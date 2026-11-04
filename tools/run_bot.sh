@@ -5,9 +5,9 @@
 cd "$(dirname "$0")/.."
 mkdir -p out/serve
 (printf '<script>window.__errs=[];addEventListener("error",e=>__errs.push(String(e.message)));</script>\n'; cat index.html) > out/serve/index.html
-python3 -m http.server 8791 --bind 127.0.0.1 --directory out/serve >/dev/null 2>&1 & SRV=$!
+python3 -m http.server 8797 --bind 127.0.0.1 --directory out/serve >/dev/null 2>&1 & SRV=$!
 sleep 1
 for q in "$@"; do d=out/bot_$(echo "$q" | tr '&=' '__'); rm -rf "$d"
-  CDP_SIZE=420,900 python3 tools/cdp.py "http://127.0.0.1:8791/index.html?$q" tools/bot.js "$d" >/dev/null 2>&1
+  CDP_SIZE=420,900 python3 tools/cdp.py "http://127.0.0.1:8797/index.html?$q" tools/bot.js "$d" >/dev/null 2>&1
   echo "== $q"; cat "$d/log.txt"; echo; done
 kill $SRV

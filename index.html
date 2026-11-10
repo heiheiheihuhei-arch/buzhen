@@ -18,12 +18,12 @@
 html, body { height: 100%; }
 [hidden] { display: none !important; }
 body {
-  background: var(--frame); color: var(--ink); font-family: var(--ui);
+  margin: 0; background: var(--frame); color: var(--ink); font-family: var(--ui);
   overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-#app { height: 100%; display: flex; flex-direction: column; gap: 6px; padding-block: 6px; max-width: 520px; margin: 0 auto; }
+#app { box-sizing: border-box; height: 100%; display: flex; flex-direction: column; gap: 6px; padding-block: 6px; max-width: 520px; margin: 0 auto; }
 .lbl { font-family: var(--brush); color: var(--dim); font-size: 18px; line-height: 1; }
 b { font-variant-numeric: tabular-nums; font-weight: 700; }
 
@@ -37,6 +37,27 @@ b { font-variant-numeric: tabular-nums; font-weight: 700; }
 .bar.vs i { background: var(--shield); }
 #mine, #foes { min-width: 3.5ch; font-size: 14px; text-align: right; }
 
+/* 士气槽：敌我各一条；80 以上「士气高昂」，槽上冒火 */
+#morale { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mrow { display: flex; align-items: center; gap: 5px; }
+.mrow .lbl { font-size: 14px; white-space: nowrap; }
+.mrow b { font-size: 13px; min-width: 2.2ch; text-align: right; }
+.mbar { position: relative; flex: 1; height: 9px; background: var(--frame-2); border: 1px solid var(--rim); border-radius: 5px; }
+.mbar i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; transition: width .25s, background .25s; }
+.me .mbar i { background: #4f7fc9; } .foe .mbar i { background: #b5473a; }
+.mbar.low i { background: #7d756c; }
+.mbar .fire { position: absolute; left: 0; right: 0; bottom: 2px; height: 22px; pointer-events: none; opacity: 0; transition: opacity .3s;
+  background:
+    radial-gradient(ellipse 7px 12px at 12% 100%, #ffd34d 0 35%, #ff7a1a 60%, transparent 72%),
+    radial-gradient(ellipse 6px 15px at 32% 100%, #ffe066 0 30%, #ff6a10 58%, transparent 72%),
+    radial-gradient(ellipse 7px 11px at 52% 100%, #ffd34d 0 35%, #ff7a1a 60%, transparent 72%),
+    radial-gradient(ellipse 6px 14px at 72% 100%, #ffe066 0 30%, #ff6a10 58%, transparent 72%),
+    radial-gradient(ellipse 7px 12px at 90% 100%, #ffd34d 0 35%, #ff7a1a 60%, transparent 72%);
+  transform-origin: 50% 100%; animation: flick .45s ease-in-out infinite alternate; filter: drop-shadow(0 0 3px #ff8a1a); }
+.mbar.hot .fire { opacity: 1; }
+.mbar.hot i { background: linear-gradient(90deg, #e0672a, #ffcf4a); box-shadow: 0 0 6px #ff9a2a; }
+@keyframes flick { from { transform: scaleY(.8) skewX(-3deg); } to { transform: scaleY(1.12) skewX(3deg); } }
+@media (prefers-reduced-motion: reduce) { .mbar .fire { animation: none; } }
 #intel { font-size: 11.5px; line-height: 1.5; background: var(--frame-2); border: 1px solid var(--rim); border-radius: 8px; padding: 5px 9px; display: flex; flex-direction: column; gap: 1px; }
 #intel b { font-weight: 700; color: var(--gold); }
 #intel .mod { display: inline-block; background: var(--red); color: var(--ink); border-radius: 4px; padding: 0 5px; margin: 0 4px 0 6px; font-size: 11px; }
@@ -52,6 +73,10 @@ footer { display: flex; flex-direction: column; gap: 6px; }
 .reward { text-align: center; font-size: 13px; color: var(--dim); margin-bottom: 12px; line-height: 1.7; }
 .reward b { color: var(--gold); font-size: 16px; }
 #tools { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+#recruit { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--dim); }
+#recruit button { appearance: none; flex: 1; border: 1px solid var(--rim); background: var(--frame-2); color: var(--ink); border-radius: 7px; padding: 4px 0; font: 12px var(--ui); cursor: pointer; }
+#recruit button small { color: var(--gold); font-size: 10px; margin-left: 2px; }
+#recruit button:disabled { opacity: .38; cursor: default; }
 #forms { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--dim); }
 #forms button { appearance: none; flex: 1; border: 1px solid var(--rim); background: var(--frame-2); color: var(--ink); border-radius: 7px; padding: 4px 0; font: 12px var(--ui); cursor: pointer; }
 #forms button small { color: var(--dim); font-size: 10px; margin-left: 3px; }
@@ -99,6 +124,15 @@ footer { display: flex; flex-direction: column; gap: 6px; }
 .card.paid em { float: right; font-style: normal; color: var(--gold); font-size: 13px; }
 .card:disabled { opacity: .5; cursor: default; }
 .paidlbl { font-size: 12px; color: var(--dim); margin-top: 6px; text-align: center; }
+.bookbtn { margin-left: auto; appearance: none; border: 1px solid var(--gold); background: var(--frame-2); color: var(--gold); border-radius: 7px; padding: 3px 12px; font: 14px var(--brush); cursor: pointer; }
+.go.ghost { background: transparent; border: 1px solid var(--gold); color: var(--gold); margin-bottom: 8px; }
+.panel.book { max-height: 100%; overflow-y: auto; }
+.panel h3 { font: 20px var(--brush); color: var(--gold); margin: 6px 0 6px; font-weight: 400; }
+.bk { border: 1px solid var(--rim); border-radius: 8px; padding: 6px 9px; margin-bottom: 6px; font-size: 12px; color: var(--dim); line-height: 1.55; }
+.bkh { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.bkh b { color: var(--ink); font-size: 14px; } .bkh small { font-size: 11px; }
+.bk .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
+.bknote { font-size: 12px !important; color: var(--dim) !important; }
 .stat { text-align: center; color: var(--dim); font-size: 13px; margin-bottom: 14px; }
 .stat b { color: var(--gold); font-size: 22px; }
 </style>
@@ -110,6 +144,10 @@ footer { display: flex; flex-direction: column; gap: 6px; }
     <div><span class="lbl">斩</span><b id="kills">0</b></div>
   </header>
 
+  <div id="morale">
+    <div class="mrow me"><span class="lbl">我军士气</span><div class="mbar"><i id="mMe"></i><em class="fire"></em></div><b id="mMeN">80</b></div>
+    <div class="mrow foe"><span class="lbl">敌军士气</span><div class="mbar"><i id="mFoe"></i><em class="fire"></em></div><b id="mFoeN">70</b></div>
+  </div>
   <div id="intel" hidden></div>
   <div id="stage">
     <canvas id="cv"></canvas>
@@ -117,9 +155,10 @@ footer { display: flex; flex-direction: column; gap: 6px; }
   </div>
 
   <footer>
-    <div class="inkrow"><span>金币</span><b id="goldTxt">0</b><span id="goldTip"></span></div>
+    <div class="inkrow"><span>金币</span><b id="goldTxt">0</b><span id="goldTip"></span><button id="bookBtn" class="bookbtn">兵书</button></div>
     <div id="tools"></div>
     <div id="forms"></div>
+    <div id="recruit"></div>
     <div id="combos"></div>
     <button id="fight" disabled>开战</button>
   </footer>
@@ -164,7 +203,7 @@ function reset() {
   grid = new Array(COLS * ROWS).fill(null); units = Array.from({ length: COLS * ROWS }, () => []);
   soldiers = []; enemies = []; shots = []; parts = []; floats = [];
   recentArmies = []; seenFoes = new Set(); sp = null; showIntel();
-  wave = 0; lastPlan = null; kills = 0; gold = 0; fightN = 1; fallen = [];
+  wave = 0; lastPlan = null; kills = 0; gold = 0; junxin = 80; fightN = 1; fallen = [];
   state = 'start'; sp = null; shake = 0;
   // 开局送一个示范阵：一排盾，后面一排枪，再后面一排弓
   for (let c = 9; c <= 26; c++) place(c, 36, 'shield', true);
@@ -189,7 +228,7 @@ function place(c, r, type, free) {
   return true;
 }
 const ownOf = k => T[k].cap; // 手里一共有几个（含场上的）；没有另外的上限，有多少就能摆多少
-let fallen = []; // 这波战死的兵（兵种和位置），打完原地补回来
+let fallen = []; // 这波战死的兵（兵种和位置）：算折损、打完从手里扣掉
 const countOf = k => soldiers.reduce((n, s) => n + (!s.dead && s.type === k ? 1 : 0), 0);
 function removeAt(i, refund) { if (grid[i]) killSoldier(grid[i], refund); }
 function killSoldier(s, refund) {
@@ -271,7 +310,7 @@ const MODS = [
   { name: '大雾', tip: '只知道从哪来，不知道来的是什么兵、多少人', from: 4, fog: true },
 ];
 // 敌我基础数值一样，难度只靠敌人的兵力（pts，和招兵花费一样算）：第 1 波 p0，之后每波 +pG
-const TUNE = { hp: 1, dmg: 1, hpG: 0, dmgG: 0, p0: 80, pG: 22 };
+const TUNE = { hp: 1, dmg: 1, hpG: 0, dmgG: 0, p0: 60, pG: 8 }; // 战死不补兵，敌人涨得慢
 let recentArmies = [], seenFoes = new Set();
 const pickOne = a => a[Math.floor(Math.random() * a.length)];
 // 大波小波：前 3 波每波都换（教玩法）；之后三波一轮——第 4、7、10… 波换新打法，后两波照着上一波来（同方向、同阵形、人更多）
@@ -318,7 +357,7 @@ function planWave(w) {
   });
   layoutArmy(groups);
   lastPlan = { army, specs: baseSpecs, mods, anchors: groups.map(g => [g.ax, g.ay]), forms: groups.map(g => g.form) };
-  return { big, army: army.name, mods, mod, groups, hpMul: TUNE.hp * (1 + TUNE.hpG * (w - 1)) * mod.hp, dmgMul: TUNE.dmg * (1 + TUNE.dmgG * (w - 1)) * mod.dmg };
+  return { big, army: army.name, mods, mod, groups, foeMor: Math.min(95, 70 + 2 * w), hpMul: TUNE.hp * (1 + TUNE.hpG * (w - 1)) * mod.hp, dmgMul: TUNE.dmg * (1 + TUNE.dmgG * (w - 1)) * mod.dmg };
 }
 
 // ---------- 敌阵：每路先在场上摆成一个阵形；准备阶段是不动的虚影，开战才变成真兵冲过来 ----------
@@ -429,7 +468,7 @@ function startFight() {
   for (const g of sp.groups) for (const k in g.counts) seenFoes.add(k);
   ghosts = []; foeZone = null;
   teams = []; hitStat = [0, 0, 0];
-  for (const s of soldiers) Object.assign(s, { side: 0, rad: R_OF[s.type], spd: MOVE[s.type], vx: 0, vy: -1, run: 0, aim: null, team: null, gofs: undefined, cdT: Math.random() * 0.5 });
+  for (const s of soldiers) Object.assign(s, { side: 0, rad: R_OF[s.type], spd: MOVE[s.type], vx: 0, vy: -1, run: 0, aim: null, team: null, gofs: undefined, cdT: Math.random() * 0.5, mor: junxin, mor0: junxin, fx0: 0, fy0: 1, mT: Math.random() * 0.25 });
   formUp();
   // 摆好的敌阵整队往前推（和我方一样）；晚到的阵开战时先不出现，倒计时到了才在原来摆阵的地方冒出来
   for (const g of sp.groups) if (g.d !== 'T') {
@@ -442,6 +481,7 @@ function startFight() {
 function landGroup(g, slots) {
   const foot = [], horse = [];
   for (const o of slots) { spawnFoe(o.k, o.x, o.y); const e = enemies[enemies.length - 1]; e.lag = 0.8 + Math.random() * 0.45; e.wob = Math.random() * 6.283; (o.k === 'horse' ? horse : foot).push(e); }
+  for (const e of foot.concat(horse)) { e.fx0 = -FWD[g.d][0]; e.fy0 = -FWD[g.d][1] || (g.d === 'T' ? -1 : 0); }
   for (const m of [foot, horse]) if (m.length) makeTeam(1, m, FWD[g.d]);
 }
 const foesLeft = () => sp ? sp.groups.reduce((n, g) => n + g.queue.length + g.slots.length + (g.pend ? g.pend.length : 0), 0) : 0;
@@ -450,7 +490,7 @@ function phaseUI() {
   b.disabled = !prep;
   b.textContent = prep ? (sp.mod.fog ? '开战 · 敌情不明' : `开战 · 敌 ${foesLeft()} 人`) : state === 'fight' ? '战斗中，不能上兵' : '开战';
   document.getElementById('tools').classList.toggle('locked', !prep);
-  if (typeof buildForms === 'function') buildForms();
+  if (typeof buildForms === 'function') { buildForms(); buildRecruit(); }
 }
 // 敌情：这波叫什么、天时、每一路来什么、新敌人的说明
 function showIntel() {
@@ -463,17 +503,13 @@ function showIntel() {
     return `${DIRS[g.d][1]} ${DIRS[g.d][0]}：${what}${g.delay0 ? `（${g.delay0} 秒后）` : ''}`;
   });
   lines.push(route.join('　'));
-  if (!sp.mod.fog) {
-    const fresh = new Set(); for (const g of sp.groups) for (const k in g.counts) if (!seenFoes.has(k)) fresh.add(k);
-    for (const k of fresh) lines.push(`<span class="new">新</span> <b>${FOES[k].name}</b>：${FOES[k].tip}`);
-  }
   el.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
   el.hidden = false; fit();
 }
 function spawnFoe(kind, x, y) {
   const f = FOES[kind], hp = f.hp * sp.hpMul;
   enemies.push({ side: 1, type: kind, kind, f, x, y, hp, max: hp, spd: f.spd * sp.mod.spd * (0.9 + Math.random() * 0.2), r: f.r, rad: f.r, dmg: (f.dmg || 0) * sp.dmgMul, cd: f.cd || 1, cdT: Math.random() * 0.5,
-    color: f.color, vx: 0, vy: 1, flash: 0, run: 0, state: 'fight', lag: 1, wob: 0 });
+    color: f.color, vx: 0, vy: 1, flash: 0, run: 0, state: 'fight', lag: 1, wob: 0, mor: sp.foeMor, mor0: sp.foeMor, fx0: 0, fy0: -1, mT: Math.random() * 0.25 });
 }
 function spawn(dt) {
   for (const g of sp.groups) {
@@ -500,6 +536,7 @@ function spawn(dt) {
     for (let k = 0; k < n; k++) {
       const kind = g.queue.pop(), a = Math.random() * 6.283, d = Math.sqrt(Math.random());
       spawnFoe(kind, bx + Math.cos(a) * d * sx, by + Math.sin(a) * d * sy);
+      if (g.d !== 'T') { const e = enemies[enemies.length - 1]; e.fx0 = -FWD[g.d][0]; e.fy0 = -FWD[g.d][1]; }
       if (kind === 'boss') { bannerTxt = '敌将来了'; bannerT = 1.4; }
     }
   }
@@ -513,11 +550,17 @@ function cellOf(x, y) { return [Math.max(0, Math.min(COLS - 1, Math.floor(x / CS
 const R_OF = { shield: 3.4, spear: 3.1, bow: 2.9, horse: 3.7 };
 const ENGAGE = 30, AIM_NEAR = 150, CHARGE = 3 * CS;
 const FWD = { N: [0, 1], S: [0, -1], W: [1, 0], E: [-1, 0], T: [0, 0] };
+// 士气：每个兵 0～100，掉到 0 就溃逃（掉头往自己那边跑、不还手、挨打 ×1.5）；跑出交战 3 秒、回到 40 就重新站住；跑出场外算折损
+// 我方开局士气 = 军心（看上一波评级），敌方看波数
+const MOR = { ally: 8, side: 3, back: 6, mob: 10, panic: 4, rest: 5, rally: 40, regen: 8 };
+const JUNXIN = { S: 100, A: 90, B: 80, C: 70, D: 60 };
+let junxin = 80;
 let teams = [], hitStat = [0, 0, 0]; // hitStat：挨打时 正面/侧面/背后 各几次（先只记下来，给以后的士气用）
 const oppOf = u => u.side ? soldiers : enemies;
 const ownOf2 = u => u.side ? enemies : soldiers;
 const canSee = (side, u) => true; // 迷雾（第三步）接在这里：side 这一方看不看得见 u
-const dmgOf = u => u.side ? u.dmg : T[u.type].dmg * (u.dmgMul || 1);
+const HOT = 80; // 士气 80 以上 = 士气高昂：伤害 +15%，身上冒火星
+const dmgOf = u => (u.side ? u.dmg : T[u.type].dmg * (u.dmgMul || 1)) * (u.mor >= HOT ? 1.15 : 1);
 const cdOf = u => u.side ? u.cd : T[u.type].cd;
 const bowRange = u => (u.side ? u.f.range : T.bow.range) * (sp.mod.rain ? 0.75 : 1);
 // 够得着：弓看射程，枪隔一格能戳，盾和骑要贴身
@@ -555,12 +598,15 @@ function hurt(u, d, src, by) {
   if (u.dead) return;
   if (by && !by.dead) { // 从哪边挨的打：和自己朝向夹角 < 60° 正面，60°–120° 侧面，> 120° 背后
     const ax = by.x - u.x, ay = by.y - u.y, L = Math.hypot(ax, ay) || 1, c = (ax * u.vx + ay * u.vy) / L;
-    hitStat[c > 0.5 ? 0 : c > -0.5 ? 1 : 2]++;
+    const k = c > 0.5 ? 0 : c > -0.5 ? 1 : 2; hitStat[k]++;
+    if (u.state !== 'rout') u.mor -= k === 1 ? MOR.side : k === 2 ? MOR.back : 0; // 侧面、背后挨打更慌
   }
   if (u.wall) d *= 0.75;
+  if (u.state === 'rout') d *= 1.5;
   u.hp -= d; u.flash = 0.1;
   if (u.thorn && by && src === 'melee') hurt(by, 1, 'thorn', null);
   if (u.hp > 0) return;
+  near(u.x, u.y, 25, u.side, o => { if (o !== u) o.mor -= MOR.ally; }); // 身边有人倒下
   if (u.side === 0) { killSoldier(u, false); burst(u.x, u.y, T[u.type].color, 6); needBuffs = true; return; }
   u.dead = true; kills++; foeLost += u.f.pts;
   burst(u.x, u.y, '#5a160f', 5);
@@ -645,8 +691,41 @@ function pickTarget(u) {
   if (u.type === 'horse') { const b = nearestIn(opp, u.x, u.y, o => o.type === 'bow' && see(o)); if (b) return b; } // 骑：先找对面弓兵
   return nearestIn(opp, u.x, u.y, see);
 }
+function moraleTick(u, dt) {
+  u.mT = (u.mT || 0) - dt; if (u.mT > 0) return;
+  const k = 0.25 - u.mT; u.mT = 0.25;
+  let mob = 0, close = false, panic = 0;
+  near(u.x, u.y, 12, 1 - u.side, () => mob++);
+  near(u.x, u.y, 40, 1 - u.side, () => { close = true; });
+  near(u.x, u.y, 25, u.side, o => { if (o !== u && o.state === 'rout') panic++; });
+  if (u.state === 'rout') {
+    if (close) u.calm = 0; else { u.mor += MOR.regen * k; u.calm += k; }
+    if (u.calm >= 3 && u.mor >= MOR.rally) { u.state = 'fight'; u.aim = null; u.aimT = 0; }
+    return;
+  }
+  if (mob >= 3) u.mor -= MOR.mob * k;                 // 被围住了
+  u.mor -= Math.min(3, panic) * MOR.panic * k;        // 旁边有人在逃，会传染
+  if (!close) u.mor = Math.min(u.mor0, u.mor + MOR.rest * k); // 没在打，慢慢定下神来
+}
+function flee(u) { // 逃出场外：不回来了，算折损
+  if (u.side === 0) { killSoldier(u, false); needBuffs = true; }
+  else { u.dead = true; kills++; foeLost += u.f.pts; }
+}
 function updateUnit(u, dt) {
   u.flash = Math.max(0, (u.flash || 0) - dt); if (u.pop) u.pop = Math.max(0, u.pop - dt * 4);
+  if (u.state !== 'team' || u.team.go) moraleTick(u, dt);
+  if (u.mor >= HOT && !reduceMotion && Math.random() < dt * 0.8 && parts.length < 700) parts.push({ x: u.x + (Math.random() - 0.5) * 4, y: u.y - 3, vx: (Math.random() - 0.5) * 6, vy: -18 - Math.random() * 14, life: 0.45 + Math.random() * 0.3, color: Math.random() < 0.5 ? '#ffb02e' : '#ff6a1a', s: 1.2 + Math.random(), ember: true });
+  if (u.state !== 'rout' && u.mor <= 0) {
+    u.state = 'rout'; u.calm = 0; u.aim = null;
+    if (Math.random() < 0.35) floats.push({ x: u.x, y: u.y - 6, text: '逃', life: 0.7, color: u.side ? '#f3d9c8' : '#d9e2f3' });
+  }
+  if (u.state === 'rout') { // 溃逃：往自己那边跑，躲着最近的敌人
+    let dx = u.fx0, dy = u.fy0; const e = nearestOpp(u, 60);
+    if (e) { const L = Math.hypot(u.x - e.x, u.y - e.y) || 1; dx += (u.x - e.x) / L * 1.2; dy += (u.y - e.y) / L * 1.2; }
+    stepTo(u, u.x + dx * 20, u.y + dy * 20, u.spd * 1.1, dt, true);
+    if (u.x <= u.rad + 0.6 || u.x >= W - u.rad - 0.6 || u.y <= u.rad + 0.6 || u.y >= H - u.rad - 0.6) flee(u);
+    return;
+  }
   if (u.state === 'team') {
     const t = u.team;
     if (!t.go || !nearestOpp(u, u.type === 'bow' ? bowRange(u) : ENGAGE)) {
@@ -772,23 +851,25 @@ function showPick() {
   state = 'pick';
   const lost = fallen.reduce((n, f) => n + BASE_TYPES[f.type].cost, 0), ratio = lost ? foeLost / lost : Infinity;
   const [g, , bonus] = GRADES.find(([, min]) => ratio >= min);
+  junxin = JUNXIN[g];
   const base = (30 + 10 * wave) * sp.mod.bounty, got = Math.round(base * (1 + bonus));
   gold += got;
-  // 打完：活着的回到画的位置，战死的在原位补回来，全军满血
-  const back = fallen.length;
-  const homes = soldiers.filter(s => !s.dead).map(s => [s.type, s.hc, s.hr]).concat(fallen.map(f => [f.type, f.c, f.r]));
+  // 打完：活着的回到画的位置、回满血；战死的不补回，手里这种兵少一个
+  const back = fallen.length, lostBy = {};
+  for (const f of fallen) { T[f.type].cap = Math.max(0, T[f.type].cap - 1); lostBy[f.type] = (lostBy[f.type] || 0) + 1; }
+  const homes = soldiers.filter(s => !s.dead).map(s => [s.type, s.hc, s.hr]);
   for (const s of soldiers) s.dead = true;
   soldiers = []; grid.fill(null); for (const a of units) a.length = 0; fallen = [];
   for (const [k, c, r] of homes) place(c, r, k, true);
   recalcBuffs(); buildTools(); hud();
-  const rewardHtml = `<div class="grade ${g}">${g}</div><div class="reward">歼敌兵力 ${foeLost} · 折损兵力 ${lost}<br>战损比 <b>${lost ? '1 : ' + ratio.toFixed(1) : '无损'}</b><br>基础 ${base} 金${bonus ? ` + 评级 ${Math.round(bonus * 100)}%` : ''} ＝ <b>${got} 金</b></div>`;
+  const rewardHtml = `<div class="grade ${g}">${g}</div><div class="reward">歼敌兵力 ${foeLost} · 折损兵力 ${lost}（含逃散）<br>战损比 <b>${lost ? '1 : ' + ratio.toFixed(1) : '无损'}</b><br>基础 ${base} 金${bonus ? ` + 评级 ${Math.round(bonus * 100)}%` : ''} ＝ <b>${got} 金</b><br>下一波军心 <b>${junxin}</b>（评级越高，兵越不容易溃逃）</div>`;
   const pool = CARDS.filter(c => c.ok()).sort(() => Math.random() - 0.5);
   const recruit = pool.filter(c => c.kind === '招兵'), buff = pool.filter(c => c.kind === '强化');
   const pick = [recruit[0], buff[0]];
   pick.push(pool.find(c => !pick.includes(c)));
   const paidPool = PAID.filter(c => c.ok()), paid = paidPool[Math.floor(Math.random() * paidPool.length)];
   const price = Math.round((45 + 15 * wave) / 5) * 5;
-  const lostHtml = back ? `<div class="reward">全军回到原位，战死的 ${back} 个已补回，全军满血</div>` : '';
+  const lostHtml = back ? `<div class="reward">活着的回到原位、全军满血<br>战死 ${back} 个，不补回：${Object.entries(lostBy).map(([k, n]) => `${T[k].name} -${n}`).join('、')}</div>` : '';
   overlay(`<div class="panel"><h2>第 ${wave} 波 守住了</h2>${rewardHtml}${lostHtml}<div class="cards">${pick.map((c, k) =>
     `<button class="card${c.isNew ? ' new' : ''}" id="card${k}" data-k="${k}"><b><i class="tag">${c.kind}</i>${c.t}</b>${c.d ? `<span>${c.d}</span>` : ''}</button>`).join('')}
     <div class="paidlbl">另外可以花金币买（买不买都行）</div>
@@ -802,17 +883,34 @@ function showPick() {
 function overlay(html) { const o = document.getElementById('ov'); o.hidden = !html; if (html) o.innerHTML = html; }
 function showStart() {
   overlay(`<div class="panel"><h1>画阵</h1>
-    <p>选一个兵种，用手指在沙盘上画。笔划过的格子都会站上兵，一笔就是一片。画好了点「开战」，<b>打起来就不能再上兵</b>。</p>
-    <ul>
+    <p>选一个兵种，用手指在沙盘上画，一笔就是一片。画好了点「开战」，两军对冲。</p>
+    <p>兵种、阵法、士气怎么算，都在「兵书」里。</p>
+    <button class="go ghost" id="bookBtn0">看兵书</button>
+    <button class="go" id="goBtn">开始</button></div>`);
+  document.getElementById('goBtn').onclick = () => { overlay(null); startPrep(); };
+  document.getElementById('bookBtn0').onclick = () => showBook(showStart);
+}
+// ---------- 兵书：兵种、阵法、规则（随时能翻；打仗时翻开会暂停） ----------
+const RULES_HTML = `<ul>
       <li>敌军和你一样是<b>刀盾、枪、弓、骑</b>，基础数值也一样；你赢在<b>阵法加成和过关强化</b>。两边对砍，<b>谁剩下谁赢</b></li>
       <li><b>刀盾兵</b>主要负责挡，也能砍几下（下面简称「盾」）</li><li><b>盾挨盾</b>＝盾墙，受伤少两成半</li>
       <li><b>枪挨盾</b>＝伤害 +60%；枪能隔着盾戳人</li>
       <li><b>弓挨盾</b>＝射速 +50%</li>
       <li><b>枪挨 3 个枪</b>＝枪林，砍它的会被反伤</li>
-      <li>手里<b>有多少兵就能摆多少</b>（按钮上的 场上/手里）。每波打完<b>战死的原地补回、全军回满血</b>；过关时可以招兵、强化</li><li>过关得金币；<b>评级看战损比</b>（歼敌兵力 ÷ 自己折损的兵力，刀盾、枪算 1，弓 2，骑 3）：比值越高，金币多给 10%～100%；过关时可以花金币买一张更强的卡</li><li>兵活下来就留到下一波。一波比一波难，<b>兵死光就输</b></li><li>布阵时「撤」能擦掉兵；直接在别的兵上画会把它换成新兵种</li><li>「移」：先拉框圈住一块兵，再按住框里拖，整块挪走</li><li>下面「阵型」能存 3 套阵：点「存」再点一格存下，以后点那格一键摆上</li><li>敌人三波一轮：换一种打法后，接下来两波是同一路数、人更多，微调就行</li>
-    </ul>
-    <button class="go" id="goBtn">开始</button></div>`);
-  document.getElementById('goBtn').onclick = () => { overlay(null); startPrep(); };
+      <li>手里<b>有多少兵就能摆多少</b>（按钮上的 场上/手里）。每波打完<b>活着的回到原位、全军回满血；战死的不补回</b>，要靠过关招兵补；过关时可以招兵、强化</li><li>过关得金币；<b>评级看战损比</b>（歼敌兵力 ÷ 自己折损的兵力，刀盾、枪算 1，弓 2，骑 3）：比值越高，金币多给 10%～100%；过关时可以花金币买一张更强的卡</li><li><b>士气</b>（上面的士气槽）：<b>80 以上士气高昂，伤害 +15%</b>，会冒火；身边有人倒下、被围、被从侧面背后打，兵会慌；慌到底就<b>溃逃</b>，逃出场外就没了。评级越高，下一波<b>军心</b>越高</li><li>战死、逃散的兵不补回：备战时可以<b>花金币招兵</b></li><li>兵活下来就留到下一波。一波比一波难，<b>兵死光就输</b></li><li>布阵时「撤」能擦掉兵；直接在别的兵上画会把它换成新兵种</li><li>「移」：先拉框圈住一块兵，再按住框里拖，整块挪走</li><li>下面「阵型」能存 3 套阵：点「存」再点一格存下，以后点那格一键摆上</li><li>敌人三波一轮：换一种打法后，接下来两波是同一路数、人更多，微调就行</li>
+    </ul>`;
+const MY_TIPS = { shield: '主要负责挡，也能砍几下。挨着别的刀盾成盾墙；身后有弓兵会去护着；敌人贴上来就被缠住，箭飞过会被挡下', spear: '隔一格就能戳，戳中一小片。站在刀盾后面最好', bow: '射得远、血薄，站住放箭，不会跑到近战兵前面去', horse: '对面有弓兵就直接冲过去打弓兵，没有就等步兵先撞上再冲。跑满 3 格撞第一下三倍伤害，还踩到旁边一片' };
+let paused = false;
+function showBook(back) {
+  const wasFight = state === 'fight'; paused = wasFight;
+  const row = k => { const t = T[k], spd = MOVE[k];
+    return `<div class="bk"><div class="bkh"><i class="sw" style="background:${t.color}"></i><b>${t.name}兵</b><small>兵力 ${t.cost} · 血 ${Math.round(t.hp)} · 伤害 ${(t.dmg || 0).toFixed(1).replace(/\.0$/, '')}${k === 'bow' ? ` · 射程 ${Math.round(t.range / CS)} 格` : k === 'spear' ? ' · 隔一格' : ''} · 速度 ${spd}</small></div><span>${MY_TIPS[k]}</span></div>`; };
+  overlay(`<div class="panel book"><h2>兵书</h2>
+    <h3>兵种</h3>${['shield', 'spear', 'bow', 'horse'].map(row).join('')}
+    <p class="bknote">敌军也是这四种兵，基础数值一样。</p>
+    <h3>阵法与规则</h3>${RULES_HTML}
+    <button class="go" id="bookClose">${wasFight ? '合上，接着打' : '合上'}</button></div>`);
+  document.getElementById('bookClose').onclick = () => { paused = false; if (back) back(); else overlay(null); };
 }
 function showOver() {
   state = 'over'; phaseUI(); document.getElementById('intel').hidden = true; fit();
@@ -834,7 +932,19 @@ function buildTools() {
     if (k === 'thick') thick = !thick; else { tool = k; sel = null; }
     buildTools();
   };
-  buildForms();
+  buildForms(); buildRecruit();
+}
+// ---------- 金币招兵：战死的不补回，只能在备战时花金币招 ----------
+const RECRUIT = { shield: [5, 3], spear: [5, 3], bow: [3, 6], horse: [2, 9] }; // 一次招几个、每个几金
+function buyTroops(k) {
+  const [n, p] = RECRUIT[k]; if (state !== 'prep' || gold < n * p) return false;
+  gold -= n * p; T[k].cap += n; buildTools(); hud(); return true;
+}
+function buildRecruit() {
+  const box = document.getElementById('recruit'), on = state === 'prep';
+  box.innerHTML = `<span>招兵</span>` + Object.entries(RECRUIT).map(([k, [n, p]]) => `<button id="r-${k}" ${!on || gold < n * p ? 'disabled' : ''}>${T[k].name}+${n}<small>${n * p}金</small></button>`).join('');
+  for (const k in RECRUIT) document.getElementById('r-' + k).onclick = () => buyTroops(k);
+  if (typeof ctx !== 'undefined') fit(); // 按钮行多了少了，沙盘跟着缩放
 }
 
 // ---------- 阵型存档：存 3 套，点一下整套摆上（记在这台设备上） ----------
@@ -915,6 +1025,7 @@ function drawSel() {
 
 // ---------- 画 ----------
 document.getElementById('fight').onclick = startFight;
+document.getElementById('bookBtn').onclick = () => { if (state !== 'pick' && state !== 'over' && state !== 'start') showBook(null); else if (state === 'start') showBook(showStart); };
 const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 let scale = 1, pointer = null;
 function toLocal(ev) { const r = cv.getBoundingClientRect(); return { x: (ev.clientX - r.left) / r.width * W, y: (ev.clientY - r.top) / r.height * H }; }
@@ -968,7 +1079,7 @@ function frame(now) {
   const gdt = dt;
   inkWarnT -= dt; bannerT -= dt;
   if (state === 'prep') for (const s of soldiers) s.pop = Math.max(0, s.pop - dt * 4);
-  if (state === 'fight') {
+  if (state === 'fight' && !paused) {
     spawn(gdt);
     buildBuckets(); updateTeams(gdt);
     for (const s of soldiers) if (!s.dead) updateUnit(s, gdt);
@@ -981,7 +1092,7 @@ function frame(now) {
     if (!soldiers.some(s => !s.dead) || (!canHit && !foeHit)) showOver();
     else if (!foesLeft() && !enemies.length) showPick();
   }
-  for (const p of parts) { p.life -= gdt; if (!p.ring) { p.x += p.vx * gdt; p.y += p.vy * gdt; p.vx *= 0.92; p.vy *= 0.92; } }
+  for (const p of parts) { p.life -= gdt; if (!p.ring) { p.x += p.vx * gdt; p.y += p.vy * gdt; if (!p.ember) { p.vx *= 0.92; p.vy *= 0.92; } } }
   parts = parts.filter(p => p.life > 0);
   for (const f of floats) { f.life -= dt; f.y -= 14 * dt; }
   floats = floats.filter(f => f.life > 0);
@@ -996,6 +1107,13 @@ function hud() {
   document.getElementById('mine').textContent = mine; document.getElementById('foes').textContent = sp && sp.mod.fog && state === 'prep' ? '?' : foes;
   document.getElementById('vsFill').style.width = (mine + foes ? mine / (mine + foes) * 100 : 50) + '%';
   document.getElementById('goldTxt').textContent = gold;
+  // 士气槽：开打后是场上活着的兵的平均士气；备战时显示开局士气
+  const avg = (a, d) => { let n = 0, m = 0; for (const u of a) if (!u.dead) { n++; m += Math.max(0, Math.min(100, u.mor ?? d)); } return n ? m / n : d; };
+  const fight = state === 'fight';
+  for (const [id, v] of [['mMe', fight ? avg(soldiers, junxin) : junxin], ['mFoe', fight ? avg(enemies, sp ? sp.foeMor : 70) : (sp ? sp.foeMor : 70)]]) {
+    const el = document.getElementById(id); el.style.width = v + '%'; document.getElementById(id + 'N').textContent = Math.round(v);
+    el.parentNode.classList.toggle('hot', v >= HOT); el.parentNode.classList.toggle('low', v < 30);
+  }
 }
 
 // 准备阶段：敌阵的虚影（站着不动，开战才变成真兵）
@@ -1077,7 +1195,7 @@ function render() {
     const t = T[s.type], x0 = s.c * CS, y0 = s.r * CS, k = s.hp / s.max, g = 1 + s.pop * 0.5;
     ctx.save(); ctx.translate(s.x, s.y); ctx.scale(g, g);
     ctx.fillStyle = 'rgba(40,26,12,.25)'; ctx.fillRect(-4, -3, 9, 9);
-    ctx.fillStyle = s.flash > 0 ? '#fff4e0' : t.color;
+    ctx.fillStyle = s.flash > 0 ? '#fff4e0' : s.state === 'rout' ? '#8f8a82' : t.color;
     if (s.type === 'shield') { ctx.fillRect(-4.5, -4.5, 9, 9); ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(-4.5, -4.5, 9, 2.5); if (s.wall) { ctx.strokeStyle = 'rgba(20,30,60,.7)'; ctx.lineWidth = 1; ctx.strokeRect(-4, -4, 8, 8); } }
     else if (s.type === 'spear') { ctx.beginPath(); ctx.moveTo(0, -4.8); ctx.lineTo(4.4, 4); ctx.lineTo(-4.4, 4); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#efe3c8'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, 3); ctx.lineTo(0, -6); ctx.stroke(); }
     else if (s.type === 'bow') { ctx.beginPath(); ctx.arc(0, 0, 4, 0, 6.283); ctx.fill(); ctx.strokeStyle = '#e8ddc2'; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.arc(0, 1, 2.6, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); }
@@ -1088,7 +1206,7 @@ function render() {
   // 准备阶段：虚画敌军冲过来的样子
   if (state === 'prep') drawGhosts();
   // 敌人：每种一个形状，小也认得出来
-  for (const e of enemies) drawFoe(e);
+  for (const e of enemies) drawFoe(e.state === 'rout' ? { ...e, color: '#7d716a' } : e);
   // 箭、枪
   for (const p of shots) {
     if (p.k === 'thrust') { ctx.strokeStyle = 'rgba(250,236,200,.85)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + (p.tx - p.x) * 0.9, p.y + (p.ty - p.y) * 0.9); ctx.stroke(); }

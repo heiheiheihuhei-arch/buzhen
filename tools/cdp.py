@@ -107,6 +107,10 @@ def main():
             print("脚本出错：", json.dumps(res["exceptionDetails"], ensure_ascii=False)[:2000])
             return
         val = res["result"].get("value")
+        # 脚本返回 {"__cap": "名字.png", ...}：最后再截一张整页（含按钮、弹窗），存成这个名字
+        if isinstance(val, dict) and "__cap" in val:
+            shot = call("Page.captureScreenshot", format="png")
+            (out / val.pop("__cap")).write_bytes(base64.b64decode(shot["data"]))
         if isinstance(val, dict) and all(isinstance(v, str) and v.startswith("data:") for v in val.values()):
             for name, data in val.items():
                 (out / name).write_bytes(base64.b64decode(data.split(",", 1)[1]))

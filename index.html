@@ -185,7 +185,7 @@ const MOVE = { shield: 42, spear: 33, bow: 24, horse: 75 }; // 盾快、枪一�
 // 敌兵：和我方一样是盾、枪、弓、骑四种，基础数值直接取我方的（我方过关强化、阵法加成不算）。pts = 兵力，和我方招兵花费一样
 const foeOf = (k, o) => { const t = BASE_TYPES[k]; return { name: t.name, pts: t.cost, hp: t.hp, dmg: t.dmg || 0, cd: t.cd || 1, spd: MOVE[k], ...o }; };
 const FOES = {
-  shield: foeOf('shield', { r: 3.4, guard: true, color: '#6b2a22', shape: 'msq', tip: '和你的刀盾兵一样：主要负责挡，也能砍几下；身后有弓兵就护着弓兵，箭射不过去' }),
+  shield: foeOf('shield', { r: 3.4, color: '#6b2a22', shape: 'msq', tip: '和你的刀盾兵一样：主要负责挡，也能砍几下；箭射不过去' }),
   spear:  foeOf('spear',  { r: 3.1, reach: BASE_TYPES.spear.range, color: '#9a3a1c', shape: 'mtri', tip: '和你的枪兵一样：能隔着一格戳人' }),
   bow:    foeOf('bow',    { r: 2.9, range: BASE_TYPES.bow.range, color: '#6e2350', shape: 'mbow', tip: '和你的弓兵一样：射得远、血薄；你的刀盾兵能挡它的箭' }),
   horse:  foeOf('horse',  { r: 3.7, charge: 3, color: '#4a1a2e', shape: 'mhorse', tip: '和你的骑兵一样：跑得快，跑起来撞第一下三倍伤害，还能踩到旁边的人' }),
@@ -468,7 +468,7 @@ function startFight() {
   for (const g of sp.groups) for (const k in g.counts) seenFoes.add(k);
   ghosts = []; foeZone = null;
   teams = []; hitStat = [0, 0, 0];
-  for (const s of soldiers) Object.assign(s, { side: 0, rad: R_OF[s.type], spd: MOVE[s.type], vx: 0, vy: -1, run: 0, aim: null, team: null, gofs: undefined, cdT: Math.random() * 0.5, mor: junxin, mor0: junxin, fx0: 0, fy0: 1, mT: Math.random() * 0.25 });
+  for (const s of soldiers) Object.assign(s, { side: 0, rad: R_OF[s.type], spd: MOVE[s.type], vx: 0, vy: -1, run: 0, aim: null, team: null, cdT: Math.random() * 0.5, mor: junxin, mor0: junxin, fx0: 0, fy0: 1, mT: Math.random() * 0.25 });
   formUp();
   // 摆好的敌阵整队往前推（和我方一样）；晚到的阵开战时先不出现，倒计时到了才在原来摆阵的地方冒出来
   for (const g of sp.groups) if (g.d !== 'T') {
@@ -749,9 +749,6 @@ function updateUnit(u, dt) {
       const f = nearestIn(ownOf2(u), a.x, a.y, o => o.type === 'shield' || o.type === 'spear');
       u.behind = !!f && my - CS < Math.hypot(a.x - f.x, a.y - f.y);
     }
-    // 盾：身边 4 格内有自己的弓兵，就去护着它
-    u.ward = u.type === 'shield' ? nearestIn(ownOf2(u), u.x, u.y, o => o.type === 'bow' && (o.x - u.x) ** 2 + (o.y - u.y) ** 2 < 40 * 40) : null;
-    if (u.gofs === undefined) u.gofs = (Math.random() - 0.5) * 22;
   }
   let e = u.aim;
   // 被盾缠住：贴着对面的盾兵，就得先把它砍倒
@@ -764,14 +761,6 @@ function updateUnit(u, dt) {
     u.cdT -= dt * (u.rateMul || 1);
     if (u.cdT <= 0) { u.cdT = cdOf(u); strike(u, e); }
     return;
-  }
-  if (u.ward && !u.ward.dead) { // 护弓：站到弓兵和离它最近的敌人中间
-    const w = u.ward, o = nearestIn(oppOf(u), w.x, w.y);
-    if (o) {
-      const ux = o.x - w.x, uy = o.y - w.y, L = Math.hypot(ux, uy) || 1;
-      stepTo(u, w.x + ux / L * 14 - uy / L * u.gofs, w.y + uy / L * 14 + ux / L * u.gofs, u.spd * 1.2, dt, false);
-      u.vx = ux / L; u.vy = uy / L; return;
-    }
   }
   if (u.behind) return;
   stepTo(u, e.x, e.y, u.spd, dt, true);
@@ -862,15 +851,15 @@ function showPick() {
   soldiers = []; grid.fill(null); for (const a of units) a.length = 0; fallen = [];
   for (const [k, c, r] of homes) place(c, r, k, true);
   recalcBuffs(); buildTools(); hud();
-  const rewardHtml = `<div class="grade ${g}">${g}</div><div class="reward">歼敌兵力 ${foeLost} · 折损兵力 ${lost}（含逃散）<br>战损比 <b>${lost ? '1 : ' + ratio.toFixed(1) : '无损'}</b><br>基础 ${base} 金${bonus ? ` + 评级 ${Math.round(bonus * 100)}%` : ''} ＝ <b>${got} 金</b><br>下一波军心 <b>${junxin}</b>（评级越高，兵越不容易溃逃）</div>`;
+  const rewardHtml = `<div class="grade ${g}">${g}</div><div class="reward">歼敌兵力 ${foeLost} · 折损兵力 ${lost}（含逃散）<br>战损比 <b>${lost ? '1 : ' + ratio.toFixed(1) : '无损'}</b><br>基础 ${base} 金${bonus ? ` + 评级 ${Math.round(bonus * 100)}%` : ''} ＝ <b>${got} 金</b></div>`;
   const pool = CARDS.filter(c => c.ok()).sort(() => Math.random() - 0.5);
   const recruit = pool.filter(c => c.kind === '招兵'), buff = pool.filter(c => c.kind === '强化');
   const pick = [recruit[0], buff[0]];
   pick.push(pool.find(c => !pick.includes(c)));
   const paidPool = PAID.filter(c => c.ok()), paid = paidPool[Math.floor(Math.random() * paidPool.length)];
   const price = Math.round((45 + 15 * wave) / 5) * 5;
-  const lostHtml = back ? `<div class="reward">活着的回到原位、全军满血<br>战死 ${back} 个，不补回：${Object.entries(lostBy).map(([k, n]) => `${T[k].name} -${n}`).join('、')}</div>` : '';
-  overlay(`<div class="panel"><h2>第 ${wave} 波 守住了</h2>${rewardHtml}${lostHtml}<div class="cards">${pick.map((c, k) =>
+  const lostHtml = back ? `<div class="reward">战死 ${back} 个，不补回：${Object.entries(lostBy).map(([k, n]) => `${T[k].name} -${n}`).join('、')}</div>` : '';
+  overlay(`<div class="panel"><h2>第 ${wave} 波 胜利</h2>${rewardHtml}${lostHtml}<div class="cards">${pick.map((c, k) =>
     `<button class="card${c.isNew ? ' new' : ''}" id="card${k}" data-k="${k}"><b><i class="tag">${c.kind}</i>${c.t}</b>${c.d ? `<span>${c.d}</span>` : ''}</button>`).join('')}
     <div class="paidlbl">另外可以花金币买（买不买都行）</div>
     <button class="card paid" id="paid"><b><i class="tag">${paid.kind}</i>${paid.t}<em>${price} 金</em></b><span>${paid.d}</span></button></div></div>`);
@@ -899,7 +888,7 @@ const RULES_HTML = `<ul>
       <li><b>枪挨 3 个枪</b>＝枪林，砍它的会被反伤</li>
       <li>手里<b>有多少兵就能摆多少</b>（按钮上的 场上/手里）。每波打完<b>活着的回到原位、全军回满血；战死的不补回</b>，要靠过关招兵补；过关时可以招兵、强化</li><li>过关得金币；<b>评级看战损比</b>（歼敌兵力 ÷ 自己折损的兵力，刀盾、枪算 1，弓 2，骑 3）：比值越高，金币多给 10%～100%；过关时可以花金币买一张更强的卡</li><li><b>士气</b>（上面的士气槽）：<b>80 以上士气高昂，伤害 +15%</b>，会冒火；身边有人倒下、被围、被从侧面背后打，兵会慌；慌到底就<b>溃逃</b>，逃出场外就没了。评级越高，下一波<b>军心</b>越高</li><li>战死、逃散的兵不补回：备战时可以<b>花金币招兵</b></li><li>兵活下来就留到下一波。一波比一波难，<b>兵死光就输</b></li><li>布阵时「撤」能擦掉兵；直接在别的兵上画会把它换成新兵种</li><li>「移」：先拉框圈住一块兵，再按住框里拖，整块挪走</li><li>下面「阵型」能存 3 套阵：点「存」再点一格存下，以后点那格一键摆上</li><li>敌人三波一轮：换一种打法后，接下来两波是同一路数、人更多，微调就行</li>
     </ul>`;
-const MY_TIPS = { shield: '主要负责挡，也能砍几下。挨着别的刀盾成盾墙；身后有弓兵会去护着；敌人贴上来就被缠住，箭飞过会被挡下', spear: '隔一格就能戳，戳中一小片。站在刀盾后面最好', bow: '射得远、血薄，站住放箭，不会跑到近战兵前面去', horse: '对面有弓兵就直接冲过去打弓兵，没有就等步兵先撞上再冲。跑满 3 格撞第一下三倍伤害，还踩到旁边一片' };
+const MY_TIPS = { shield: '主要负责挡，也能砍几下。挨着别的刀盾成盾墙；敌人贴上来就被缠住，箭飞过会被挡下', spear: '隔一格就能戳，戳中一小片。站在刀盾后面最好', bow: '射得远、血薄，站住放箭，不会跑到近战兵前面去', horse: '对面有弓兵就直接冲过去打弓兵，没有就等步兵先撞上再冲。跑满 3 格撞第一下三倍伤害，还踩到旁边一片' };
 let paused = false;
 function showBook(back) {
   const wasFight = state === 'fight'; paused = wasFight;

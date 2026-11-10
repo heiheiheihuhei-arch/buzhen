@@ -680,10 +680,13 @@ function updateTeams(dt) {
       if (best) { ax = best.x - t.x; ay = best.y - t.y; } else if (n) { ax = sx / n - t.x; ay = sy / n - t.y; } else if (any) { ax = t.fx; ay = t.fy; } else ax = ay = 0;
       const L = Math.hypot(ax, ay);
       if (L < (best ? 14 : 0.01)) t.hx = t.hy = 0; else { t.hx = ax / L; t.hy = ay / L; }
+      // 队伍已经走到敌人跟前停下，就全队散开各自打，免得离得远的队员一直干站着
+      if (best && !t.hx && !t.hy) { for (const u of t.mem) u.state = 'fight'; t.mem = []; continue; }
     }
     // 队员被挡住、落在后面太多：队中心等一等
     const lag = t.mem.reduce((a, u) => a + Math.hypot(t.x + u.ox - u.x, t.y + u.oy - u.y), 0) / t.mem.length;
-    if (lag < 18) { t.x += t.hx * t.spd * dt; t.y += t.hy * t.spd * dt; }
+    if (lag < 18) { t.x += t.hx * t.spd * dt; t.y += t.hy * t.spd * dt; t.waitT = 0; }
+    else if ((t.waitT = (t.waitT || 0) + dt) > 2.5) { for (const u of t.mem) u.state = 'fight'; t.mem = []; } // 等了 2.5 秒还跟不上：散开各自打
   }
 }
 function pickTarget(u) {

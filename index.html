@@ -137,7 +137,7 @@ const COL = { shield: css('--shield'), spear: css('--spear'), bow: css('--bow'),
 // 兵种（每局开始时复制一份，升级改的是复制的那份）
 const BASE_TYPES = {
 // cap = 手里有几个这种兵（场上的也算）；弓兵箭不限量
-  shield: { name: '盾', cost: 1, hp: 14, cap: 20, color: COL.shield },
+  shield: { name: '盾', cost: 1, hp: 14, dmg: 0.5, cd: 1, cap: 20, color: COL.shield }, // 盾主要是挡：推搡伤害很低（免得两排盾对顶永远打不完）
   spear:  { name: '枪', cost: 1, hp: 10, dmg: 2, cd: 0.55, range: 23, cap: 30, color: COL.spear },
   bow:    { name: '弓', cost: 2, hp: 5, dmg: 2, cd: 0.9, range: 78, cap: 16, color: COL.bow },
   horse:  { name: '骑', cost: 3, hp: 18, dmg: 2.5, cd: 0.8, range: 9, cap: 6, color: COL.horse }, // 不跟阵走：有弓手、投石车就先扑它们，没有就等前排接上敌人再冲；跑够 3 格后撞上去，踩一片 ×3
@@ -146,16 +146,15 @@ const MOVE = { shield: 42, spear: 33, bow: 24, horse: 75 }; // 盾快、枪一�
 // 敌兵：和我方一样是盾、枪、弓、骑四种，基础数值直接取我方的（我方过关强化、阵法加成不算）。pts = 兵力，和我方招兵花费一样
 const foeOf = (k, o) => { const t = BASE_TYPES[k]; return { name: t.name, pts: t.cost, hp: t.hp, dmg: t.dmg || 0, cd: t.cd || 1, spd: MOVE[k], ...o }; };
 const FOES = {
-  shield: foeOf('shield', { r: 3.4, guard: true, color: '#6b2a22', shape: 'msq', tip: '和你的盾兵一样：不砍人，挡在前面；身后有弓兵就护着弓兵，箭射不过去' }),
+  shield: foeOf('shield', { r: 3.4, guard: true, color: '#6b2a22', shape: 'msq', tip: '和你的盾兵一样：挡在前面，伤害很低；身后有弓兵就护着弓兵，箭射不过去' }),
   spear:  foeOf('spear',  { r: 3.1, reach: BASE_TYPES.spear.range, color: '#9a3a1c', shape: 'mtri', tip: '和你的枪兵一样：能隔着一格戳人' }),
   bow:    foeOf('bow',    { r: 2.9, range: BASE_TYPES.bow.range, color: '#6e2350', shape: 'mbow', tip: '和你的弓兵一样：射得远、血薄；你的盾兵能挡它的箭' }),
   horse:  foeOf('horse',  { r: 3.7, charge: 3, color: '#4a1a2e', shape: 'mhorse', tip: '和你的骑兵一样：跑得快，跑起来撞第一下三倍伤害，还能踩到旁边的人' }),
 };
 
 let T, grid, soldiers, enemies, shots, parts, floats;
-let wave, kills, gold, fightN, foeLost = 0, state, sp, flowDirty, shake, combos;
+let wave, kills, gold, fightN, foeLost = 0, state, sp, shake, combos, needBuffs = false, buffT = 0;
 let tool = 'shield', thick = true, drawing = false, lastPt = null, inkWarnT = 0, bannerT = 0, bannerTxt = '';
-const dist = new Float32Array(COLS * ROWS);
 const buckets = Array.from({ length: COLS * ROWS }, () => []);
 const usedB = [];
 
@@ -166,13 +165,13 @@ function reset() {
   soldiers = []; enemies = []; shots = []; parts = []; floats = [];
   recentArmies = []; seenFoes = new Set(); sp = null; showIntel();
   wave = 0; lastPlan = null; kills = 0; gold = 0; fightN = 1; fallen = [];
-  state = 'start'; sp = null; flowDirty = true; shake = 0;
+  state = 'start'; sp = null; shake = 0;
   // 开局送一个示范阵：一排盾，后面一排枪，再后面一排弓
   for (let c = 9; c <= 26; c++) place(c, 36, 'shield', true);
   for (let c = 9; c <= 26; c++) place(c, 37, 'spear', true);
   for (let c = 11; c <= 24; c++) place(c, 39, 'bow', true);
   tool = 'shield';
-  buildTools(); recalcBuffs(); computeFlow();
+  buildTools(); recalcBuffs();
 }
 
 // ---------- 摆兵 / 撤兵 ----------
@@ -186,7 +185,7 @@ function place(c, r, type, free) {
   const t = T[type];
   if (!free && countOf(type) >= ownOf(type)) return 'cap';
   const s = { type, i, c, r, hc: c, hr: r, x: c * CS + CS / 2, y: r * CS + CS / 2, hp: t.hp, max: t.hp, cdT: Math.random() * 0.5, pop: 1 };
-  cellAdd(i, s); soldiers.push(s); flowDirty = true;
+  cellAdd(i, s); soldiers.push(s);
   return true;
 }
 const ownOf = k => T[k].cap; // 手里一共有几个（含场上的）；没有另外的上限，有多少就能摆多少
@@ -195,7 +194,7 @@ const countOf = k => soldiers.reduce((n, s) => n + (!s.dead && s.type === k ? 1 
 function removeAt(i, refund) { if (grid[i]) killSoldier(grid[i], refund); }
 function killSoldier(s, refund) {
   if (!refund) fallen.push({ type: s.type, c: s.hc, r: s.hr });
-  cellDel(s.i, s); s.dead = true; flowDirty = true;
+  cellDel(s.i, s); s.dead = true;
 }
 // 一格最多站 3 个兵（画的时候还是一格一个；开打后走动时可以挤过去、叠着站）
 // units[i] = 这格里的兵；grid[i] = 其中第一个（敌人砍的、算阵法加成的都看它）
@@ -203,7 +202,6 @@ let units = [];
 const CELL_MAX = 3, OFS = [[0, 0], [-2.6, 2], [2.6, -2]];
 function cellAdd(i, s) { units[i].push(s); grid[i] = units[i][0]; }
 function cellDel(i, s) { const a = units[i], k = a.indexOf(s); if (k >= 0) a.splice(k, 1); grid[i] = a[0] || null; }
-const roomAt = j => units[j].length < CELL_MAX && !buckets[j].length; // 还能挤进去、里面没敌人
 function stamp(x, y) {
   const c = Math.floor(x / CS), r = Math.floor(y / CS);
   const R = thick ? 1 : 0;
@@ -229,14 +227,10 @@ function stamp(x, y) {
 function recalcBuffs() {
   combos = { 盾墙: 0, 盾枪: 0, 盾弓: 0, 枪林: 0 };
   soldiers = soldiers.filter(s => !s.dead);
+  // 挨着 = 离得不到一格半（布阵时就是周围 8 格；打起来以后按实际站的位置算）
   for (const s of soldiers) {
     const n = { shield: 0, spear: 0, bow: 0, horse: 0 };
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-      if (!dx && !dy) continue;
-      const c = s.c + dx, r = s.r + dy;
-      if (c < 0 || c >= COLS || r < 0 || r >= ROWS) continue;
-      const o = grid[r * COLS + c]; if (o) n[o.type]++;
-    }
+    for (const o of soldiers) if (o !== s && Math.abs(o.x - s.x) < 14.5 && Math.abs(o.y - s.y) < 14.5) n[o.type]++;
     s.wall = s.type === 'shield' && n.shield >= 2;
     s.dmgMul = s.type === 'spear' && n.shield ? 1.6 : 1;
     s.rateMul = s.type === 'bow' && n.shield ? 1.5 : 1;
@@ -249,38 +243,6 @@ function recalcBuffs() {
   }
   const lines = Object.entries(combos).filter(([, v]) => v).map(([k, v]) => `${k} <em>${v}</em>`);
   document.getElementById('combos').innerHTML = lines.length ? lines.join(' · ') : '盾挨盾、枪挨盾、弓挨盾都有加成';
-}
-
-// ---------- 敌人的路：从每个兵往外算每格离最近的兵有多远，敌人顺着往下走 = 直接冲最近的兵 ----------
-function computeFlow() {
-  dist.fill(1e9);
-  const hd = [], hi = [];
-  const push = (d, i) => {
-    hd.push(d); hi.push(i); let k = hd.length - 1;
-    while (k > 0) { const p = (k - 1) >> 1; if (hd[p] <= hd[k]) break; [hd[p], hd[k]] = [hd[k], hd[p]]; [hi[p], hi[k]] = [hi[k], hi[p]]; k = p; }
-  };
-  const pop = () => {
-    const d = hd[0], i = hi[0], ld = hd.pop(), li = hi.pop();
-    if (hd.length) {
-      hd[0] = ld; hi[0] = li; let k = 0;
-      for (;;) { const l = 2 * k + 1, r = l + 1; let m = k;
-        if (l < hd.length && hd[l] < hd[m]) m = l; if (r < hd.length && hd[r] < hd[m]) m = r;
-        if (m === k) break; [hd[m], hd[k]] = [hd[k], hd[m]]; [hi[m], hi[k]] = [hi[k], hi[m]]; k = m; }
-    }
-    return [d, i];
-  };
-  for (const s of soldiers) if (!s.dead) { dist[s.i] = 0; push(0, s.i); }
-  while (hd.length) {
-    const [d, i] = pop(); if (d > dist[i]) continue;
-    const c = i % COLS, r = (i / COLS) | 0;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const cc = c + dx, rr = r + dy; if (cc < 0 || cc >= COLS || rr < 0 || rr >= ROWS) continue;
-      const j = rr * COLS + cc; if (grid[j]) continue;
-      const nd = d + 1;
-      if (nd < dist[j]) { dist[j] = nd; push(nd, j); }
-    }
-  }
-  flowDirty = false;
 }
 
 // ---------- 波次 ----------
@@ -449,7 +411,7 @@ function clearZone() {
     s.i = best; s.c = s.hc = best % COLS; s.r = s.hr = (best / COLS) | 0; s.x = s.c * CS + CS / 2; s.y = s.r * CS + CS / 2; s.pop = 1;
     cellAdd(best, s); moved++; sx += s.x; sy += s.y;
   }
-  if (moved) { floats.push({ x: sx / moved, y: sy / moved - 12, text: `${moved} 个兵站在敌阵红区里，挪到旁边了`, life: 2.5, color: '#ffd9c8' }); flowDirty = true; recalcBuffs(); }
+  if (moved) { floats.push({ x: sx / moved, y: sy / moved - 12, text: `${moved} 个兵站在敌阵红区里，挪到旁边了`, life: 2.5, color: '#ffd9c8' }); recalcBuffs(); }
 }
 function blockedNear(x, y) { const [c, r] = cellOf(x, y); for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const cc = c + dx, rr = r + dy; if (cc >= 0 && cc < COLS && rr >= 0 && rr < ROWS && grid[rr * COLS + cc]) return true; } return false; }
 function startPrep() {
@@ -466,27 +428,21 @@ function startFight() {
   drawing = false; lastPt = null; pointer = null; sel = null; selDrag = null; saving = false;
   for (const g of sp.groups) for (const k in g.counts) seenFoes.add(k);
   ghosts = []; foeZone = null;
+  teams = []; hitStat = [0, 0, 0];
+  for (const s of soldiers) Object.assign(s, { side: 0, rad: R_OF[s.type], spd: MOVE[s.type], vx: 0, vy: -1, run: 0, aim: null, team: null, gofs: undefined, cdT: Math.random() * 0.5 });
   formUp();
-  // 摆好的阵整体往前推：阵有一个中心点，按阵里最慢的兵的速度走；每个兵守着自己在阵里的位置，贴近我方才散开冲
+  // 摆好的敌阵整队往前推（和我方一样）；晚到的阵开战时先不出现，倒计时到了才在原来摆阵的地方冒出来
   for (const g of sp.groups) if (g.d !== 'T') {
-    if (g.slots.length) {
-      const cx = g.slots.reduce((a, o) => a + o.x, 0) / g.slots.length, cy = g.slots.reduce((a, o) => a + o.y, 0) / g.slots.length;
-      const spd = Math.min(...g.slots.map(o => FOES[o.k].spd)) * sp.mod.spd;
-      g.march = { x: cx, y: cy, cx, cy, tx: cx, ty: cy + 1, spd, t: g.delay0, aimT: 0, done: false };
-      // 晚到的阵：开战时先不出现（我方也看不到、不会朝它走），倒计时到了才在原来摆阵的地方冒出来；正好压在我方兵上就直接开打
-      if (g.delay0 > 0) g.pend = g.slots; else landGroup(g, g.slots);
-    }
+    if (g.slots.length) { if (g.delay0 > 0) g.pend = g.slots; else landGroup(g, g.slots); }
     g.slots = [];
   }
   state = 'fight'; bannerTxt = '开战'; bannerT = 1.0;
   phaseUI();
 }
 function landGroup(g, slots) {
-  const m = g.march;
-  for (const o of slots) {
-    spawnFoe(o.k, o.x, o.y); const e = enemies[enemies.length - 1];
-    if (!FOES[o.k].leap) { e.grp = g; e.ox = o.x - m.cx; e.oy = o.y - m.cy; e.lag = 0.8 + Math.random() * 0.45; e.wob = Math.random() * 6.283; }
-  }
+  const foot = [], horse = [];
+  for (const o of slots) { spawnFoe(o.k, o.x, o.y); const e = enemies[enemies.length - 1]; e.lag = 0.8 + Math.random() * 0.45; e.wob = Math.random() * 6.283; (o.k === 'horse' ? horse : foot).push(e); }
+  for (const m of [foot, horse]) if (m.length) makeTeam(1, m, FWD[g.d]);
 }
 const foesLeft = () => sp ? sp.groups.reduce((n, g) => n + g.queue.length + g.slots.length + (g.pend ? g.pend.length : 0), 0) : 0;
 function phaseUI() {
@@ -516,13 +472,17 @@ function showIntel() {
 }
 function spawnFoe(kind, x, y) {
   const f = FOES[kind], hp = f.hp * sp.hpMul;
-  enemies.push({ kind, f, x, y, hp, max: hp, spd: f.spd * sp.mod.spd * (0.9 + Math.random() * 0.2), r: f.r, dmg: (f.dmg || 0) * sp.dmgMul, cd: f.cd || 1, cdT: 0,
-    ammo: f.ammo || 0, color: f.color, vx: 0, vy: 1, flash: 0, buffT: 0, healT: Math.random(), lt: null, ltT: 0 });
+  enemies.push({ side: 1, type: kind, kind, f, x, y, hp, max: hp, spd: f.spd * sp.mod.spd * (0.9 + Math.random() * 0.2), r: f.r, rad: f.r, dmg: (f.dmg || 0) * sp.dmgMul, cd: f.cd || 1, cdT: Math.random() * 0.5,
+    color: f.color, vx: 0, vy: 1, flash: 0, run: 0, state: 'fight', lag: 1, wob: 0 });
 }
 function spawn(dt) {
   for (const g of sp.groups) {
-    if (!g.queue.length && !g.slots.length) continue;
+    if (!g.queue.length && !g.slots.length && !g.pend) continue;
     if (g.delay > 0) { g.delay -= dt; continue; }
+    if (g.pend) { // 晚到的阵到了
+      const n = g.pend.length, cx = g.pend.reduce((a, o) => a + o.x, 0) / n, cy = g.pend.reduce((a, o) => a + o.y, 0) / n;
+      landGroup(g, g.pend); g.pend = null; ring(cx, cy, 40, '#3a0a06'); bannerTxt = '敌军到了'; bannerT = 1;
+    }
     if (g.slots.length) { // 地道：一下子从地里冒出来
       ring(g.ax, g.ay, 26, '#2b1a10'); burst(g.ax, g.ay, '#6b5030', 20); shake = Math.min(0.3, shake + 0.1);
       for (const o of g.slots) spawnFoe(o.k, o.x, o.y);
@@ -545,402 +505,226 @@ function spawn(dt) {
   }
 }
 
-// ---------- 敌人：冲向最近的兵，贴上就砍；离得近了冲锋加速；各兵种有自己的打法 ----------
-const N8 = [[0, 1], [-1, 1], [1, 1], [-1, 0], [1, 0], [0, -1], [-1, -1], [1, -1]];
+// ---------- 打仗：敌我一套规则（规则说明见 docs/战斗逻辑.md） ----------
+// 每个兵（我方 soldiers、敌方 enemies）都有：side（0 我、1 敌）、type、x/y、rad（身子多大）、spd、vx/vy（朝哪边）、state
+// 开战时挨在一起的编成一队（骑兵单独成队）：队有一个中心，按队里最慢的兵往前推，队员守着自己在队里的位置跟着走。
+// 谁离敌人 3 格以内（弓兵：敌人进了射程）谁就离队（state 'fight'）各自开打，其余的接着跟队走。
 function cellOf(x, y) { return [Math.max(0, Math.min(COLS - 1, Math.floor(x / CS))), Math.max(0, Math.min(ROWS - 1, Math.floor(y / CS)))]; }
-function blockedAt(x, y) { const [c, r] = cellOf(x, y); return !!grid[r * COLS + c]; }
-function hurtSoldier(s, d, e) {
-  if (s.dead) return;
-  s.hp -= s.wall ? d * 0.75 : d; s.flash = 0.12;
-  if (s.thorn && e) hurtFoe(e, 1, 'spear');
-  if (s.hp <= 0) { killSoldier(s, false); burst(s.x, s.y, T[s.type].color, 6); needBuffs = true; }
-}
-function soldiersIn(x, y, rad, fn) {
-  const R = Math.ceil(rad / CS), [c, r] = cellOf(x, y);
-  for (let dy = -R; dy <= R; dy++) { const rr = r + dy; if (rr < 0 || rr >= ROWS) continue;
-    for (let dx = -R; dx <= R; dx++) { const cc = c + dx; if (cc < 0 || cc >= COLS) continue;
-      const s = grid[rr * COLS + cc]; if (s && !s.dead && (s.x - x) ** 2 + (s.y - y) ** 2 <= rad * rad) fn(s); } }
-}
-// 远程敌人挑目标：普通的挑最近的；投石车挑兵最密的地方
-function pickSoldier(e, range, dense) {
-  let best = null, score = -1e9;
-  soldiersIn(e.x, e.y, range, s => {
-    let v = -((s.x - e.x) ** 2 + (s.y - e.y) ** 2);
-    if (dense) { let n = 0; soldiersIn(s.x, s.y, 16, () => n++); v = n * 1e5 + v * 0.01; }
-    if (v > score) { score = v; best = s; }
-  });
-  return best;
-}
-let needBuffs = false;
-function meleeHit(e, target) {
-  const f = e.f, boost = e.buffT > 0 ? 1.4 : 1;
-  if (f.boom) { // 死士：贴上就炸
-    soldiersIn(e.x, e.y, f.boom, s => hurtSoldier(s, f.boomDmg * sp.dmgMul, null));
-    ring(e.x, e.y, f.boom, '#ff9a3c'); burst(e.x, e.y, '#ffb347', 14); shake = Math.min(0.35, shake + 0.08); e.dead = true; return;
-  }
-  let d = e.dmg * boost;
-  // 骑：跑够 3 格再撞上去，这一下三倍、踩到旁边一小片（和我方骑兵一样）；撞完要重新跑起来
-  if (f.charge) {
-    const ch = e.runD >= 3 * CS; e.runD = 0;
-    if (ch) { soldiersIn(target.x, target.y, 8, s => hurtSoldier(s, d * f.charge, e)); floats.push({ x: target.x, y: target.y - 6, text: '冲', life: 0.6, color: '#ffb0a0' }); burst(target.x, target.y, '#f2d29b', 6); return; }
-  }
-  hurtSoldier(target, d, e);
-  if (f.cleave) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-    const c = target.c + dx, r = target.r + dy; if (c < 0 || c >= COLS || r < 0 || r >= ROWS) continue;
-    const o = grid[r * COLS + c]; if (o && o !== target) hurtSoldier(o, d * 0.5, null);
-  }
-}
-function moveToward(e, tx, ty, spd, dt, ghost) {
-  const dx = tx - e.x, dy = ty - e.y, L = Math.hypot(dx, dy) || 1, step = Math.min(L, spd * dt);
-  const nx = e.x + dx / L * step, ny = e.y + dy / L * step;
-  e.vx = dx / L; e.vy = dy / L;
-  if (ghost) { e.x = nx; e.y = ny; return; }
-  const [c, r] = cellOf(e.x, e.y);
-  if (!blockedAt(nx, ny) || grid[r * COLS + c]) { e.x = nx; e.y = ny; }
-  else if (!blockedAt(nx, e.y)) e.x = nx;
-  else if (!blockedAt(e.x, ny)) e.y = ny;
-}
-function marchGroups(dt) {
-  for (const g of sp.groups) {
-    const m = g.march; if (!m || m.done) continue;
-    if (m.t > 0) {
-      m.t -= dt;
-      if (m.t <= 0 && g.pend) { landGroup(g, g.pend); g.pend = null; ring(m.x, m.y, 40, '#3a0a06'); bannerTxt = '敌军到了'; bannerT = 1; }
-      continue;
-    }
-    m.aimT -= dt;
-    if (m.aimT <= 0) { // 阵的中心对准离它最近的兵
-      m.aimT = 0.3; let bd = 1e12;
-      for (const s of soldiers) if (!s.dead) { const d = (s.x - m.x) ** 2 + (s.y - m.y) ** 2; if (d < bd) { bd = d; m.tx = s.x; m.ty = s.y; } }
-      if (bd === 1e12) { m.done = true; continue; }
-    }
-    const dx = m.tx - m.x, dy = m.ty - m.y, L = Math.hypot(dx, dy) || 1, st = Math.min(L, m.spd * dt);
-    if (L < 14) { m.done = true; continue; } // 阵中心已经顶到我方了：整队散开冲，免得后排站着不动
-    m.x += dx / L * st; m.y += dy / L * st;
-  }
-}
-function updateEnemies(dt) {
-  marchGroups(dt);
-  // 旗手：身边的敌人加速加攻
-  for (const e of enemies) if (!e.dead && e.f.aura) foesIn(e.x, e.y, e.f.aura, o => { o.buffT = 0.3; });
-  for (const e of enemies) {
-    if (e.dead) continue;
-    const f = e.f, boost = e.buffT > 0 ? 1.4 : 1;
-    e.flash = Math.max(0, e.flash - dt); e.buffT -= dt;
-    if (f.charge) { e.runD = (e.runD || 0) + Math.hypot(e.x - (e.px ?? e.x), e.y - (e.py ?? e.y)); e.px = e.x; e.py = e.y; }
-    if (f.heal) { e.healT -= dt; if (e.healT <= 0) { e.healT = 1; foesIn(e.x, e.y, f.healR, o => { if (o !== e) o.hp = Math.min(o.max, o.hp + f.heal * sp.hpMul); }); ring(e.x, e.y, f.healR, '#b8e3a0'); } }
-    const [c, r] = cellOf(e.x, e.y), i = r * COLS + c;
-    // 还在阵里：跟着阵走，守住自己的位置；离我方够近了（远程的到射程）才散开各自冲
-    if (e.grp && !e.free) {
-      const m = e.grp.march;
-      if (!m || m.done || dist[i] * CS <= Math.max(26, reachOf(f) * 0.95)) e.free = true;
-      else {
-        // 不用排得整整齐齐：每人跟得有快有慢、左右晃一点，大概保持阵形就行
-        e.wob += dt * 2.2;
-        const lagB = (1 - e.lag) * 14; // 跟得慢的落后几步
-        const ux = m.tx - m.x, uy = m.ty - m.y, uL = Math.hypot(ux, uy) || 1;
-        moveToward(e, m.x + e.ox - ux / uL * lagB + Math.sin(e.wob) * 2.5, m.y + e.oy - uy / uL * lagB + Math.cos(e.wob * 0.7) * 2, e.spd * 1.3 * e.lag * boost, dt, true);
-        continue;
-      }
-    }
-    // 弓：够得着就站住放箭；枪：隔一格就能戳（和我方枪兵一样，戳一小片）
-    // （按路程算够得着、按直线算刚好够不着时，pickSoldier 找不到人：这时别站着，接着往前走）
-    const rch = reachOf(f);
-    const inRange = rch && dist[i] * CS <= rch && (e.cdT > 0 || pickSoldier(e, rch, false));
-    if (inRange) {
-      e.cdT -= dt * boost;
-      if (e.cdT <= 0) {
-        const s = pickSoldier(e, rch, !!f.aoe);
-        if (s) {
-          e.cdT = e.cd;
-          if (f.reach) { soldiersIn(s.x, s.y, 5, o => hurtSoldier(o, e.dmg * boost, e)); shots.push({ k: 'thrust', x: e.x, y: e.y, tx: s.x, ty: s.y, life: 0.12 }); }
-          else if (f.aoe) { shots.push({ k: 'rock', x: e.x, y: e.y, sx: e.x, sy: e.y, tx: s.x, ty: s.y, spd: 110, dmg: e.dmg, aoe: f.aoe }); e.ammo--; }
-          else { shots.push({ k: 'earrow', x: e.x, y: e.y, s, tx: s.x, ty: s.y, spd: 220, dmg: e.dmg * boost }); e.ammo--; }
-        } else e.cdT = 0.2;
-      }
-      continue;
-    }
-    // 盾手：同阵的弓手、投石车还活着，就站到它们前面（挡在它们和我方之间）；有兵贴上来就砍
-    if (f.guard) {
-      e.gT = (e.gT || 0) - dt;
-      if (e.gT <= 0) { e.gT = 0.4; e.ward = null; let bd = 1e12; for (const o of enemies) if (!o.dead && o.f.range && !o.f.guard) { const d2 = (o.x - e.x) ** 2 + (o.y - e.y) ** 2; if (d2 < bd && d2 < 120 * 120) { bd = d2; e.ward = o; } } if (e.gofs === undefined) e.gofs = (Math.random() - 0.5) * 22; }
-      if (e.ward && !e.ward.dead) {
-        const near = nearestSoldier(e.x, e.y);
-        if (near && Math.hypot(near.x - e.x, near.y - e.y) <= e.r + 6) { if (e.dmg) { e.cdT -= dt * boost; if (e.cdT <= 0) { e.cdT = e.cd; meleeHit(e, near); } } continue; }
-        const tgt = nearestSoldier(e.ward.x, e.ward.y);
-        if (tgt) {
-          const ux = tgt.x - e.ward.x, uy = tgt.y - e.ward.y, uL = Math.hypot(ux, uy) || 1;
-          const gx = e.ward.x + ux / uL * 14 - uy / uL * e.gofs, gy = e.ward.y + uy / uL * 14 + ux / uL * e.gofs;
-          if (Math.hypot(gx - e.x, gy - e.y) > 1.5) moveToward(e, gx, gy, e.spd * 1.2 * boost, dt, false);
-          e.vx = ux / uL; e.vy = uy / uL; // 盾朝着我方
-          continue;
-        }
-      }
-    }
-    // 2. 盾兵拦人：敌人走到我方盾兵旁边一格，就被缠住，得先把这个盾兵砍倒才能往后走（飞贼也一样）
-    const sh = shieldNear(c, r);
-    if (sh) {
-      const nx = Math.max(sh.c * CS, Math.min(sh.c * CS + CS, e.x)), ny = Math.max(sh.r * CS, Math.min(sh.r * CS + CS, e.y));
-      if (Math.hypot(e.x - nx, e.y - ny) <= e.r + 1.5) { if (e.dmg) { e.cdT -= dt * boost; if (e.cdT <= 0) { e.cdT = e.cd; meleeHit(e, sh); } } }
-      else moveToward(e, sh.x, sh.y, e.spd * boost, dt, false);
-      continue;
-    }
-    // 飞贼：翻过前排，直扑弓兵
-    if (f.leap) {
-      e.ltT -= dt;
-      if (!e.lt || e.lt.dead || e.ltT <= 0) {
-        e.ltT = 0.5; e.lt = null; let bd = 1e12;
-        for (const s of soldiers) if (!s.dead && s.type === 'bow') { const d2 = (s.x - e.x) ** 2 + (s.y - e.y) ** 2; if (d2 < bd) { bd = d2; e.lt = s; } }
-      }
-      if (e.lt) {
-        if (Math.hypot(e.lt.x - e.x, e.lt.y - e.y) <= e.r + 6) { e.cdT -= dt * boost; if (e.cdT <= 0) { e.cdT = e.cd; meleeHit(e, e.lt); } }
-        else moveToward(e, e.lt.x, e.lt.y, e.spd * boost, dt, true);
-        continue;
-      }
-    }
-    let target = grid[i] || null, tx, ty;
-    if (!target) {
-      let best = -1, bd = dist[i];
-      for (const [dx, dy] of N8) {
-        const cc = c + dx, rr = r + dy; if (cc < 0 || cc >= COLS || rr < 0 || rr >= ROWS) continue;
-        if (dx && dy && (grid[r * COLS + cc] || grid[rr * COLS + c])) continue; // 不从两个兵的斜缝里钻
-        const j = rr * COLS + cc; if (dist[j] < bd - 0.01) { bd = dist[j]; best = j; }
-      }
-      if (best < 0) best = i;
-      if (grid[best]) target = grid[best];
-      // 顺着路的方向走（不是走向格子中心），这样一群人能保持成一大片，不会挤成一条线
-      else if (best !== i) { tx = e.x + ((best % COLS) - c) * 20; ty = e.y + (((best / COLS) | 0) - r) * 20; }
-      else { tx = W / 2; ty = H / 2; }
-    }
-    if (target) {
-      // 离兵的格子边够近就砍，不然往兵那边挤
-      const nx = Math.max(target.c * CS, Math.min(target.c * CS + CS, e.x)), ny = Math.max(target.r * CS, Math.min(target.r * CS + CS, e.y));
-      if (Math.hypot(e.x - nx, e.y - ny) <= e.r + 1.5 || grid[i] === target) {
-        if (!e.dmg) continue; // 盾：顶住就站着
-        if (f.charge && e.runD >= 3 * CS) e.cdT = 0; // 骑：跑起来撞上去，立刻就撞
-        e.cdT -= dt * boost;
-        if (e.cdT <= 0) { e.cdT = e.cd; meleeHit(e, target); }
-        continue;
-      }
-      tx = target.x; ty = target.y;
-    }
-    const charge = dist[i] < 7 ? 1.6 : 1;
-    moveToward(e, tx, ty, e.spd * charge * boost, dt, false);
-  }
-}
-const reachOf = f => f.range ? f.range * (sp.mod.rain ? 0.75 : 1) : f.reach || 0;
-function shieldNear(c, r) {
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-    const cc = c + dx, rr = r + dy; if (cc < 0 || cc >= COLS || rr < 0 || rr >= ROWS) continue;
-    const o = grid[rr * COLS + cc]; if (o && !o.dead && o.type === 'shield') return o;
-  }
-  return null;
-}
-function nearestSoldier(x, y) {
-  let best = null, bd = 1e12;
-  for (const s of soldiers) { if (s.dead) continue; const d = (s.x - x) ** 2 + (s.y - y) ** 2; if (d < bd) { bd = d; best = s; } }
-  return best;
-}
+const R_OF = { shield: 3.4, spear: 3.1, bow: 2.9, horse: 3.7 };
+const ENGAGE = 30, AIM_NEAR = 150, CHARGE = 3 * CS;
+const FWD = { N: [0, 1], S: [0, -1], W: [1, 0], E: [-1, 0], T: [0, 0] };
+let teams = [], hitStat = [0, 0, 0]; // hitStat：挨打时 正面/侧面/背后 各几次（先只记下来，给以后的士气用）
+const oppOf = u => u.side ? soldiers : enemies;
+const ownOf2 = u => u.side ? enemies : soldiers;
+const canSee = (side, u) => true; // 迷雾（第三步）接在这里：side 这一方看不看得见 u
+const dmgOf = u => u.side ? u.dmg : T[u.type].dmg * (u.dmgMul || 1);
+const cdOf = u => u.side ? u.cd : T[u.type].cd;
+const bowRange = u => (u.side ? u.f.range : T.bow.range) * (sp.mod.rain ? 0.75 : 1);
+// 够得着：弓看射程，枪隔一格能戳，盾和骑要贴身
+const reachTo = (u, e) => u.type === 'bow' ? bowRange(u) : u.type === 'spear' ? (u.side ? u.f.reach : T.spear.range) : u.rad + e.rad + 2.5;
+
 function buildBuckets() {
   for (const k of usedB) buckets[k].length = 0;
   usedB.length = 0;
-  for (const e of enemies) {
-    if (e.dead) continue;
-    const [c, r] = cellOf(e.x, e.y), k = r * COLS + c;
+  for (const a of [soldiers, enemies]) for (const u of a) {
+    if (u.dead) continue;
+    const [c, r] = cellOf(u.x, u.y), k = r * COLS + c;
     if (!buckets[k].length) usedB.push(k);
-    buckets[k].push(e);
+    buckets[k].push(u);
   }
 }
+// rad 范围内（算上对方身子）某一方（side：0 我、1 敌、-1 两边）的兵
+function near(x, y, rad, side, fn) {
+  const R = Math.ceil((rad + 4) / CS), [c, r] = cellOf(x, y);
+  for (let dy = -R; dy <= R; dy++) { const rr = r + dy; if (rr < 0 || rr >= ROWS) continue;
+    for (let dx = -R; dx <= R; dx++) { const cc = c + dx; if (cc < 0 || cc >= COLS) continue;
+      for (const o of buckets[rr * COLS + cc]) if (!o.dead && (side < 0 || o.side === side) && (o.x - x) ** 2 + (o.y - y) ** 2 <= (rad + o.rad) ** 2) fn(o); } }
+}
+function nearestOpp(u, rad, pred) {
+  let best = null, bd = 1e12;
+  near(u.x, u.y, rad, 1 - u.side, o => { if (pred && !pred(o)) return; const d = (o.x - u.x) ** 2 + (o.y - u.y) ** 2; if (d < bd && canSee(u.side, o)) { bd = d; best = o; } });
+  return best;
+}
+function nearestIn(list, x, y, pred) {
+  let best = null, bd = 1e12;
+  for (const o of list) { if (o.dead || (pred && !pred(o))) continue; const d = (o.x - x) ** 2 + (o.y - y) ** 2; if (d < bd) { bd = d; best = o; } }
+  return best;
+}
+
+function hurt(u, d, src, by) {
+  if (u.dead) return;
+  if (by && !by.dead) { // 从哪边挨的打：和自己朝向夹角 < 60° 正面，60°–120° 侧面，> 120° 背后
+    const ax = by.x - u.x, ay = by.y - u.y, L = Math.hypot(ax, ay) || 1, c = (ax * u.vx + ay * u.vy) / L;
+    hitStat[c > 0.5 ? 0 : c > -0.5 ? 1 : 2]++;
+  }
+  if (u.wall) d *= 0.75;
+  u.hp -= d; u.flash = 0.1;
+  if (u.thorn && by && src === 'melee') hurt(by, 1, 'thorn', null);
+  if (u.hp > 0) return;
+  if (u.side === 0) { killSoldier(u, false); burst(u.x, u.y, T[u.type].color, 6); needBuffs = true; return; }
+  u.dead = true; kills++; foeLost += u.f.pts;
+  burst(u.x, u.y, '#5a160f', 5);
+  if (u.f.pts >= 3) floats.push({ x: u.x, y: u.y - 6, text: '斩', life: 1, color: COL.gold });
+}
+function strike(u, e) {
+  const d = dmgOf(u), L = Math.hypot(e.x - u.x, e.y - u.y) || 1; u.vx = (e.x - u.x) / L; u.vy = (e.y - u.y) / L;
+  if (u.type === 'bow') shots.push({ k: u.side ? 'earrow' : 'arrow', side: u.side, by: u, x: u.x, y: u.y, e, tx: e.x, ty: e.y, spd: u.side ? 220 : 300, dmg: d });
+  else if (u.type === 'spear') { near(e.x, e.y, 5, e.side, o => hurt(o, d, 'melee', u)); shots.push({ k: 'thrust', x: u.x, y: u.y, tx: e.x, ty: e.y, life: 0.12 }); }
+  else if (u.type === 'horse' && u.run >= CHARGE) { // 跑够 3 格撞上去：三倍，踩到旁边一片
+    near(e.x, e.y, 8, e.side, o => hurt(o, d * 3, 'melee', u));
+    floats.push({ x: e.x, y: e.y - 6, text: '冲', life: 0.6, color: u.side ? '#ffb0a0' : COL.gold }); burst(e.x, e.y, u.side ? '#f2d29b' : COL.horse, 6);
+  }
+  else hurt(e, d, 'melee', u); // 盾：推搡一下，伤害很低
+  if (u.type === 'horse') u.run = 0;
+}
+// 走一步。avoid：前面被自己人挡住，就斜着绕一下
+function stepTo(u, tx, ty, spd, dt, avoid) {
+  let dx = tx - u.x, dy = ty - u.y; const L = Math.hypot(dx, dy); if (L < 0.3) return;
+  dx /= L; dy /= L; const step = Math.min(L, spd * dt);
+  if (avoid) {
+    const p = u.rad * 2 + 1;
+    for (const a of [0, 0.6, -0.6, 1.2, -1.2]) {
+      const c = Math.cos(a * (u.turn || 1)), s = Math.sin(a * (u.turn || 1)), nx = dx * c - dy * s, ny = dx * s + dy * c;
+      let hit = false; near(u.x + nx * p, u.y + ny * p, u.rad, u.side, o => { if (o !== u) hit = true; });
+      if (!hit) { dx = nx; dy = ny; break; }
+    }
+  }
+  u.x += dx * step; u.y += dy * step; u.vx = dx; u.vy = dy;
+  if (u.type === 'horse') u.run += step;
+}
+
+// 开战编队：我方按画的格子，相隔 2 格以内连成一片算一队；骑兵和步兵分开
+function makeTeam(side, mem, fwd) {
+  const cx = mem.reduce((a, u) => a + u.x, 0) / mem.length, cy = mem.reduce((a, u) => a + u.y, 0) / mem.length;
+  const t = { side, mem, horse: mem[0].type === 'horse', go: mem[0].type !== 'horse', x: cx, y: cy, hx: 0, hy: 0, fx: fwd[0], fy: fwd[1], spd: Math.min(...mem.map(u => u.spd)), aimT: 0 };
+  for (const u of mem) { u.team = t; u.state = 'team'; u.ox = u.x - cx; u.oy = u.y - cy; }
+  teams.push(t);
+}
+function formUp() {
+  const live = soldiers.filter(s => !s.dead), seen = new Set();
+  for (const s0 of live) {
+    if (seen.has(s0)) continue;
+    const horse = s0.type === 'horse', mem = [], q = [s0]; seen.add(s0);
+    while (q.length) { const s = q.pop(); mem.push(s);
+      for (const o of live) if (!seen.has(o) && (o.type === 'horse') === horse && Math.abs(o.hc - s.hc) <= 2 && Math.abs(o.hr - s.hr) <= 2) { seen.add(o); q.push(o); } }
+    makeTeam(0, mem, FWD.S);
+  }
+}
+function updateTeams(dt) {
+  for (const t of teams) {
+    t.mem = t.mem.filter(u => !u.dead && u.state === 'team');
+    if (!t.mem.length) continue;
+    const opp = t.side ? soldiers : enemies, own = t.side ? enemies : soldiers;
+    // 骑兵队：对面有弓兵、或自己这边的步兵已经打起来了、或敌人到了跟前，才冲
+    if (!t.go) {
+      if (opp.some(o => !o.dead && o.type === 'bow' && canSee(t.side, o)) || own.some(o => !o.dead && o.state === 'fight' && o.type !== 'horse') || t.mem.some(u => nearestOpp(u, ENGAGE))) {
+        t.go = true; for (const u of t.mem) u.state = 'fight';
+      }
+      continue;
+    }
+    t.aimT -= dt;
+    if (t.aimT <= 0) {
+      // 往哪走：15 格内看得见敌人，朝最近的那个；没有就朝看得见的敌人整体；一个都看不见就往正前方走；场上根本没敌人就原地等
+      t.aimT = 0.4; let best = null, bd = AIM_NEAR * AIM_NEAR, sx = 0, sy = 0, n = 0, any = false;
+      for (const o of opp) {
+        if (o.dead) continue; any = true; if (!canSee(t.side, o)) continue;
+        const d = (o.x - t.x) ** 2 + (o.y - t.y) ** 2; if (d < bd) { bd = d; best = o; } sx += o.x; sy += o.y; n++;
+      }
+      let ax, ay;
+      if (best) { ax = best.x - t.x; ay = best.y - t.y; } else if (n) { ax = sx / n - t.x; ay = sy / n - t.y; } else if (any) { ax = t.fx; ay = t.fy; } else ax = ay = 0;
+      const L = Math.hypot(ax, ay);
+      if (L < (best ? 14 : 0.01)) t.hx = t.hy = 0; else { t.hx = ax / L; t.hy = ay / L; }
+    }
+    // 队员被挡住、落在后面太多：队中心等一等
+    const lag = t.mem.reduce((a, u) => a + Math.hypot(t.x + u.ox - u.x, t.y + u.oy - u.y), 0) / t.mem.length;
+    if (lag < 18) { t.x += t.hx * t.spd * dt; t.y += t.hy * t.spd * dt; }
+  }
+}
+function pickTarget(u) {
+  const opp = oppOf(u), see = o => canSee(u.side, o);
+  if (u.type === 'horse') { const b = nearestIn(opp, u.x, u.y, o => o.type === 'bow' && see(o)); if (b) return b; } // 骑：先找对面弓兵
+  return nearestIn(opp, u.x, u.y, see);
+}
+function updateUnit(u, dt) {
+  u.flash = Math.max(0, (u.flash || 0) - dt); if (u.pop) u.pop = Math.max(0, u.pop - dt * 4);
+  if (u.state === 'team') {
+    const t = u.team;
+    if (!t.go || !nearestOpp(u, u.type === 'bow' ? bowRange(u) : ENGAGE)) {
+      if (!t.go) return;
+      // 跟队走：守着自己在队里的位置；敌方的兵跟得有快有慢、左右晃一点，看着像一群人
+      let tx = t.x + u.ox, ty = t.y + u.oy, spd = u.spd * 1.3;
+      if (u.side) { u.wob += dt * 2.2; const b = (1 - u.lag) * 14; tx += -t.hx * b + Math.sin(u.wob) * 2.5; ty += -t.hy * b + Math.cos(u.wob * 0.7) * 2; spd *= u.lag; }
+      stepTo(u, tx, ty, spd, dt, false);
+      if (t.hx || t.hy) { u.vx = t.hx; u.vy = t.hy; }
+      return;
+    }
+    u.state = 'fight';
+  }
+  u.aimT = (u.aimT || 0) - dt;
+  if (u.aimT <= 0 || !u.aim || u.aim.dead) {
+    u.aimT = 0.3 + Math.random() * 0.2; u.aim = pickTarget(u);
+    // 弓兵不跑到自己的近战兵前面去
+    u.behind = false;
+    if (u.type === 'bow' && u.aim) {
+      const a = u.aim, my = Math.hypot(a.x - u.x, a.y - u.y);
+      const f = nearestIn(ownOf2(u), a.x, a.y, o => o.type === 'shield' || o.type === 'spear');
+      u.behind = !!f && my - CS < Math.hypot(a.x - f.x, a.y - f.y);
+    }
+    // 盾：身边 4 格内有自己的弓兵，就去护着它
+    u.ward = u.type === 'shield' ? nearestIn(ownOf2(u), u.x, u.y, o => o.type === 'bow' && (o.x - u.x) ** 2 + (o.y - u.y) ** 2 < 40 * 40) : null;
+    if (u.gofs === undefined) u.gofs = (Math.random() - 0.5) * 22;
+  }
+  let e = u.aim;
+  // 被盾缠住：贴着对面的盾兵，就得先把它砍倒
+  if (u.type !== 'bow') { const sh = nearestOpp(u, u.rad + 6, o => o.type === 'shield'); if (sh) e = sh; }
+  if (!e) return;
+  const d = Math.hypot(e.x - u.x, e.y - u.y);
+  if (d <= reachTo(u, e)) {
+    u.vx = (e.x - u.x) / (d || 1); u.vy = (e.y - u.y) / (d || 1);
+    if (u.type === 'horse' && u.run >= CHARGE) u.cdT = 0; // 冲到跟前，立刻撞
+    u.cdT -= dt * (u.rateMul || 1);
+    if (u.cdT <= 0) { u.cdT = cdOf(u); strike(u, e); }
+    return;
+  }
+  if (u.ward && !u.ward.dead) { // 护弓：站到弓兵和离它最近的敌人中间
+    const w = u.ward, o = nearestIn(oppOf(u), w.x, w.y);
+    if (o) {
+      const ux = o.x - w.x, uy = o.y - w.y, L = Math.hypot(ux, uy) || 1;
+      stepTo(u, w.x + ux / L * 14 - uy / L * u.gofs, w.y + uy / L * 14 + ux / L * u.gofs, u.spd * 1.2, dt, false);
+      u.vx = ux / L; u.vy = uy / L; return;
+    }
+  }
+  if (u.behind) return;
+  stepTo(u, e.x, e.y, u.spd, dt, true);
+}
+// 互相挤开：两边的兵谁也穿不过谁；自己人之间可以挤一挤
 function separate() {
-  for (const e of enemies) {
-    if (e.dead) continue;
-    const [c, r] = cellOf(e.x, e.y);
+  for (const a of [soldiers, enemies]) for (const u of a) {
+    if (u.dead) continue;
+    const [c, r] = cellOf(u.x, u.y);
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
       const cc = c + dx, rr = r + dy; if (cc < 0 || cc >= COLS || rr < 0 || rr >= ROWS) continue;
       for (const o of buckets[rr * COLS + cc]) {
-        if (o === e || o.dead) continue;
-        const ddx = e.x - o.x, ddy = e.y - o.y, d2 = ddx * ddx + ddy * ddy, m = e.r + o.r + 1;
-        if (d2 >= m * m || d2 === 0) continue;
-        const d = Math.sqrt(d2), push = (m - d) * 0.5, wE = o.r / m;
-        const px = ddx / d * push * wE * 2, py = ddy / d * push * wE * 2;
-        if (!blockedAt(e.x + px, e.y + py)) { e.x += px; e.y += py; }
+        if (o === u || o.dead) continue;
+        const ddx = u.x - o.x, ddy = u.y - o.y, d2 = ddx * ddx + ddy * ddy, m = u.rad + o.rad + 0.6;
+        if (d2 >= m * m) continue;
+        const d = Math.sqrt(d2) || 0.01, k = (m - d) * (o.side === u.side ? 0.35 : 0.5);
+        u.x += (d2 ? ddx / d : Math.random() - 0.5) * k; u.y += (d2 ? ddy / d : Math.random() - 0.5) * k;
       }
     }
-    e.x = Math.max(e.r, Math.min(W - e.r, e.x)); e.y = Math.max(e.r, Math.min(H - e.r, e.y));
-  }
-}
-function nearestFoe(x, y, range) {
-  const R = Math.ceil(range / CS), [c, r] = cellOf(x, y);
-  let best = null, bd = range * range;
-  for (let dy = -R; dy <= R; dy++) { const rr = r + dy; if (rr < 0 || rr >= ROWS) continue;
-    for (let dx = -R; dx <= R; dx++) { const cc = c + dx; if (cc < 0 || cc >= COLS) continue;
-      for (const e of buckets[rr * COLS + cc]) {
-        if (e.dead) continue; const d2 = (e.x - x) ** 2 + (e.y - y) ** 2;
-        if (d2 < bd) { bd = d2; best = e; }
-      } } }
-  return best;
-}
-function foesIn(x, y, rad, fn) {
-  const R = Math.ceil(rad / CS), [c, r] = cellOf(x, y);
-  for (let dy = -R; dy <= R; dy++) { const rr = r + dy; if (rr < 0 || rr >= ROWS) continue;
-    for (let dx = -R; dx <= R; dx++) { const cc = c + dx; if (cc < 0 || cc >= COLS) continue;
-      for (const e of buckets[rr * COLS + cc]) if (!e.dead && (e.x - x) ** 2 + (e.y - y) ** 2 <= (rad + e.r) ** 2) fn(e); } }
-}
-function hurtFoe(e, d, src) {
-  if (e.dead) return;
-  const f = e.f, mul = src === 'arrow' ? (f.arrowMul ?? 1) : src === 'spear' ? (f.spearMul ?? 1) : 1;
-  if (mul === 0) { if (Math.random() < 0.08) floats.push({ x: e.x, y: e.y - 5, text: '挡', life: 0.5, color: '#e8e0c8' }); return; }
-  e.hp -= d * mul; e.flash = 0.08;
-  if (e.hp <= 0) {
-    e.dead = true; kills++; foeLost += f.pts;
-    const big = f.pts >= 10;
-    burst(e.x, e.y, e.kind === 'boss' ? '#ffcf6b' : '#5a160f', e.kind === 'boss' ? 40 : big ? 12 : 5);
-    if (f.pts >= 3) floats.push({ x: e.x, y: e.y - 6, text: e.kind === 'boss' ? '斩！' : '斩', life: 1, color: COL.gold });
-  }
-}
-
-// ---------- 兵：枪戳近处，弓射远处，骑兵绕去冲后排 ----------
-// 我方也迎上去：每个兵朝离自己最近的敌人走（一格一格地挪），够得着就停下打
-// 盾：没有攻击，顶到敌人跟前就站住；枪：够得着就戳；弓：进了射程就站住放箭；骑：先找敌方弓手、投石车，跑起来撞第一下最疼
-function nearestAny(x, y, ranged) {
-  let best = null, bd = 1e12;
-  for (const e of enemies) { if (e.dead || (ranged && !e.f.range)) continue; const d = (e.x - x) ** 2 + (e.y - y) ** 2; if (d < bd) { bd = d; best = e; } }
-  return best;
-}
-function stepSoldier(s, e, dt, spd) {
-  const o = OFS[Math.max(0, units[s.i].indexOf(s))] || OFS[0];
-  const cx = s.c * CS + CS / 2 + o[0], cy = s.r * CS + CS / 2 + o[1], dx = cx - s.x, dy = cy - s.y, L = Math.hypot(dx, dy);
-  if (L > 0.5) { const k = Math.min(1, (spd || MOVE[s.type]) * dt / L); s.x += dx * k; s.y += dy * k; return; } // 还在往下一格走
-  s.x = cx; s.y = cy;
-  if (!e) return;
-  // 先直着往前挤（格里不满 3 个就能进）；前面挤不过去，就找一条从侧边绕过去的路（骑兵一直按绕路走）
-  let best = -1;
-  if (s.type !== 'horse') {
-    let bd = (e.x - cx) ** 2 + (e.y - cy) ** 2;
-    for (const [ox, oy] of N8) {
-      const c = s.c + ox, r = s.r + oy; if (c < 0 || c >= COLS || r < 0 || r >= ROWS) continue;
-      const j = r * COLS + c; if (!roomAt(j)) continue;
-      const d = (e.x - c * CS - CS / 2) ** 2 + (e.y - r * CS - CS / 2) ** 2;
-      if (d < bd - 0.5) { bd = d; best = j; }
-    }
-  }
-  if (best < 0) {
-    s.pathT = (s.pathT || 0) - dt; if (s.pathT > 0) return; // 找路不用每帧都找
-    s.pathT = 0.25; best = pathStep(s, e);
-  }
-  if (best >= 0) moveTo(s, best);
-}
-function moveTo(s, j) {
-  cellDel(s.i, s); s.run = (s.run || 0) + 1; s.i = j; s.c = j % COLS; s.r = (j / COLS) | 0; cellAdd(j, s);
-  flowDirty = true; needBuffs = true;
-}
-// 绕路：从自己这格往外找一条能走的路（格里不满 3 个、没有敌人），走到目标跟前（挨着目标那格）为止，返回下一步该走哪格
-const hPrev = new Int32Array(COLS * ROWS), hSeen = new Uint32Array(COLS * ROWS); let hStamp = 0;
-function pathStep(s, e) {
-  const [ec, er] = cellOf(e.x, e.y); hStamp++;
-  const q = [s.i]; hSeen[s.i] = hStamp; hPrev[s.i] = -1;
-  for (let h = 0; h < q.length; h++) {
-    const i = q[h], c = i % COLS, r = (i / COLS) | 0;
-    if (Math.abs(c - ec) <= 1 && Math.abs(r - er) <= 1) { let j = i; while (hPrev[j] !== s.i && hPrev[j] !== -1) j = hPrev[j]; return j === s.i ? -1 : j; }
-    for (const [ox, oy] of N8) {
-      const cc = c + ox, rr = r + oy; if (cc < 0 || cc >= COLS || rr < 0 || rr >= ROWS) continue;
-      const j = rr * COLS + cc; if (hSeen[j] === hStamp || !roomAt(j)) continue;
-      if (ox && oy && !roomAt(r * COLS + cc) && !roomAt(rr * COLS + c)) continue; // 两边都挤满了，斜缝钻不过去
-      hSeen[j] = hStamp; hPrev[j] = i; q.push(j);
-    }
-  }
-  return -1; // 被围死了，原地等
-}
-// 我方也整队推进（大致就行）：挨在一起的兵（隔 2 格以内）算一个阵，阵里所有人用同一个速度、朝同一个方向走
-// （方向 = 阵中心指向离它最近的敌人），不死守各自的格子，前面被挡了就自己绕一下，阵形自然大概保持住。
-// 阵里任何一个兵贴到敌人跟前了，整个阵一起散开，各自去打离自己最近的敌人
-let myGroups = [];
-function formUp() {
-  myGroups = [];
-  const live = soldiers.filter(s => !s.dead && s.type !== 'horse'); for (const s of soldiers) s.grp = null; // 骑兵不跟阵
-  for (const s0 of live) {
-    if (s0.grp) continue;
-    const g = { mem: [], done: false, aimT: 0, hx: 0, hy: -1 }; s0.grp = g; const q = [s0];
-    while (q.length) { const s = q.pop(); g.mem.push(s);
-      for (const o of live) if (!o.grp && Math.abs(o.c - s.c) <= 2 && Math.abs(o.r - s.r) <= 2) { o.grp = g; q.push(o); } }
-    g.spd = Math.min(...g.mem.map(s => MOVE[s.type])); // 全阵一个速度：按最慢的兵走
-    myGroups.push(g);
-  }
-}
-function marchMine(dt) {
-  for (const g of myGroups) {
-    if (g.done) continue;
-    g.mem = g.mem.filter(s => !s.dead);
-    if (!g.mem.length || g.mem.some(s => nearestFoe(s.x, s.y, 24))) { g.done = true; continue; } // 贴上了：散开
-    g.aimT -= dt;
-    if (g.aimT <= 0) {
-      g.aimT = 0.4;
-      const cx = g.mem.reduce((a, s) => a + s.x, 0) / g.mem.length, cy = g.mem.reduce((a, s) => a + s.y, 0) / g.mem.length;
-      const e = nearestAny(cx, cy); if (!e) { g.hx = g.hy = 0; continue; } // 场上暂时没敌人（后阵还没到）：原地等
-      const L = Math.hypot(e.x - cx, e.y - cy) || 1; g.hx = (e.x - cx) / L; g.hy = (e.y - cy) / L;
-    }
-  }
-}
-function updateSoldiers(dt) {
-  const rain = sp.mod.rain;
-  marchMine(dt);
-  for (const s of soldiers) {
-    if (s.dead) continue;
-    s.flash = Math.max(0, (s.flash || 0) - dt); s.pop = Math.max(0, s.pop - dt * 4);
-    const t = T[s.type];
-    s.aimT = (s.aimT || 0) - dt;
-    if (s.aimT <= 0 || !s.aim || s.aim.dead) {
-      s.aim = (s.type === 'horse' && nearestAny(s.x, s.y, true)) || nearestAny(s.x, s.y); s.aimT = 0.3 + Math.random() * 0.2;
-      // 3. 弓兵不越过前排：离目标比我方最前面的近战兵还近（差不到一格），就不再往前走
-      if (s.type === 'bow' && s.aim) {
-        const my = Math.hypot(s.aim.x - s.x, s.aim.y - s.y); let front = 1e9;
-        for (const o of soldiers) if (!o.dead && (o.type === 'shield' || o.type === 'spear')) front = Math.min(front, Math.hypot(s.aim.x - o.x, s.aim.y - o.y));
-        s.behind = front < 1e9 && my - CS < front;
-      } else s.behind = false;
-    }
-    let hold = false;
-    // 骑兵：敌人没有远程，就等我方前排先跟敌人接上（有阵散开了）再冲，免得一个人扎进人堆
-    if (s.type === 'horse' && !(s.aim && s.aim.f.range) && myGroups.length && !myGroups.some(g => g.done) && !nearestFoe(s.x, s.y, t.range)) hold = true;
-    else if (!t.dmg) hold = !!nearestFoe(s.x, s.y, 9); // 盾：顶住了
-    else {
-      const e = nearestFoe(s.x, s.y, t.range * (rain && s.type === 'bow' ? 0.75 : 1));
-      if (e) {
-        hold = true;
-        if (s.type === 'horse' && (s.run || 0) >= 3) s.cdT = 0; // 冲到跟前，立刻撞
-        s.cdT -= dt * (s.rateMul || 1);
-        if (s.cdT <= 0) {
-          s.cdT = t.cd;
-          if (s.type === 'spear') { foesIn(e.x, e.y, 5, o => hurtFoe(o, t.dmg * s.dmgMul, 'spear')); shots.push({ k: 'thrust', x: s.x, y: s.y, tx: e.x, ty: e.y, life: 0.12 }); }
-          else if (s.type === 'bow') shots.push({ k: 'arrow', x: s.x, y: s.y, e, tx: e.x, ty: e.y, spd: 300, dmg: t.dmg });
-          else if (s.type === 'horse') { const ch = (s.run || 0) >= 3; if (ch) foesIn(e.x, e.y, 8, o => hurtFoe(o, t.dmg * 3, 'horse')); else hurtFoe(e, t.dmg, 'horse'); if (ch) { floats.push({ x: e.x, y: e.y - 6, text: '冲', life: 0.6, color: COL.gold }); burst(e.x, e.y, COL.horse, 6); } s.run = 0; }
-        }
-      }
-    }
-    if (s.grp && !s.grp.done) stepSoldier(s, { x: s.x + s.grp.hx * 30, y: s.y + s.grp.hy * 30 }, dt, s.grp.spd); // 还在阵里：跟全阵同速同向走，边走边打
-    else stepSoldier(s, hold || s.behind ? null : s.aim, dt);
+    u.x = Math.max(u.rad, Math.min(W - u.rad, u.x)); u.y = Math.max(u.rad, Math.min(H - u.rad, u.y));
   }
 }
 function updateShots(dt) {
   for (const p of shots) {
     if (p.k === 'thrust') { p.life -= dt; continue; }
     if (p.e && !p.e.dead) { p.tx = p.e.x; p.ty = p.e.y; }
-    if (p.s && !p.s.dead) { p.tx = p.s.x; p.ty = p.s.y; }
     const dx = p.tx - p.x, dy = p.ty - p.y, L = Math.hypot(dx, dy), step = p.spd * dt;
-    if (L <= step + 2) {
-      p.life = 0;
-      if (p.k === 'arrow') {
-        if (p.e && !p.e.dead) hurtFoe(p.e, p.dmg, 'arrow');
-      }
-      else if (p.k === 'earrow') { if (p.s && !p.s.dead) hurtSoldier(p.s, p.dmg, null); }
-      else if (p.k === 'rock') { soldiersIn(p.tx, p.ty, p.aoe, s => hurtSoldier(s, p.dmg, null)); ring(p.tx, p.ty, p.aoe, '#4a3218'); burst(p.tx, p.ty, '#7a5a34', 12); shake = Math.min(0.3, shake + 0.06); }
-    } else {
-      p.x += dx / L * step; p.y += dy / L * step; p.life = 1;
-      const [c, r] = cellOf(p.x, p.y), j = r * COLS + c;
-      // 1. 敌人的箭飞过我方盾兵：被盾挡下，盾只吃三成
-      if (p.k === 'earrow') { const o = grid[j]; if (o && !o.dead && o.type === 'shield' && o !== p.s) { hurtSoldier(o, p.dmg * 0.3, null); p.life = 0; if (Math.random() < 0.3) floats.push({ x: o.x, y: o.y - 5, text: '挡', life: 0.5, color: '#e8e0c8' }); } }
-      // 我方的箭飞过敌方盾兵：同样被挡，盾只吃三成
-      else if (p.k === 'arrow') for (const o of buckets[j]) if (!o.dead && o.f.guard && o !== p.e && Math.hypot(o.x - p.x, o.y - p.y) <= o.r + 2) { hurtFoe(o, p.dmg * 0.3, 'arrow'); p.life = 0; if (Math.random() < 0.3) floats.push({ x: o.x, y: o.y - 5, text: '挡', life: 0.5, color: '#e8e0c8' }); break; }
-    }
+    if (L <= step + 2) { p.life = 0; if (p.e && !p.e.dead) hurt(p.e, p.dmg, 'arrow', p.by); continue; }
+    p.x += dx / L * step; p.y += dy / L * step; p.life = 1;
+    // 箭飞过对面的盾兵：被盾挡下，盾只吃三成
+    let blk = null; near(p.x, p.y, 2, 1 - p.side, o => { if (!blk && o.type === 'shield' && o !== p.e) blk = o; });
+    if (blk) { hurt(blk, p.dmg * 0.3, 'arrow', p.by); p.life = 0; if (Math.random() < 0.3) floats.push({ x: blk.x, y: blk.y - 5, text: '挡', life: 0.5, color: '#e8e0c8' }); }
   }
   shots = shots.filter(p => p.life > 0);
 }
@@ -996,7 +780,6 @@ function showPick() {
   for (const s of soldiers) s.dead = true;
   soldiers = []; grid.fill(null); for (const a of units) a.length = 0; fallen = [];
   for (const [k, c, r] of homes) place(c, r, k, true);
-  flowDirty = true;
   recalcBuffs(); buildTools(); hud();
   const rewardHtml = `<div class="grade ${g}">${g}</div><div class="reward">歼敌兵力 ${foeLost} · 折损兵力 ${lost}<br>战损比 <b>${lost ? '1 : ' + ratio.toFixed(1) : '无损'}</b><br>基础 ${base} 金${bonus ? ` + 评级 ${Math.round(bonus * 100)}%` : ''} ＝ <b>${got} 金</b></div>`;
   const pool = CARDS.filter(c => c.ok()).sort(() => Math.random() - 0.5);
@@ -1113,7 +896,7 @@ function selUp() {
   for (const s of mine) cellDel(s.i, s);
   for (const s of mine) { s.c = s.hc = s.c + d.dc; s.r = s.hr = s.r + d.dr; s.i = s.r * COLS + s.c; s.x = s.c * CS + CS / 2; s.y = s.r * CS + CS / 2; cellAdd(s.i, s); }
   sel = { c0: sel.c0 + d.dc, c1: sel.c1 + d.dc, r0: sel.r0 + d.dr, r1: sel.r1 + d.dr };
-  flowDirty = true; recalcBuffs();
+  recalcBuffs();
 }
 function drawSel() {
   if (state !== 'prep' || !sel) return;
@@ -1179,7 +962,7 @@ function fit() {
 window.addEventListener('resize', fit);
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-let last = performance.now(), flowT = 0, uiT = 0;
+let last = performance.now(), uiT = 0;
 function frame(now) {
   let dt = Math.min(0.05, (now - last) / 1000); last = now;
   const gdt = dt;
@@ -1187,9 +970,11 @@ function frame(now) {
   if (state === 'prep') for (const s of soldiers) s.pop = Math.max(0, s.pop - dt * 4);
   if (state === 'fight') {
     spawn(gdt);
-    flowT -= dt; if (flowDirty && flowT <= 0) { computeFlow(); flowT = 0.15; }
-    updateEnemies(gdt); buildBuckets(); separate(); updateSoldiers(gdt); updateShots(gdt);
-    if (needBuffs) { recalcBuffs(); needBuffs = false; }
+    buildBuckets(); updateTeams(gdt);
+    for (const s of soldiers) if (!s.dead) updateUnit(s, gdt);
+    for (const e of enemies) if (!e.dead) updateUnit(e, gdt);
+    buildBuckets(); separate(); updateShots(gdt);
+    buffT -= dt; if (needBuffs || buffT <= 0) { recalcBuffs(); needBuffs = false; buffT = 0.5; } // 阵法加成：打起来以后按谁挨着谁重新算
     if (enemies.some(e => e.dead)) enemies = enemies.filter(e => !e.dead);
     // 两边都只剩不会打人的盾兵：打不下去了，算输
     const canHit = soldiers.some(s => !s.dead && T[s.type].dmg), foeHit = enemies.some(e => !e.dead && e.dmg) || sp.groups.some(g => g.queue.some(k => FOES[k].dmg) || (g.pend || g.slots).some(o => FOES[o.k].dmg));
@@ -1242,7 +1027,7 @@ function drawMarks() {
   ctx.font = 'bold 8px system-ui, sans-serif'; ctx.textAlign = 'center';
   const placed = [];
   for (const g of sp.groups) {
-    const left = g.march ? g.march.t : g.delay; // 摆在场上的阵用自己的计时，地道和后续援军用 g.delay
+    const left = g.delay;
     if (state === 'fight' && left <= 0) continue;
     const what = [];
     if (state === 'prep') {
@@ -1341,5 +1126,5 @@ sandImg = makeSand();
 reset(); fit(); showStart(); hud();
 requestAnimationFrame(frame);
 // 测试用：外部可以直接调这些
-window.__hz = { TUNE, setThick: v => { thick = v; }, get list() { return enemies.map(e => { const [c, r] = cellOf(e.x, e.y); return [e.kind, Math.round(e.x), Math.round(e.y), e.hold || 0, +e.hp.toFixed(1), e.free ? 'F' : e.grp ? 'G' : '-', dist[r * COLS + c], e.grp && e.grp.march ? [Math.round(e.grp.march.x), Math.round(e.grp.march.y), e.grp.march.done] : 0]; }); }, get state() { return state; }, startPrep: () => { overlay(null); startPrep(); }, startFight: () => startFight(), stamp: (x, y) => stamp(x, y), setTool: k => { tool = k; }, get enemies() { return enemies.length; }, get kills() { return kills; }, get wave() { return wave; }, get mine() { return soldiers.filter(s => !s.dead).length; } };
+window.__hz = { TUNE, setThick: v => { thick = v; }, get list() { return enemies.map(e => [e.kind, Math.round(e.x), Math.round(e.y), +e.hp.toFixed(1), e.state]); }, get hits() { return hitStat; }, get state() { return state; }, startPrep: () => { overlay(null); startPrep(); }, startFight: () => startFight(), stamp: (x, y) => stamp(x, y), setTool: k => { tool = k; }, get enemies() { return enemies.length; }, get kills() { return kills; }, get wave() { return wave; }, get mine() { return soldiers.filter(s => !s.dead).length; } };
 </script>

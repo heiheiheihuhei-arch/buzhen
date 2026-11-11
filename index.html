@@ -72,7 +72,12 @@ footer { display: flex; flex-direction: column; gap: 6px; }
 .grade.S { color: #ffd76a; } .grade.A { color: #e6b65a; } .grade.B { color: #c9b48a; } .grade.C, .grade.D { color: var(--dim); }
 .reward { text-align: center; font-size: 13px; color: var(--dim); margin-bottom: 12px; line-height: 1.7; }
 .reward b { color: var(--gold); font-size: 16px; }
-#tools { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+#tools { display: grid; grid-template-columns: repeat(4, 1fr) 0.7fr; gap: 5px; }
+.fly { position: fixed; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 2px; border: 1px solid rgba(20,12,6,.55); pointer-events: none; z-index: 60; }
+#selPop { position: fixed; z-index: 55; display: flex; gap: 8px; transform: translate(-50%, 0); }
+#selPop[hidden] { display: none; }
+#selPop button { min-width: 52px; height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--gold); background: #2a2018; color: var(--gold); font-family: var(--brush); font-size: 22px; box-shadow: 0 3px 10px rgba(0,0,0,.5); cursor: pointer; }
+#selPop #selRecall { background: var(--gold); color: #2a1a0c; }
 #recruit { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--dim); }
 #recruit button { appearance: none; flex: 1; border: 1px solid var(--rim); background: var(--frame-2); color: var(--ink); border-radius: 7px; padding: 4px 0; font: 12px var(--ui); cursor: pointer; }
 #recruit button small { color: var(--gold); font-size: 10px; margin-left: 2px; }
@@ -153,6 +158,7 @@ footer { display: flex; flex-direction: column; gap: 6px; }
     <canvas id="cv"></canvas>
     <div id="ov" class="ov"></div>
   </div>
+  <div id="selPop" hidden><button id="selRecall">撤</button><button id="selCancel" aria-label="取消选择">✕</button></div>
 
   <footer>
     <div class="inkrow"><span>金币</span><b id="goldTxt">0</b><span id="goldTip"></span><button id="bookBtn" class="bookbtn">兵书</button></div>
@@ -225,8 +231,28 @@ function place(c, r, type, free) {
   if (!free && countOf(type) >= ownOf(type)) return 'cap';
   const s = { type, i, c, r, hc: c, hr: r, x: c * CS + CS / 2, y: r * CS + CS / 2, hp: t.hp, max: t.hp, cdT: Math.random() * 0.5, pop: 1 };
   cellAdd(i, s); soldiers.push(s);
+  if (!free && state === 'prep') s.hideT = performance.now() + fly(type, true, s.x, s.y);
   return true;
 }
+// ---------- 进场、收回的动画：小兵从兵种按钮跳到落点；收回时跳回按钮 ----------
+// 一笔画下很多兵时一个接一个地跳，最多错开 0.3 秒。返回这个兵多少毫秒后落地（落地前沙盘上先不画它）
+let flyN = 0, flyLast = 0;
+function fly(type, enter, x, y) {
+  const b = document.getElementById('t-' + type);
+  if (reduceMotion || document.hidden || !b) return 0;
+  const now = performance.now(); if (now - flyLast > 80) flyN = 0; flyLast = now;
+  const delay = Math.min(300, flyN++ * 12), dur = 240;
+  const br = b.getBoundingClientRect(), cr = cv.getBoundingClientRect();
+  const board = [cr.left + x / W * cr.width, cr.top + y / H * cr.height], btn = [br.left + br.width / 2, br.top + br.height / 2];
+  const from = enter ? btn : board, to = enter ? board : btn, mx = (from[0] + to[0]) / 2, my = Math.min(from[1], to[1]) - 36;
+  const d = document.createElement('i'); d.className = 'fly'; d.style.background = T[type].color; document.body.appendChild(d);
+  d.animate([{ transform: `translate(${from[0]}px,${from[1]}px) scale(.7)` }, { transform: `translate(${mx}px,${my}px) scale(1.5)`, offset: 0.5 }, { transform: `translate(${to[0]}px,${to[1]}px) scale(1)` }],
+    { duration: dur, delay, easing: 'ease-in-out', fill: 'both' });
+  setTimeout(() => d.remove(), delay + dur + 30);
+  return delay + dur;
+}
+// 收回一个兵：跳回按钮，手里的数加回来
+function recall(s) { fly(s.type, false, s.x, s.y); killSoldier(s, true); }
 const ownOf = k => T[k].cap; // 手里一共有几个（含场上的）；没有另外的上限，有多少就能摆多少
 let fallen = []; // 这波战死的兵（兵种和位置）：算折损、打完从手里扣掉
 const countOf = k => soldiers.reduce((n, s) => n + (!s.dead && s.type === k ? 1 : 0), 0);
@@ -247,17 +273,16 @@ function stamp(x, y) {
   let placed = 0, short = false, capped = false;
   for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
     const cc = c + dx, rr = r + dy;
-    if (tool === 'erase') { if (cc >= 0 && cc < COLS && rr >= 0 && rr < ROWS) removeAt(rr * COLS + cc, true); continue; }
     if (!drawable(cc, rr)) continue;
     const old = grid[rr * COLS + cc];
     if (old && old.type === tool) continue;
     // 画在别的兵种上 = 换掉：旧的收回手里，新的站上去（手里没这种兵了就不动）
-    if (old) { if (countOf(tool) >= ownOf(tool)) { capped = true; continue; } removeAt(old.i, true); }
+    if (old) { if (countOf(tool) >= ownOf(tool)) { capped = true; continue; } recall(old); }
     const ok = place(cc, rr, tool);
     if (ok === true) placed++; else if (ok === 'cap') capped = true; else short = true;
   }
   if ((short || capped) && inkWarnT <= 0) { floats.push({ x, y: y - 10, text: `${T[tool].name}兵用完了`, life: 0.9, color: '#d9d2ff' }); inkWarnT = 0.9; }
-  if (placed || tool === 'erase') { recalcBuffs(); buildTools(); }
+  if (placed) { recalcBuffs(); buildTools(); }
 }
 
 // ---------- 阵法加成：挨着谁 ----------
@@ -913,10 +938,9 @@ function showOver() {
 // ---------- 底部的兵种按钮 ----------
 function buildTools() {
   const box = document.getElementById('tools');
-  const items = [['shield'], ['spear'], ['bow'], ['horse'], ['move', '移', '框选'], ['erase', '撤', '擦掉'], ['thick']];
+  const items = [['shield'], ['spear'], ['bow'], ['horse'], ['thick']];
   box.innerHTML = items.map(([k, g, sm]) => {
     if (k === 'thick') return `<button class="tool" id="t-thick"><span class="g">${thick ? '粗' : '细'}</span><small>${thick ? '3×3' : '1 格'}</small></button>`;
-    if (k === 'erase' || k === 'move') return `<button class="tool${tool === k ? ' on' : ''}" id="t-${k}"><span class="g">${g}</span><small>${sm}</small></button>`;
     const t = T[k];
     return `<button class="tool${tool === k ? ' on' : ''}" id="t-${k}" ${t.locked ? 'disabled' : ''}><i class="sw" style="background:${t.color}"></i><span class="g"${t.name.length > 1 ? ' style="font-size:17px"' : ''}>${t.name}</span><small>${t.locked ? '未解锁' : `${countOf(k)}/${ownOf(k)}`}</small></button>`;
   }).join('');
@@ -969,7 +993,21 @@ function loadForm(f) {
   sel = null; recalcBuffs(); buildTools();
 }
 
-// ---------- 框选平移：先拉一个框，再按住框里拖，整块兵一起挪 ----------
+// ---------- 长按选兵：按住一个兵 0.5 秒出选择框，滑动改框的大小；松手后弹出「撤 / ✕」，按住框拖动就整块挪 ----------
+// 松手时框里只有一个兵：直接撤回，不用再点
+const HOLD_MS = 500;
+let press = null; // 手指按在兵身上、还没分出是「长按选兵」还是「画」
+function recallSel() { for (const s of selSoldiers()) recall(s); sel = null; recalcBuffs(); buildTools(); }
+function syncPop() {
+  const pop = document.getElementById('selPop'), show = state === 'prep' && sel && !selDrag;
+  if (pop.hidden === !show && !show) return;
+  pop.hidden = !show; if (!show) return;
+  const cr = cv.getBoundingClientRect(), k = cr.height / H, top = cr.top + sel.r0 * CS * k, bot = cr.top + (sel.r1 + 1) * CS * k;
+  pop.style.left = Math.max(70, Math.min(innerWidth - 70, cr.left + (sel.c0 + sel.c1 + 1) * CS / 2 * cr.width / W)) + 'px';
+  pop.style.top = (top - 54 > cr.top ? top - 54 : bot + 10) + 'px';
+}
+document.getElementById('selRecall').onclick = recallSel;
+document.getElementById('selCancel').onclick = () => { sel = null; };
 let sel = null, selDrag = null;
 const inSel = (c, r) => sel && c >= sel.c0 && c <= sel.c1 && r >= sel.r0 && r <= sel.r1;
 const selSoldiers = () => sel ? soldiers.filter(s => !s.dead && inSel(s.c, s.r)) : [];
@@ -1002,7 +1040,8 @@ function selUp() {
 }
 function drawSel() {
   if (state !== 'prep' || !sel) return;
-  ctx.save(); ctx.setLineDash([3, 2]); ctx.strokeStyle = COL.gold; ctx.lineWidth = 1;
+  ctx.save(); ctx.fillStyle = 'rgba(255,216,107,.16)'; ctx.fillRect(sel.c0 * CS, sel.r0 * CS, (sel.c1 - sel.c0 + 1) * CS, (sel.r1 - sel.r0 + 1) * CS);
+  ctx.setLineDash([4, 2]); ctx.strokeStyle = COL.gold; ctx.lineWidth = 1.5;
   ctx.strokeRect(sel.c0 * CS + 0.5, sel.r0 * CS + 0.5, (sel.c1 - sel.c0 + 1) * CS - 1, (sel.r1 - sel.r0 + 1) * CS - 1);
   ctx.setLineDash([]);
   if (selDrag && selDrag.drag && (selDrag.dc || selDrag.dr)) {
@@ -1023,19 +1062,44 @@ let scale = 1, pointer = null;
 function toLocal(ev) { const r = cv.getBoundingClientRect(); return { x: (ev.clientX - r.left) / r.width * W, y: (ev.clientY - r.top) / r.height * H }; }
 cv.addEventListener('pointerdown', ev => {
   if (state !== 'prep') return;
-  cv.setPointerCapture(ev.pointerId); lastPt = toLocal(ev); pointer = lastPt;
-  if (tool === 'move') { selDown(lastPt); return; }
+  try { cv.setPointerCapture(ev.pointerId); } catch (e) {} lastPt = toLocal(ev); pointer = lastPt;
+  const [c, r] = cellOf(lastPt.x, lastPt.y);
+  if (sel) { // 已经有选择框：按在框里是拖着挪，按在框外是取消
+    if (inSel(c, r)) selDrag = { drag: true, sc: c, sr: r, dc: 0, dr: 0 }; else sel = null;
+    return;
+  }
+  if (grid[r * COLS + c]) { // 按在兵身上：先等等看是长按还是画
+    const p0 = lastPt;
+    press = { p: p0, box: false, timer: setTimeout(() => {
+      if (!press || press.p !== p0) return;
+      press.box = true; sel = { c0: c, r0: r, c1: c, r1: r }; selDrag = { drag: false, sc: c, sr: r };
+      if (navigator.vibrate) navigator.vibrate(15);
+    }, HOLD_MS) };
+    return;
+  }
   drawing = true; stamp(lastPt.x, lastPt.y);
 });
 cv.addEventListener('pointermove', ev => {
   const p = toLocal(ev); pointer = p;
-  if (tool === 'move' && state === 'prep') { selMove(p); return; }
-  if (!drawing || state !== 'prep') return;
+  if (state !== 'prep') return;
+  if (selDrag) { selMove(p); return; }
+  if (press) { // 没到 0.5 秒手指就划走了：当成画
+    if (Math.hypot(p.x - press.p.x, p.y - press.p.y) < CS * 0.8) return;
+    clearTimeout(press.timer); lastPt = press.p; press = null; drawing = true; stamp(lastPt.x, lastPt.y);
+  }
+  if (!drawing) return;
   const dx = p.x - lastPt.x, dy = p.y - lastPt.y, L = Math.hypot(dx, dy), n = Math.max(1, Math.ceil(L / (CS * 0.5)));
   for (let k = 1; k <= n; k++) stamp(lastPt.x + dx * k / n, lastPt.y + dy * k / n);
   lastPt = p;
 });
-const endDraw = () => { drawing = false; lastPt = null; if (tool === 'move' && state === 'prep') selUp(); };
+const endDraw = () => {
+  if (press) { clearTimeout(press.timer); if (!press.box && state === 'prep') stamp(press.p.x, press.p.y); press = null; } // 点一下就松手：照常画（换兵种）
+  if (selDrag && state === 'prep') {
+    const box = !selDrag.drag; selUp();
+    if (box && sel && selSoldiers().length === 1) recallSel(); // 只框住一个：直接撤
+  }
+  selDrag = null; drawing = false; lastPt = null;
+};
 cv.addEventListener('pointerup', endDraw); cv.addEventListener('pointercancel', endDraw);
 cv.addEventListener('pointerleave', () => { if (!drawing) pointer = null; });
 
@@ -1184,6 +1248,7 @@ function render() {
   // 兵
   for (const s of soldiers) {
     if (s.dead) continue;
+    if (s.hideT) { if (performance.now() < s.hideT) continue; s.hideT = 0; s.pop = 1; } // 还在从按钮跳过来的路上
     const t = T[s.type], x0 = s.c * CS, y0 = s.r * CS, k = s.hp / s.max, g = 1 + s.pop * 0.5;
     ctx.save(); ctx.translate(s.x, s.y); ctx.scale(g, g);
     ctx.fillStyle = 'rgba(40,26,12,.25)'; ctx.fillRect(-4, -3, 9, 9);
@@ -1217,10 +1282,10 @@ function render() {
   if (sp && sp.mod.rain) { ctx.strokeStyle = 'rgba(70,90,120,.25)'; ctx.lineWidth = 0.7; const o = (performance.now() / 8) % 40; ctx.beginPath(); for (let k = 0; k < 70; k++) { const x = (k * 53) % W, y = ((k * 97) % H + o * (1 + k % 3)) % H; ctx.moveTo(x, y); ctx.lineTo(x - 3, y + 9); } ctx.stroke(); }
   ctx.restore();
   // 画的时候：四周压暗一点表示时间变慢，手指下画出笔刷范围
-  drawSel();
-  if (pointer && state === 'prep' && tool !== 'move') {
+  drawSel(); syncPop();
+  if (pointer && state === 'prep' && !sel) {
     const c = Math.floor(pointer.x / CS), r = Math.floor(pointer.y / CS), R = thick ? 1 : 0;
-    ctx.strokeStyle = tool === 'erase' ? 'rgba(255,90,70,.9)' : 'rgba(255,248,225,.85)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,248,225,.85)'; ctx.lineWidth = 1;
     ctx.strokeRect((c - R) * CS + 0.5, (r - R) * CS + 0.5, (2 * R + 1) * CS - 1, (2 * R + 1) * CS - 1);
   }
   if (bannerT > 0) {

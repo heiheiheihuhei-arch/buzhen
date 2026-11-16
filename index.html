@@ -498,7 +498,7 @@ function startFight() {
   drawing = false; lastPt = null; pointer = null; sel = null; selDrag = null; saving = false;
   for (const g of sp.groups) for (const k in g.counts) seenFoes.add(k);
   ghosts = []; foeZone = null;
-  teams = []; hitStat = [0, 0, 0];
+  teams = []; hitStat = [0, 0, 0]; mstat = { rout: [0, 0], flee: [0, 0], die: [0, 0] };
   for (const s of soldiers) Object.assign(s, { side: 0, rad: R_OF[s.type], spd: MOVE[s.type], vx: 0, vy: -1, run: 0, aim: null, team: null, cdT: Math.random() * 0.5, mor: junxin, mor0: junxin, fx0: 0, fy0: 1, mT: Math.random() * 0.25 });
   formUp();
   // 摆好的敌阵整队往前推（和我方一样）；晚到的阵开战时先不出现，倒计时到了才在原来摆阵的地方冒出来
@@ -583,8 +583,8 @@ const ENGAGE = 30, AIM_NEAR = 150, CHARGE = 3 * CS;
 const FWD = { N: [0, 1], S: [0, -1], W: [1, 0], E: [-1, 0], T: [0, 0] };
 // 士气：每个兵 0～100，掉到 0 就溃逃（掉头往自己那边跑、不还手、挨打 ×1.5）；跑出交战 3 秒、回到 40 就重新站住；跑出场外算折损
 // 我方开局士气 = 军心（看上一波评级），敌方看波数
-const MOR = { ally: 8, side: 3, back: 6, mob: 10, panic: 4, rest: 5, rally: 40, regen: 8 };
-const JUNXIN = { S: 100, A: 90, B: 80, C: 70, D: 60 };
+const MOR = { ally: 5, side: 3, back: 6, mob: 10, panic: 2, rest: 5, rally: 40, regen: 8, calm: 2 }; // 11-16 调松：身边有人倒下 8→5，被逃兵带着慌 4→2，脱离接触 3 秒→2 秒就能重新站住
+const JUNXIN = { S: 100, A: 90, B: 80, C: 75, D: 70 }; // 打得差也不会掉到太低，免得越打越逃、越逃越差
 let junxin = 80;
 let teams = [], hitStat = [0, 0, 0]; // hitStat：挨打时 正面/侧面/背后 各几次（先只记下来，给以后的士气用）
 const oppOf = u => u.side ? soldiers : enemies;
@@ -637,6 +637,7 @@ function hurt(u, d, src, by) {
   u.hp -= d; u.flash = 0.1;
   if (u.thorn && by && src === 'melee') hurt(by, 1, 'thorn', null);
   if (u.hp > 0) return;
+  mstat.die[u.side]++;
   near(u.x, u.y, 25, u.side, o => { if (o !== u) o.mor -= MOR.ally; }); // 身边有人倒下
   if (u.side === 0) { killSoldier(u, false); burst(u.x, u.y, T[u.type].color, 6); needBuffs = true; return; }
   u.dead = true; kills++; foeLost += u.f.pts;
@@ -734,14 +735,16 @@ function moraleTick(u, dt) {
   near(u.x, u.y, 25, u.side, o => { if (o !== u && o.state === 'rout') panic++; });
   if (u.state === 'rout') {
     if (close) u.calm = 0; else { u.mor += MOR.regen * k; u.calm += k; }
-    if (u.calm >= 3 && u.mor >= MOR.rally) { u.state = 'fight'; u.aim = null; u.aimT = 0; }
+    if (u.calm >= MOR.calm && u.mor >= MOR.rally) { u.state = 'fight'; u.aim = null; u.aimT = 0; }
     return;
   }
   if (mob >= 3) u.mor -= MOR.mob * k;                 // 被围住了
   u.mor -= Math.min(3, panic) * MOR.panic * k;        // 旁边有人在逃，会传染
   if (!close) u.mor = Math.min(u.mor0, u.mor + MOR.rest * k); // 没在打，慢慢定下神来
 }
+let mstat = { rout: [0, 0], flee: [0, 0], die: [0, 0] }; // 这一波：溃逃过几次、逃出场外几个、战死几个（[我方, 敌方]）
 function flee(u) { // 逃出场外：不回来了，算折损
+  mstat.flee[u.side]++;
   if (u.side === 0) { killSoldier(u, false); needBuffs = true; }
   else { u.dead = true; kills++; foeLost += u.f.pts; }
 }
@@ -750,7 +753,7 @@ function updateUnit(u, dt) {
   if (u.state !== 'team' || u.team.go) moraleTick(u, dt);
   if (u.mor >= HOT && !reduceMotion && Math.random() < dt * 0.8 && parts.length < 700) parts.push({ x: u.x + (Math.random() - 0.5) * 4, y: u.y - 3, vx: (Math.random() - 0.5) * 6, vy: -18 - Math.random() * 14, life: 0.45 + Math.random() * 0.3, color: Math.random() < 0.5 ? '#ffb02e' : '#ff6a1a', s: 1.2 + Math.random(), ember: true });
   if (u.state !== 'rout' && u.mor <= 0) {
-    u.state = 'rout'; u.calm = 0; u.aim = null;
+    u.state = 'rout'; u.calm = 0; u.aim = null; mstat.rout[u.side]++;
     if (Math.random() < 0.35) floats.push({ x: u.x, y: u.y - 6, text: '逃', life: 0.7, color: u.side ? '#f3d9c8' : '#d9e2f3' });
   }
   if (u.state === 'rout') { // 溃逃：往自己那边跑，躲着最近的敌人
@@ -1304,5 +1307,5 @@ sandImg = makeSand();
 reset(); fit(); showStart(); hud();
 requestAnimationFrame(frame);
 // 测试用：外部可以直接调这些
-window.__hz = { TUNE, setThick: v => { thick = v; }, get list() { return enemies.map(e => [e.kind, Math.round(e.x), Math.round(e.y), +e.hp.toFixed(1), e.state]); }, get hits() { return hitStat; }, get state() { return state; }, startPrep: () => { overlay(null); startPrep(); }, startFight: () => startFight(), stamp: (x, y) => stamp(x, y), setTool: k => { tool = k; }, get enemies() { return enemies.length; }, get kills() { return kills; }, get wave() { return wave; }, get mine() { return soldiers.filter(s => !s.dead).length; } };
+window.__hz = { TUNE, setThick: v => { thick = v; }, get list() { return enemies.map(e => [e.kind, Math.round(e.x), Math.round(e.y), +e.hp.toFixed(1), e.state]); }, get hits() { return hitStat; }, get mstat() { return mstat; }, get state() { return state; }, startPrep: () => { overlay(null); startPrep(); }, startFight: () => startFight(), stamp: (x, y) => stamp(x, y), setTool: k => { tool = k; }, get enemies() { return enemies.length; }, get kills() { return kills; }, get wave() { return wave; }, get mine() { return soldiers.filter(s => !s.dead).length; } };
 </script>

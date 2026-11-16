@@ -10,7 +10,7 @@ for (let w=1; w<=to; w++) {
   const army=sp.army, n0=hz.mine, foes=foesLeft(), junxin0=junxin;
   hz.startFight(); let t=0; while (hz.state==='fight' && t<120000) { await sleep(250); t+=250; }
   if (hz.state==='pick') { const g=document.querySelector('.grade').textContent, rw=document.querySelector('.reward').innerText.replace(/\n/g,' ');
-    log.push(`波${w} ${army}${sp.big?'':'(同)'} 军心${junxin0} 我${n0} 敌${foes} 胜 ${g} ${rw.split('基础')[0]} ${t/1000}s`); document.getElementById('card0').click(); }
+    log.push(`波${w} ${army}${sp.big?'':'(同)'} 军心${junxin0} 我${n0} 敌${foes} 胜 ${g} ${rw.split('基础')[0]} ${t/1000}s｜我方 战死${__hz.mstat.die[0]} 逃出场${__hz.mstat.flee[0]} 溃逃${__hz.mstat.rout[0]}次｜敌方 战死${__hz.mstat.die[1]} 逃出场${__hz.mstat.flee[1]} 溃逃${__hz.mstat.rout[1]}次`); document.getElementById('card0').click(); }
   else { log.push(`波${w} ${army} 我${n0} 敌${foes} ${hz.state==='over'?'败':'超时 剩'+enemies.length+' '+JSON.stringify(enemies.slice(0,3).map(e=>[e.kind,Math.round(e.x),Math.round(e.y)]))} ${t/1000}s`); break; }
 }
 log.push('errs:'+JSON.stringify(window.__errs||"未注入"));

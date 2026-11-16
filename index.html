@@ -288,9 +288,15 @@ function stamp(x, y) {
 // ---------- 阵法加成：挨着谁 ----------
 // 盾挨盾 = 盾墙（受伤 -40%）；枪挨盾 = 盾枪（伤害 +60%）；弓挨盾 = 盾弓（射速 +50%）；
 // 枪挨 ≥3 枪 = 枪林（打它的敌人被反伤）
+const FORMATIONS = false; // 阵法（盾墙、盾枪、盾弓、枪林）先不用：敌我规则完全一样。以后要恢复，改成 true
 function recalcBuffs() {
   combos = { 盾墙: 0, 盾枪: 0, 盾弓: 0, 枪林: 0 };
   soldiers = soldiers.filter(s => !s.dead);
+  if (!FORMATIONS) {
+    for (const s of soldiers) { s.wall = false; s.dmgMul = 1; s.rateMul = 1; s.thorn = false; s.buffed = false; }
+    document.getElementById('combos').hidden = true;
+    return;
+  }
   // 挨着 = 离得不到一格半（布阵时就是周围 8 格；打起来以后按实际站的位置算）
   for (const s of soldiers) {
     const n = { shield: 0, spear: 0, bow: 0, horse: 0 };
@@ -335,7 +341,7 @@ const MODS = [
   { name: '大雾', tip: '只知道从哪来，不知道来的是什么兵、多少人', from: 4, fog: true },
 ];
 // 敌我基础数值一样，难度只靠敌人的兵力（pts，和招兵花费一样算）：第 1 波 p0，之后每波 +pG
-const TUNE = { hp: 1, dmg: 1, hpG: 0, dmgG: 0, p0: 60, pG: 8 }; // 战死不补兵，敌人涨得慢
+const TUNE = { hp: 1, dmg: 1, hpG: 0, dmgG: 0, p0: 40, pG: 7 }; // 战死不补兵，敌人涨得慢
 let recentArmies = [], seenFoes = new Set();
 const pickOne = a => a[Math.floor(Math.random() * a.length)];
 // 大波小波：前 3 波每波都换（教玩法）；之后三波一轮——第 4、7、10… 波换新打法，后两波照着上一波来（同方向、同阵形、人更多）
@@ -901,7 +907,7 @@ function overlay(html) { const o = document.getElementById('ov'); o.hidden = !ht
 function showStart() {
   overlay(`<div class="panel"><h1>画阵</h1>
     <p>选一个兵种，用手指在沙盘上画，一笔就是一片。画好了点「开战」，两军对冲。</p>
-    <p>兵种、阵法、士气怎么算，都在「兵书」里。</p>
+    <p>兵种、士气怎么算，都在「兵书」里。</p>
     <button class="go ghost" id="bookBtn0">看兵书</button>
     <button class="go" id="goBtn">开始</button></div>`);
   document.getElementById('goBtn').onclick = () => { overlay(null); startPrep(); };
@@ -909,14 +915,11 @@ function showStart() {
 }
 // ---------- 兵书：兵种、阵法、规则（随时能翻；打仗时翻开会暂停） ----------
 const RULES_HTML = `<ul>
-      <li>敌军和你一样是<b>刀盾、枪、弓、骑</b>，基础数值也一样；你赢在<b>阵法加成和过关强化</b>。两边对砍，<b>谁剩下谁赢</b></li>
-      <li><b>刀盾兵</b>主要负责挡，也能砍几下（下面简称「盾」）</li><li><b>盾挨盾</b>＝盾墙，受伤少两成半</li>
-      <li><b>枪挨盾</b>＝伤害 +60%；枪能隔着盾戳人</li>
-      <li><b>弓挨盾</b>＝射速 +50%</li>
-      <li><b>枪挨 3 个枪</b>＝枪林，砍它的会被反伤</li>
+      <li>敌军和你一样是<b>刀盾、枪、弓、骑</b>，基础数值也一样；你赢在<b>怎么摆、怎么搭配，加上过关强化</b>。两边对砍，<b>谁剩下谁赢</b></li>
+      <li><b>刀盾兵</b>主要负责挡，也能砍几下（下面简称「盾」）</li>
       <li>手里<b>有多少兵就能摆多少</b>（按钮上的 场上/手里）。每波打完<b>活着的回到原位、全军回满血；战死的不补回</b>，要靠过关招兵补；过关时可以招兵、强化</li><li>过关得金币；<b>评级看战损比</b>（歼敌兵力 ÷ 自己折损的兵力，刀盾、枪算 1，弓 2，骑 3）：比值越高，金币多给 10%～100%；过关时可以花金币买一张更强的卡</li><li><b>士气</b>（上面的士气槽）：<b>80 以上士气高昂，伤害 +15%</b>，会冒火；身边有人倒下、被围、被从侧面背后打，兵会慌；慌到底就<b>溃逃</b>，逃出场外就没了。评级越高，下一波<b>军心</b>越高</li><li>战死、逃散的兵不补回：备战时可以<b>花金币招兵</b></li><li>兵活下来就留到下一波。一波比一波难，<b>兵死光就输</b></li><li>布阵时「撤」能擦掉兵；直接在别的兵上画会把它换成新兵种</li><li>「移」：先拉框圈住一块兵，再按住框里拖，整块挪走</li><li>下面「阵型」能存 3 套阵：点「存」再点一格存下，以后点那格一键摆上</li><li>敌人三波一轮：换一种打法后，接下来两波是同一路数、人更多，微调就行</li>
     </ul>`;
-const MY_TIPS = { shield: '主要负责挡，也能砍几下。挨着别的刀盾成盾墙；敌人贴上来就被缠住，箭飞过会被挡下', spear: '隔一格就能戳，戳中一小片。站在刀盾后面最好', bow: '射得远、血薄，站住放箭，不会跑到近战兵前面去', horse: '对面有弓兵就直接冲过去打弓兵，没有就等步兵先撞上再冲。跑满 3 格撞第一下三倍伤害，还踩到旁边一片' };
+const MY_TIPS = { shield: '主要负责挡，也能砍几下。敌人贴上来就被缠住，箭飞过会被挡下', spear: '隔一格就能戳，戳中一小片。站在刀盾后面最好', bow: '射得远、血薄，站住放箭，不会跑到近战兵前面去', horse: '对面有弓兵就直接冲过去打弓兵，没有就等步兵先撞上再冲。跑满 3 格撞第一下三倍伤害，还踩到旁边一片' };
 let paused = false;
 function showBook(back) {
   const wasFight = state === 'fight'; paused = wasFight;
@@ -925,7 +928,7 @@ function showBook(back) {
   overlay(`<div class="panel book"><h2>兵书</h2>
     <h3>兵种</h3>${['shield', 'spear', 'bow', 'horse'].map(row).join('')}
     <p class="bknote">敌军也是这四种兵，基础数值一样。</p>
-    <h3>阵法与规则</h3>${RULES_HTML}
+    <h3>规则</h3>${RULES_HTML}
     <button class="go" id="bookClose">${wasFight ? '合上，接着打' : '合上'}</button></div>`);
   document.getElementById('bookClose').onclick = () => { paused = false; if (back) back(); else overlay(null); };
 }

@@ -94,6 +94,8 @@ footer { display: flex; flex-direction: column; gap: 6px; }
 .fly { position: fixed; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 2px; border: 1px solid rgba(20,12,6,.55); pointer-events: none; z-index: 60; }
 #selPop { position: fixed; z-index: 55; display: flex; gap: 8px; transform: translate(-50%, 0); }
 #selPop[hidden] { display: none; }
+#selPop { animation: popDuang .36s cubic-bezier(.3, 1.9, .5, 1) both; transform-origin: 50% 100%; }
+@keyframes popDuang { 0% { transform: translate(-50%, 8px) scale(.2); opacity: 0; } 55% { opacity: 1; } 100% { transform: translate(-50%, 0) scale(1); opacity: 1; } }
 #selPop button { min-width: 52px; height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--gold); background: #2a2018; color: var(--gold); font-family: var(--brush); font-size: 22px; box-shadow: 0 3px 10px rgba(0,0,0,.5); cursor: pointer; }
 #selPop #selRecall { background: var(--gold); color: #2a1a0c; }
 #recruit { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--dim); }
@@ -1180,7 +1182,7 @@ function selMove(p) {
   if (!selDrag) return;
   const [c, r] = cellOf(p.x, p.y);
   if (selDrag.drag) { selDrag.dc = c - selDrag.sc; selDrag.dr = r - selDrag.sr; }
-  else sel = { c0: Math.min(c, selDrag.sc), c1: Math.max(c, selDrag.sc), r0: Math.min(r, selDrag.sr), r1: Math.max(r, selDrag.sr) };
+  else sel = { c0: Math.min(c, selDrag.sc), c1: Math.max(c, selDrag.sc), r0: Math.min(r, selDrag.sr), r1: Math.max(r, selDrag.sr), t0: sel && sel.t0 };
 }
 function selUp() {
   const d = selDrag; selDrag = null; if (!d) return;
@@ -1195,7 +1197,14 @@ function selUp() {
 }
 function drawSel() {
   if (state !== 'prep' || !sel) return;
-  ctx.save(); ctx.fillStyle = 'rgba(255,216,107,.16)'; ctx.fillRect(sel.c0 * CS, sel.r0 * CS, (sel.c1 - sel.c0 + 1) * CS, (sel.r1 - sel.r0 + 1) * CS);
+  ctx.save();
+  const age = (performance.now() - (sel.t0 || 0)) / 280;   // 刚唤起：从小弹出来，冲过头再回弹
+  if (age < 1) {
+    const k = 1 + 2.6 * Math.pow(age - 1, 3) + 1.6 * Math.pow(age - 1, 2), sc = 0.3 + 0.7 * k;
+    const mx = (sel.c0 + sel.c1 + 1) * CS / 2, my = (sel.r0 + sel.r1 + 1) * CS / 2;
+    ctx.translate(mx, my); ctx.scale(sc, sc); ctx.translate(-mx, -my); ctx.globalAlpha = Math.min(1, age * 3);
+  }
+  ctx.fillStyle = 'rgba(255,216,107,.16)'; ctx.fillRect(sel.c0 * CS, sel.r0 * CS, (sel.c1 - sel.c0 + 1) * CS, (sel.r1 - sel.r0 + 1) * CS);
   ctx.setLineDash([4, 2]); ctx.strokeStyle = COL.gold; ctx.lineWidth = 1.5;
   ctx.strokeRect(sel.c0 * CS + 0.5, sel.r0 * CS + 0.5, (sel.c1 - sel.c0 + 1) * CS - 1, (sel.r1 - sel.r0 + 1) * CS - 1);
   ctx.setLineDash([]);
@@ -1252,16 +1261,13 @@ cv.addEventListener('pointerdown', ev => {
     if (inSel(c, r)) selDrag = { drag: true, sc: c, sr: r, dc: 0, dr: 0 }; else sel = null;
     return;
   }
-  if (grid[r * COLS + c]) { // 按在兵身上：先等等看是长按还是画
-    const p0 = lastPt;
-    press = { p: p0, box: false, timer: setTimeout(() => {
-      if (!press || press.p !== p0) return;
-      press.box = true; sel = { c0: c, r0: r, c1: c, r1: r }; selDrag = { drag: false, sc: c, sr: r };
-      if (navigator.vibrate) navigator.vibrate(15);
-    }, HOLD_MS) };
-    return;
-  }
-  drawing = true; stamp(lastPt.x, lastPt.y);
+  // 按下不放兵：松手才放；划开就是画；按住 0.5 秒（兵身上、空地上都行）出选择框
+  const p0 = lastPt;
+  press = { p: p0, box: false, timer: setTimeout(() => {
+    if (!press || press.p !== p0) return;
+    press.box = true; sel = { c0: c, r0: r, c1: c, r1: r, t0: performance.now() }; selDrag = { drag: false, sc: c, sr: r };
+    if (navigator.vibrate) navigator.vibrate(15);
+  }, HOLD_MS) };
 });
 cv.addEventListener('pointermove', ev => {
   const p = toLocal(ev); pointer = p;
@@ -1317,7 +1323,7 @@ let last = performance.now(), uiT = 0;
 // ---------- 镜头：布阵时贴近（沙地平放、桌面在画面外），开战后沙地放倒、镜头拉远 ----------
 // 每一帧自己算，不靠样式的自动过渡：这样在任何设备上都会播，也不受系统「减弱动态效果」影响
 let camK = 0;                       // 0 = 布阵的镜头，1 = 开战后的镜头
-const CAM_SEC = 1.1;                // 整个转场多少秒
+const CAM_SEC = 0.55;                // 整个转场多少秒
 const camEase = k => k * k * (3 - 2 * k);
 function camApply() {
   const e = camEase(camK), g = document.getElementById('ground'), d = document.getElementById('desk');

@@ -62,8 +62,11 @@ b { font-variant-numeric: tabular-nums; font-weight: 700; }
 #intel b { font-weight: 700; color: var(--gold); }
 #intel .mod { display: inline-block; background: var(--red); color: var(--ink); border-radius: 4px; padding: 0 5px; margin: 0 4px 0 6px; font-size: 11px; }
 #intel .new { display: inline-block; background: var(--gold); color: var(--frame); border-radius: 4px; padding: 0 4px; font-size: 10px; font-weight: 700; }
-#stage { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
-#cv { display: block; touch-action: none; border-radius: 6px; box-shadow: 0 0 0 3px var(--rim), 0 8px 24px rgba(0,0,0,.5); }
+#stage { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; perspective: 1100px; perspective-origin: 50% 12%; }
+#cv { display: block; touch-action: none; border-radius: 6px; box-shadow: 0 0 0 3px var(--rim), 0 8px 24px rgba(0,0,0,.5); transform-origin: 50% 100%; transition: transform .7s cubic-bezier(.2,.8,.2,1), box-shadow .7s; }
+/* 布阵时沙盘是平的（手指画得准）；开战后倒成斜面，像低头看桌上的沙盘。打完回到备战再放平 */
+#stage.tilt #cv { transform: rotateX(30deg); box-shadow: 0 0 0 3px var(--rim), 0 12px 0 3px #5a3e22, 0 14px 0 5px #2a1c10, 0 44px 40px rgba(0,0,0,.6); }
+@media (prefers-reduced-motion: reduce) { #cv { transition: none; } }
 
 footer { display: flex; flex-direction: column; gap: 6px; }
 .inkrow { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--dim); }
@@ -1137,6 +1140,7 @@ window.addEventListener('resize', fit);
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let last = performance.now(), uiT = 0;
 function frame(now) {
+  document.getElementById('stage').classList.toggle('tilt', state === 'fight' || state === 'pick' || state === 'over');
   let dt = Math.min(0.05, (now - last) / 1000); last = now;
   const gdt = dt;
   inkWarnT -= dt; bannerT -= dt;

@@ -68,23 +68,20 @@ b { font-variant-numeric: tabular-nums; font-weight: 700; }
    2) #desk 桌面：地图、木纹和摆件，只在屏幕最上边和上方两角显出来，往中间渐变成透明
    3) 弹窗
    布阵时镜头贴近：沙地平放，桌面被推到画面外；开战后沙地放倒、镜头拉远，桌面和摆件进来 */
-#ground { position: relative; z-index: 1; display: flex; transform-origin: 50% 100%; transition: transform .9s cubic-bezier(.3,.7,.2,1); }
-#stage.tilt #ground { transform: scale(.94) rotateX(25deg); }
+#ground { position: relative; z-index: 1; display: flex; transform-origin: 50% 100%; will-change: transform; }
 #terrain { position: absolute; left: -75%; right: -75%; top: -45%; bottom: -45%;
   background: linear-gradient(180deg, rgba(70,20,14,.55) 0%, rgba(70,20,14,.55) 23.68%, rgba(70,20,14,.08) 28.07%, rgba(70,20,14,0) 31%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .12 0 0 0 .22 -.05'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"), #c9b085; }
 #cv { position: relative; display: block; touch-action: none; box-shadow: 0 0 0 1px rgba(80,58,30,.32); }
-#desk { position: absolute; inset: 0; z-index: 2; pointer-events: none; transform: scale(1.32); transform-origin: 50% 72%; transition: transform .9s cubic-bezier(.3,.7,.2,1);
+#desk { position: absolute; inset: 0; z-index: 2; pointer-events: none; transform: scale(1.32); transform-origin: 50% 72%; will-change: transform;
   background: radial-gradient(70% 34% at 12% 6%, rgba(255,190,110,.4), rgba(255,190,110,0) 70%), repeating-linear-gradient(90deg, rgba(0,0,0,.16) 0 2px, rgba(0,0,0,0) 2px 64px), linear-gradient(180deg, #4a3220 0%, #3a2616 50%, #22150c 100%);
   -webkit-mask-image: radial-gradient(ellipse 60% 62% at 50% 72%, transparent 84%, #000 100%); mask-image: radial-gradient(ellipse 60% 62% at 50% 72%, transparent 84%, #000 100%); }
-#stage.tilt #desk { transform: none; }
-#desk .prop { position: absolute; opacity: 0; transition: opacity .5s .3s; }
-#stage.tilt #desk .prop { opacity: 1; }
+#desk .prop { position: absolute; opacity: 0; }
 #desk .prop > div, #desk .prop > svg { position: relative; display: block; }
 #desk .p-lamp { left: 1%; top: .5%; transform: scale(.62); transform-origin: 0 0; } #desk .p-flags { right: 1%; top: 0; transform: scale(.62); transform-origin: 100% 0; } #desk .p-roll { left: 50%; top: 1%; transform: translateX(-50%) scale(.6); transform-origin: 50% 0; } #desk .p-ink { display: none; }
 @keyframes lampflick { 0% { opacity: .85; transform: scale(1); } 100% { opacity: 1; transform: scale(1.08); } }
 #desk .p-lamp > div > div { animation: lampflick .7s ease-in-out infinite alternate; }
-@media (prefers-reduced-motion: reduce) { #ground, #desk, #desk .prop { transition: none; } #desk .p-lamp > div > div { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #desk .p-lamp > div > div { animation: none; } }
 
 footer { display: flex; flex-direction: column; gap: 6px; }
 .inkrow { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--dim); }
@@ -1317,9 +1314,27 @@ window.addEventListener('resize', fit);
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let last = performance.now(), uiT = 0;
+// ---------- 镜头：布阵时贴近（沙地平放、桌面在画面外），开战后沙地放倒、镜头拉远 ----------
+// 每一帧自己算，不靠样式的自动过渡：这样在任何设备上都会播，也不受系统「减弱动态效果」影响
+let camK = 0;                       // 0 = 布阵的镜头，1 = 开战后的镜头
+const CAM_SEC = 1.1;                // 整个转场多少秒
+const camEase = k => k * k * (3 - 2 * k);
+function camApply() {
+  const e = camEase(camK), g = document.getElementById('ground'), d = document.getElementById('desk');
+  g.style.transform = e < 0.001 ? 'none' : `scale(${(1 - 0.06 * e).toFixed(4)}) rotateX(${(25 * e).toFixed(2)}deg)`;
+  d.style.transform = `scale(${(1.32 - 0.32 * e).toFixed(4)})`;
+  const o = Math.max(0, Math.min(1, (e - 0.45) / 0.4)).toFixed(3);   // 摆件在镜头退到一半以后才淡进来
+  for (const p of d.querySelectorAll('.prop')) p.style.opacity = o;
+}
+function camStep(dt) {
+  const to = state === 'fight' || state === 'pick' || state === 'over' ? 1 : 0;
+  if (camK === to) return;
+  camK = to > camK ? Math.min(1, camK + dt / CAM_SEC) : Math.max(0, camK - dt / CAM_SEC);
+  camApply();
+}
 function frame(now) {
-  document.getElementById('stage').classList.toggle('tilt', state === 'fight' || state === 'pick' || state === 'over');
   let dt = Math.min(0.05, (now - last) / 1000); last = now;
+  camStep(dt);
   const gdt = dt;
   inkWarnT -= dt; bannerT -= dt;
   if (state === 'prep') for (const s of soldiers) s.pop = Math.max(0, s.pop - dt * 4);
@@ -1517,5 +1532,5 @@ sandImg = makeSand();
 reset(); fit(); showStart(); hud();
 requestAnimationFrame(frame);
 // 测试用：外部可以直接调这些
-window.__hz = { TUNE, setThick: v => { thick = v; }, get list() { return enemies.map(e => [e.kind, Math.round(e.x), Math.round(e.y), +e.hp.toFixed(1), e.state]); }, get hits() { return hitStat; }, get mstat() { return mstat; }, get state() { return state; }, startPrep: () => { overlay(null); startPrep(); }, startFight: () => startFight(), stamp: (x, y) => stamp(x, y), setTool: k => { tool = k; }, get enemies() { return enemies.length; }, get kills() { return kills; }, get wave() { return wave; }, get mine() { return soldiers.filter(s => !s.dead).length; } };
+window.__hz = { TUNE, setThick: v => { thick = v; }, get list() { return enemies.map(e => [e.kind, Math.round(e.x), Math.round(e.y), +e.hp.toFixed(1), e.state]); }, get hits() { return hitStat; }, get cam() { return camK; }, get mstat() { return mstat; }, get state() { return state; }, startPrep: () => { overlay(null); startPrep(); }, startFight: () => startFight(), stamp: (x, y) => stamp(x, y), setTool: k => { tool = k; }, get enemies() { return enemies.length; }, get kills() { return kills; }, get wave() { return wave; }, get mine() { return soldiers.filter(s => !s.dead).length; } };
 </script>

@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>画阵</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@900&family=Barlow+Semi+Condensed:wght@700;800&display=swap">
 <style>
 /* 沙盘推演：深木框围着一块沙土台面，兵是涂了色的小棋子，敌人是一片暗红的潮水 */
 :root {
@@ -161,20 +161,125 @@ footer { display: flex; flex-direction: column; gap: 6px; }
 .bknote { font-size: 12px !important; color: var(--dim) !important; }
 .stat { text-align: center; color: var(--dim); font-size: 13px; margin-bottom: 14px; }
 .stat b { color: var(--gold); font-size: 22px; }
+
+/* ================= 丙 · 沙盘桌界面（备战、战斗、结算） ================= */
+body { background: radial-gradient(90% 36% at 12% 0%, rgba(255,190,110,.2), rgba(255,190,110,0) 70%), repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 2px, rgba(0,0,0,0) 2px 64px), linear-gradient(180deg, #3a2616, #1c120a);
+  padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); }
+.serif { font-family: "Noto Serif SC", "Songti SC", serif; font-weight: 900; }
+.num { font-family: "Barlow Semi Condensed", var(--ui); font-weight: 800; font-variant-numeric: tabular-nums; }
+#app[data-s="fight"] .only-prep, #app:not([data-s="fight"]) .only-fight { display: none !important; }
+.rb { appearance: none; width: 42px; height: 42px; flex: none; padding: 0; border: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff3d6; cursor: pointer;
+  background: rgba(20,12,6,.62); box-shadow: inset 0 0 0 1.5px rgba(255,236,190,.34), 0 4px 10px rgba(0,0,0,.4); font: 800 17px "Barlow Semi Condensed", var(--ui); }
+.rb:focus-visible, .act:focus-visible, .hcard:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.pill { height: 32px; padding: 0 12px 0 9px; border-radius: 16px; display: flex; align-items: center; gap: 6px; color: #fff3d6; font-size: 12px; font-weight: 700; white-space: nowrap;
+  background: rgba(20,12,6,.62); box-shadow: inset 0 0 0 1.5px rgba(255,236,190,.3); }
+.pill b { font: 800 17px "Barlow Semi Condensed", var(--ui); }
+#top { display: flex; align-items: center; gap: 8px; height: 46px; flex: none; }
+.scroll { position: relative; flex: 1; min-width: 0; height: 40px; margin: 0 8px; padding: 0 12px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #2a1e12;
+  background: linear-gradient(180deg, #fbf3de, #eedfb8); box-shadow: 0 4px 10px rgba(0,0,0,.4); }
+.scroll::before, .scroll::after { content: ""; position: absolute; top: -4px; width: 11px; height: 48px; border-radius: 6px; background: linear-gradient(90deg, #8a5a2e, #c99a5a, #8a5a2e); }
+.scroll::before { left: -7px; } .scroll::after { right: -7px; }
+.scroll b { font: 900 19px "Noto Serif SC", "Songti SC", serif; letter-spacing: 2px; white-space: nowrap; }
+.scroll small { font-size: 11px; font-weight: 700; color: #7a5a36; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#row2 { height: 34px; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#foeChip span { display: flex; align-items: center; gap: 2px; } #foeChip em { font-style: normal; color: #ff9a88; font-weight: 900; }
+#morChip b { color: #ffb45a; }
+#vs { flex: 1; display: flex; align-items: center; }
+.flag { width: 92px; height: 34px; flex: none; display: flex; align-items: center; padding: 0 14px; color: #fff; }
+.flag b, #mine, #foes { font: 800 24px "Barlow Semi Condensed", var(--ui); text-shadow: 0 2px 0 rgba(0,0,0,.35); min-width: 0; }
+.flag.me { background: linear-gradient(180deg, #4f9bff, #2a6ae0); clip-path: polygon(0 0, 100% 0, 88% 50%, 100% 100%, 0 100%); }
+.flag.foe { justify-content: flex-end; background: linear-gradient(180deg, #f26a52, #c9372a); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 12% 50%); }
+#vs .bar { height: 10px; margin: 0 -6px; border: 0; border-radius: 5px; background: #e0553a; box-shadow: inset 0 0 0 1.5px rgba(255,236,190,.5); }
+#vs .bar i { background: #3f8cff; border-right: 2px solid #fff3d6; }
+footer { position: relative; height: 158px; flex: none; display: block; }
+#acts { position: absolute; left: 0; top: 2px; display: flex; gap: 8px; align-items: center; }
+.act { appearance: none; height: 36px; padding: 0 14px; border: 0; border-radius: 18px; color: #fff3d6; cursor: pointer; font: 900 14px "Noto Serif SC", "Songti SC", serif;
+  background: rgba(20,12,6,.62); box-shadow: inset 0 0 0 1.5px rgba(255,236,190,.3); }
+.act.green { color: #bff0d8; }
+#fight { position: absolute; right: 2px; top: -20px; z-index: 3; width: 80px; height: 80px; padding: 0; border-radius: 50%; border: 0; color: #fff6dc; cursor: pointer;
+  font: 900 23px "Noto Serif SC", "Songti SC", serif; letter-spacing: 2px; text-shadow: 0 2px 0 rgba(80,10,0,.6);
+  background: radial-gradient(circle at 50% 28%, #f2735a 0%, #c9372a 55%, #8e1e14 100%); box-shadow: inset 0 0 0 3px rgba(255,255,255,.25), 0 0 0 4px #e9c87a, 0 0 0 6px #5a3e22, 0 12px 20px rgba(0,0,0,.55); }
+#fight:disabled { opacity: .5; background: radial-gradient(circle at 50% 28%, #f2735a 0%, #c9372a 55%, #8e1e14 100%); color: #fff6dc; font: 900 23px "Noto Serif SC", "Songti SC", serif; letter-spacing: 2px; border: 0; }
+#tools { position: absolute; left: 0; right: 0; bottom: 16px; display: flex; justify-content: center; gap: 0; }
+.hcard { appearance: none; width: 74px; height: 100px; margin: 0 -4px; padding: 0; border: 0; border-radius: 11px; overflow: hidden; display: flex; flex-direction: column; align-items: center; cursor: pointer;
+  color: #2a1e12; background: linear-gradient(180deg, #fffbee, #f1e3bf); box-shadow: 0 0 0 1.5px #b8935a, 0 8px 14px rgba(0,0,0,.45);
+  transform: rotate(var(--r, 0deg)) translateY(calc(var(--y, 0px) - var(--up, 0px))); transition: transform .15s, box-shadow .15s; }
+.hcard:nth-child(1) { --r: -9deg; --y: 9px; } .hcard:nth-child(2) { --r: -3deg; } .hcard:nth-child(3) { --r: 3deg; } .hcard:nth-child(4) { --r: 9deg; --y: 9px; }
+.hcard .ht { width: 100%; height: 50px; flex: none; display: flex; align-items: center; justify-content: center; }
+.hcard .ht i { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.9); display: flex; align-items: center; justify-content: center; }
+.hcard b { font: 900 17px/24px "Noto Serif SC", "Songti SC", serif; margin-top: 2px; }
+.hcard small { font: 800 15px/16px "Barlow Semi Condensed", var(--ui); color: #7a5a36; } .hcard small u { text-decoration: none; opacity: .6; font-size: 12px; }
+.hcard.on { --up: 10px; box-shadow: 0 0 0 3px #ffd24a, 0 0 20px 4px rgba(255,210,74,.7), 0 10px 18px rgba(0,0,0,.5); z-index: 2; }
+#tools.locked .hcard { opacity: .45; pointer-events: none; }
+#brazier { position: absolute; left: 8px; bottom: 6px; width: 84px; height: 124px; }
+#brazier .glow { position: absolute; left: 4px; bottom: 26px; width: 76px; height: 76px; border-radius: 50%; background: radial-gradient(circle, rgba(255,150,40,.8), rgba(255,120,30,0) 70%); opacity: var(--g, .4); transition: opacity .3s; }
+#brazier .fl { position: absolute; left: 0; right: 0; bottom: 42px; display: flex; justify-content: center; align-items: flex-end; transform: scale(var(--f, .7)); transform-origin: 50% 100%; transition: transform .3s; }
+#brazier .fl svg { animation: flick .45s ease-in-out infinite alternate; transform-origin: 50% 100%; } #brazier .fl svg:nth-child(1) { margin-right: -14px; animation-delay: .1s; } #brazier .fl svg:nth-child(3) { margin-left: -14px; animation-delay: .2s; }
+#brazier .bowl { position: absolute; left: 8px; bottom: 20px; width: 68px; height: 26px; border-radius: 6px 6px 30px 30px; background: linear-gradient(180deg, #8a6a3a, #4a3418); box-shadow: inset 0 2px 0 #c9a25a, 0 6px 10px rgba(0,0,0,.5); }
+#brazier .foot { position: absolute; left: 30px; bottom: 8px; width: 24px; height: 14px; background: #3a2812; border-radius: 0 0 6px 6px; }
+#brazier b { position: absolute; left: 8px; bottom: 20px; width: 68px; text-align: center; font: 800 22px/26px "Barlow Semi Condensed", var(--ui); color: #ffe9b8; }
+#alive { position: absolute; right: 0; bottom: 34px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; max-width: 250px; }
+#alive .pill { height: 38px; padding: 0 14px 0 8px; border-radius: 19px; } #alive .pill b { font-size: 19px; }
+.panel .go + .go { margin-top: 8px; }
+/* 结算 + 选卡：盖住整个屏幕 */
+#full { position: fixed; inset: 0; z-index: 80; display: flex; justify-content: center; overflow-y: auto; background: rgba(16,10,5,.9); }
+#full[hidden] { display: none; }
+.res { width: 100%; max-width: 420px; padding: 14px 14px 22px; display: flex; flex-direction: column; gap: 12px; color: #fff3d6; }
+.res .rtop { display: flex; justify-content: flex-end; }
+.res .big { position: relative; align-self: center; width: 236px; height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #2a1e12; background: linear-gradient(180deg, #fbf3de, #eedfb8); box-shadow: 0 12px 26px rgba(0,0,0,.5); }
+.res .big::before, .res .big::after { content: ""; position: absolute; top: -6px; width: 16px; height: 108px; border-radius: 8px; background: linear-gradient(90deg, #8a5a2e, #c99a5a, #8a5a2e); }
+.res .big::before { left: -10px; } .res .big::after { right: -10px; }
+.res .big small { font-size: 12px; font-weight: 700; letter-spacing: 6px; color: #7a5a36; } .res .big h1 { margin: 0; font: 900 52px/1.1 "Noto Serif SC", "Songti SC", serif; letter-spacing: 14px; padding-left: 14px; color: #2a1e12; }
+.res .row { position: relative; height: 104px; margin-top: 6px; }
+.res .sealw { position: absolute; left: 6px; top: 6px; animation: push .35s cubic-bezier(.3,.8,.3,1) .9s backwards; }
+.res .seal { width: 92px; height: 92px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: #c9372a; color: #fff; font: 900 64px/1 "Noto Serif SC", "Songti SC", serif; transform: rotate(-6deg);
+  box-shadow: inset 0 0 0 4px #c9372a, inset 0 0 0 6px rgba(255,255,255,.75), 0 10px 20px rgba(120,20,10,.5); animation: stamp .45s cubic-bezier(.2,.9,.3,1.2) .15s backwards; }
+.res .goldw { position: absolute; left: 118px; top: 4px; display: flex; flex-direction: column; align-items: flex-start; gap: 0; transform-origin: 0 50%; animation: pop .5s ease-out .95s backwards; }
+.res .goldw .lab { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: 3px; color: #c9bfa4; } .res .goldw .lab svg { animation: coinpop .5s ease-out 3.7s backwards; }
+.res .goldn { display: flex; align-items: center; gap: 8px; } .res .digits { display: flex; font: 800 54px/1 "Barlow Semi Condensed", var(--ui); color: #ffd98a; }
+.res .digits > span { display: inline-block; height: 58px; overflow: hidden; } .res .digits > span > span { display: flex; flex-direction: column; } .res .digits > span > span > span { height: 58px; line-height: 58px; }
+.res .plus { padding: 0 10px; border-radius: 13px; background: #c9372a; color: #fff; font: 800 18px/26px "Barlow Semi Condensed", var(--ui); animation: rise .35s ease-out 3.8s backwards; }
+.res .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; text-align: center; height: 58px; border-radius: 14px; background: rgba(20,12,6,.62); box-shadow: inset 0 0 0 1.5px rgba(255,236,190,.3); font-size: 12px; font-weight: 700; color: #c9bfa4; }
+.res .stats > div + div { border-left: 1.5px solid rgba(255,236,190,.2); } .res .stats b { display: block; font: 800 22px/24px "Barlow Semi Condensed", var(--ui); color: #fff3d6; } .res .stats .hi b { color: #ffd98a; }
+.res .stats .lost { display: flex; justify-content: center; gap: 8px; margin-top: 1px; } .res .stats .lost span { display: flex; align-items: center; gap: 1px; font: 800 15px "Barlow Semi Condensed", var(--ui); color: #fff3d6; }
+.res .hd { display: flex; align-items: center; justify-content: space-between; } .res .hd h2 { margin: 0; font: 900 24px "Noto Serif SC", "Songti SC", serif; letter-spacing: 4px; }
+.res .hd button { display: flex; align-items: center; gap: 6px; } .res .hd button em { font-style: normal; padding: 0 7px; border-radius: 9px; background: #ffd24a; color: #2a1e12; font: 800 14px/18px "Barlow Semi Condensed", var(--ui); } .res .hd button:disabled { opacity: .4; }
+.res .fan { display: flex; justify-content: center; padding: 6px 0 16px; }
+.rcard { appearance: none; width: 112px; height: 168px; margin: 0 -2px; padding: 0; border: 0; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; align-items: center; cursor: pointer; color: #2a1e12;
+  background: linear-gradient(180deg, #fffbee, #f1e3bf); box-shadow: 0 0 0 2px #c9a25a, 0 14px 24px rgba(0,0,0,.5); transform: rotate(var(--r, 0deg)) translateY(var(--y, 0px)); }
+.rcard:nth-child(1) { --r: -6deg; --y: 12px; } .rcard:nth-child(3) { --r: 6deg; --y: 12px; }
+.rcard .ht { width: 100%; height: 78px; flex: none; display: flex; align-items: center; justify-content: center; gap: 2px; } .rcard .ht i { width: 58px; height: 58px; border-radius: 50%; background: rgba(255,255,255,.9); display: flex; align-items: center; justify-content: center; }
+.rcard em { margin-top: 8px; font-style: normal; font-size: 11px; font-weight: 900; letter-spacing: 3px; color: #b8700a; } .rcard em.g { color: #0e8a5a; }
+.rcard b { font: 900 19px/26px "Noto Serif SC", "Songti SC", serif; } .rcard span { font: 800 16px "Barlow Semi Condensed", var(--ui); color: #c9372a; padding: 0 4px; text-align: center; line-height: 1.15; }
+.prem { position: relative; height: 78px; padding: 0 10px 0 14px; border-radius: 14px; display: flex; align-items: center; gap: 10px; color: #2a1e12; background: linear-gradient(180deg, #fff0b8, #f0cc6a); box-shadow: 0 0 0 2px #ffe9a8, 0 0 0 4px #8a6222, 0 14px 24px rgba(0,0,0,.5); }
+.prem .tt { flex: 1; min-width: 0; } .prem .tt b { font: 900 20px "Noto Serif SC", "Songti SC", serif; } .prem .tt i { font-style: normal; font-size: 10px; font-weight: 900; letter-spacing: 2px; color: #fff; background: #c9372a; border-radius: 4px; padding: 1px 5px; margin-left: 8px; vertical-align: 3px; }
+.prem .tt div { font: 800 14px "Barlow Semi Condensed", var(--ui); color: #7a5212; }
+.prem button { appearance: none; height: 48px; padding: 0 16px 0 10px; border: 0; border-radius: 24px; display: flex; align-items: center; gap: 6px; cursor: pointer; color: #fff6dc; font: 800 21px "Barlow Semi Condensed", var(--ui); background: linear-gradient(180deg, #f2735a, #b82a1c); box-shadow: 0 8px 16px rgba(120,20,10,.5); }
+.prem button:disabled { opacity: .5; }
+@keyframes roll { from { transform: translateY(0); } }
+@keyframes stamp { 0% { transform: scale(2.4) rotate(-18deg); opacity: 0; } 70% { transform: scale(.92) rotate(-6deg); opacity: 1; } 100% { transform: scale(1) rotate(-6deg); opacity: 1; } }
+@keyframes rise { from { transform: translateY(20px); opacity: 0; } }
+@keyframes push { from { transform: translateX(calc(50vw - 66px)); } }
+@keyframes pop { 0% { transform: scale(0); } 65% { transform: scale(1.2); } 82% { transform: scale(.94); } 100% { transform: scale(1); } }
+@keyframes coinpop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .res *, #brazier .fl svg { animation: none !important; } }
 </style>
 
-<div id="app">
-  <header id="hud">
-    <div><span class="lbl">波</span><b id="wave">1</b></div>
-    <div><span class="lbl">我</span><b id="mine">0</b><div class="bar vs"><i id="vsFill"></i></div><b id="foes">0</b><span class="lbl">敌</span></div>
-    <div><span class="lbl">斩</span><b id="kills">0</b></div>
+<div id="app" data-s="start">
+  <header id="top">
+    <button class="rb" id="backBtn" aria-label="返回"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="scroll only-prep"><b id="waveTxt">第一波</b><small id="armyTxt"></small></div>
+    <div class="only-fight" style="flex:1"></div>
+    <div class="pill only-prep" aria-label="金币"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f5c445" stroke="#2a1e12" stroke-width="1.6"/><circle cx="12" cy="12" r="6.8" fill="none" stroke="#b8700a" stroke-width="1.2"/><rect x="9.7" y="9.7" width="4.6" height="4.6" rx=".8" fill="#fff4cc" stroke="#2a1e12" stroke-width="1.2"/></svg><b id="goldTxt" style="color:#ffd98a">0</b></div>
+    <button class="rb only-fight" id="speedBtn" aria-label="变速">×1</button>
+    <button class="rb only-fight" id="pauseBtn" aria-label="暂停"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
+    <button class="rb only-prep" id="menuBtn" aria-label="菜单"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </header>
-
-  <div id="morale">
-    <div class="mrow me"><span class="lbl">我军士气</span><div class="mbar"><i id="mMe"></i><em class="fire"></em></div><b id="mMeN">80</b></div>
-    <div class="mrow foe"><span class="lbl">敌军士气</span><div class="mbar"><i id="mFoe"></i><em class="fire"></em></div><b id="mFoeN">70</b></div>
+  <div id="row2">
+    <div class="pill only-prep" id="foeChip"></div>
+    <div class="pill only-prep" id="morChip"><svg width="15" height="16" viewBox="0 0 24 26" aria-hidden="true"><path d="M12 2c1 5 6 7 6 13a6 6 0 0 1-12 0c0-3 1-4 2-5 0 2 1 3 2 3 0-4-1-6 2-11z" fill="#ff7a1f"/></svg>士气<b id="mMeN">80</b></div>
+    <div class="only-fight" id="vs"><span class="flag me"><b id="mine">0</b></span><div class="bar vs"><i id="vsFill"></i></div><span class="flag foe"><b id="foes">0</b></span></div>
   </div>
-  <div id="intel" hidden></div>
   <div id="stage">
     <div id="ground"><div id="terrain"><svg viewBox="-270 -270 900 1140" preserveAspectRatio="none" style="position:absolute;left:0;top:0;width:100%;height:100%" aria-hidden="true"><path d="M-110 640 Q-105 380 -40 120" fill="none" stroke="#8a6f45" stroke-width="1.4" stroke-dasharray="3 6" stroke-linecap="round" opacity=".55"/><path d="M-103 640 Q-98 380 -33 120" fill="none" stroke="#8a6f45" stroke-width="1.4" stroke-dasharray="3 6" stroke-linecap="round" opacity=".55"/><path d="M450 640 Q465 390 400 140" fill="none" stroke="#8a6f45" stroke-width="1.4" stroke-dasharray="3 6" stroke-linecap="round" opacity=".55"/><path d="M457 640 Q472 390 407 140" fill="none" stroke="#8a6f45" stroke-width="1.4" stroke-dasharray="3 6" stroke-linecap="round" opacity=".55"/><path d="M60 690 Q180 725 300 760" fill="none" stroke="#8a6f45" stroke-width="1.4" stroke-dasharray="3 6" stroke-linecap="round" opacity=".55"/><path d="M67 690 Q187 725 307 760" fill="none" stroke="#8a6f45" stroke-width="1.4" stroke-dasharray="3 6" stroke-linecap="round" opacity=".55"/><g transform="translate(20,-96) scale(1.20)"><ellipse cx="1" cy="1" rx="5" ry="1.6" fill="rgba(70,48,20,.3)"/><path d="M0 0 V-22" stroke="#5a4326" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -22 h11 l-3 4 3 4 h-11 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(180,-96) scale(1.20)"><ellipse cx="1" cy="1" rx="5" ry="1.6" fill="rgba(70,48,20,.3)"/><path d="M0 0 V-22" stroke="#5a4326" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -22 h11 l-3 4 3 4 h-11 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(340,-96) scale(1.20)"><ellipse cx="1" cy="1" rx="5" ry="1.6" fill="rgba(70,48,20,.3)"/><path d="M0 0 V-22" stroke="#5a4326" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -22 h11 l-3 4 3 4 h-11 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(93,-66) scale(1.05)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#c96a52"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(262,-63) scale(1.02)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#c96a52"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(157,-56) scale(1.13)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#c96a52"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(212,-53) scale(1.05)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#c96a52"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(320,-52) scale(0.97)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#c96a52"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(38,-49) scale(1.11)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#c96a52"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(426,-24) scale(1.02)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(505,-17) scale(1.18)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-68,4) scale(0.99)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(506,25) scale(1.18)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-39,28) scale(0.86)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-59,28) scale(1.15)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(436,36) scale(0.93)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-116,40) scale(1.30)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(394,68) scale(1.09)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(437,98) scale(0.85)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-130,98) scale(1.06)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(402,110) scale(0.85)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(447,121) scale(1.17)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-148,131) scale(0.97)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-98,137) scale(0.91)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-94,147) scale(0.99)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-83,148) scale(0.92)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(472,189) scale(0.80)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(-128,192) scale(1.08)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(420,217) scale(1.16)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-111,219) scale(0.92)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(426,236) scale(0.91)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-90,238) scale(1.09)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-111,254) scale(1.03)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(395,277) scale(1.02)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-73,302) scale(1.02)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(444,304) scale(1.24)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-64,308) scale(1.25)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(471,312) scale(0.90)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-57,315) scale(0.91)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-141,317) scale(1.25)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(487,350) scale(0.88)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(-131,367) scale(0.83)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(397,373) scale(0.86)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-48,378) scale(0.84)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(444,384) scale(1.04)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(485,400) scale(1.09)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(379,413) scale(1.11)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-105,423) scale(1.15)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(471,468) scale(1.11)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(472,468) scale(1.04)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-103,468) scale(0.92)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(435,475) scale(1.13)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-28,534) scale(0.79)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(406,545) scale(1.24)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(462,561) scale(0.80)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-43,564) scale(0.97)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-132,575) scale(1.18)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-112,577) scale(0.98)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(461,582) scale(1.16)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(473,603) scale(0.96)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(-74,622) scale(1.16)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-85,622) scale(0.90)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-107,624) scale(1.08)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(-39,625) scale(1.05)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(401,628) scale(0.85)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(436,639) scale(0.84)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(95,647) scale(1.11)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#6f8cc4"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(208,651) scale(1.12)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#6f8cc4"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(148,651) scale(1.10)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#6f8cc4"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(263,653) scale(1.14)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#6f8cc4"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(455,653) scale(0.89)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(33,662) scale(0.97)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#6f8cc4"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(325,662) scale(0.96)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#6f8cc4"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(16,700) scale(1.20)"><ellipse cx="1" cy="1" rx="5" ry="1.6" fill="rgba(70,48,20,.3)"/><path d="M0 0 V-22" stroke="#5a4326" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -22 h11 l-3 4 3 4 h-11 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(180,700) scale(1.20)"><ellipse cx="1" cy="1" rx="5" ry="1.6" fill="rgba(70,48,20,.3)"/><path d="M0 0 V-22" stroke="#5a4326" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -22 h11 l-3 4 3 4 h-11 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(344,700) scale(1.20)"><ellipse cx="1" cy="1" rx="5" ry="1.6" fill="rgba(70,48,20,.3)"/><path d="M0 0 V-22" stroke="#5a4326" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -22 h11 l-3 4 3 4 h-11 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(330,716) scale(1.10)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(226,726) scale(1.10)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(338,736) scale(1.10)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(117,746) scale(1.10)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(315,756) scale(1.10)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g></svg></div><canvas id="cv"></canvas></div>
 <div id="desk" aria-hidden="true"><svg viewBox="0 0 390 700" preserveAspectRatio="xMidYMid slice" style="position:absolute;left:3%;top:2.5%;width:94%;height:95%" aria-hidden="true"><defs><filter id="mp"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="7"/><feColorMatrix values="0 0 0 0 .45  0 0 0 0 .32  0 0 0 0 .16  0 0 0 .2 -.05"/></filter></defs>
@@ -188,15 +293,16 @@ footer { display: flex; flex-direction: column; gap: 6px; }
     </div>
     <div id="ov" class="ov"></div>
   </div>
+  <div id="full" hidden></div>
   <div id="selPop" hidden><button id="selRecall">撤</button><button id="selCancel" aria-label="取消选择">✕</button></div>
 
   <footer>
-    <div class="inkrow"><span>金币</span><b id="goldTxt">0</b><span id="goldTip"></span><button id="bookBtn" class="bookbtn">兵书</button></div>
-    <div id="tools"></div>
-    <div id="forms"></div>
-    <div id="recruit"></div>
-    <div id="combos"></div>
-    <button id="fight" disabled>开战</button>
+    <div id="acts" class="only-prep"><button class="act" id="formBtn">阵谱</button><button class="act green" id="recBtn">招兵</button><button class="act" id="thickBtn">粗笔</button></div>
+    <button id="fight" class="only-prep" disabled>开战</button>
+    <div id="tools" class="only-prep"></div>
+    <div id="brazier" class="only-fight" aria-label="我军士气"><div class="glow"></div><div class="fl"><svg width="30" height="33" viewBox="0 0 24 26" aria-hidden="true"><path d="M12 2c1 5 6 7 6 13a6 6 0 0 1-12 0c0-3 1-4 2-5 0 2 1 3 2 3 0-4-1-6 2-11z" fill="#ffb02e"/></svg><svg width="56" height="62" viewBox="0 0 24 26" aria-hidden="true"><path d="M12 2c1 5 6 7 6 13a6 6 0 0 1-12 0c0-3 1-4 2-5 0 2 1 3 2 3 0-4-1-6 2-11z" fill="#ff6a1a"/><path d="M12 13c1 2 3 3 3 5a3 3 0 0 1-6 0c0-2 2-3 3-5z" fill="#ffe98a"/></svg><svg width="30" height="33" viewBox="0 0 24 26" aria-hidden="true"><path d="M12 2c1 5 6 7 6 13a6 6 0 0 1-12 0c0-3 1-4 2-5 0 2 1 3 2 3 0-4-1-6 2-11z" fill="#ff8a1f"/></svg></div><div class="bowl"></div><div class="foot"></div><b id="mFightN">80</b></div>
+    <div id="alive" class="only-fight"></div>
+    <div id="combos" hidden></div>
   </footer>
 </div>
 
@@ -518,7 +624,6 @@ function startPrep() {
   wave++;
   sp = planWave(wave);
   state = 'prep'; bannerTxt = `第 ${wave} 波 · ${sp.army}${wave > 3 && !sp.big ? '（同上波）' : ''}`; bannerT = 1.6;
-  document.getElementById('wave').textContent = wave;
   clearZone();
   showIntel(); phaseUI(); buildGhosts(); buildTools();
 }
@@ -548,24 +653,28 @@ function landGroup(g, slots) {
 const foesLeft = () => sp ? sp.groups.reduce((n, g) => n + g.queue.length + g.slots.length + (g.pend ? g.pend.length : 0), 0) : 0;
 function phaseUI() {
   const b = document.getElementById('fight'), prep = state === 'prep';
+  document.getElementById('app').dataset.s = state;   // 样式按它切换备战 / 战斗两套界面
   b.disabled = !prep;
-  b.textContent = prep ? (sp.mod.fog ? '开战 · 敌情不明' : `开战 · 敌 ${foesLeft()} 人`) : state === 'fight' ? '战斗中，不能上兵' : '开战';
   document.getElementById('tools').classList.toggle('locked', !prep);
   if (typeof buildForms === 'function') { buildForms(); buildRecruit(); }
+  if (typeof ctx !== 'undefined') fit();
 }
 // 敌情：这波叫什么、天时、每一路来什么、新敌人的说明
+// 小图标：和沙盘上画的棋子是同一个形状、同一个颜色
+const uicon = (k, s = 24, col) => { const c = col || T[k].color, sh = {
+  shield: `<rect x="5" y="5" width="14" height="14" rx="2.5" fill="${c}" stroke="#2a1e12" stroke-width="1.6"/><rect x="6" y="6" width="12" height="3.4" rx="1.4" fill="rgba(255,255,255,.3)"/>`,
+  spear: `<path d="M12 4 L19.5 19 L4.5 19 Z" fill="${c}" stroke="#2a1e12" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 17 V2" stroke="#efe3c8" stroke-width="1.6" stroke-linecap="round"/>`,
+  bow: `<circle cx="12" cy="12" r="7.5" fill="${c}" stroke="#2a1e12" stroke-width="1.6"/><path d="M7.5 13.5 A5 5 0 0 1 16.5 13.5" fill="none" stroke="#e8ddc2" stroke-width="1.6" stroke-linecap="round"/>`,
+  horse: `<path d="M3.5 18 L7 6.5 L18 4 L20.5 18 Z" fill="${c}" stroke="#2a1e12" stroke-width="1.6" stroke-linejoin="round"/><rect x="15" y="5.2" width="3.2" height="3.2" fill="#efe3c8"/>` }[k];
+  return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true" style="flex:none">${sh}</svg>`; };
+const CN = n => n <= 10 ? '零一二三四五六七八九十'[n] : n;
+// 顶上的卷轴（第几波、军势、天时）和敌军各兵种的数量
 function showIntel() {
-  const el = document.getElementById('intel');
-  if (!sp) { el.hidden = true; fit(); return; }
-  const tag = wave <= 3 ? '' : sp.big ? ` <span class="mod">变阵</span>换打法了` : ` <span class="mod">同上波</span>人更多，微调就行`;
-  const lines = [`<b>${sp.army}</b>` + tag + sp.mods.map(m => ` <span class="mod">${m.name}</span>${m.tip}`).join('')];
-  const route = sp.groups.map(g => {
-    const what = sp.mod.fog ? '？' : Object.entries(g.counts).map(([k, n]) => `${FOES[k].name} ${n}`).join('、');
-    return `${DIRS[g.d][1]} ${DIRS[g.d][0]}：${what}${g.delay0 ? `（${g.delay0} 秒后）` : ''}`;
-  });
-  lines.push(route.join('　'));
-  el.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
-  el.hidden = false; fit();
+  if (!sp) return;
+  document.getElementById('waveTxt').textContent = `第${CN(wave)}波`;
+  document.getElementById('armyTxt').textContent = [sp.army, ...sp.mods.map(m => m.name)].join(' · ');
+  const n = {}; for (const g of sp.groups) for (const k in g.counts) n[k] = (n[k] || 0) + g.counts[k];
+  document.getElementById('foeChip').innerHTML = '<em>敌军</em>' + (sp.mod.fog ? '<span>？</span>' : Object.keys(FOES).filter(k => n[k]).map(k => `<span>${uicon(k, 16, FOES[k].color)}<b style="font-size:15px">${n[k]}</b></span>`).join(''));
 }
 function spawnFoe(kind, x, y) {
   const f = FOES[kind], hp = f.hp * sp.hpMul;
@@ -918,22 +1027,42 @@ function showPick() {
   soldiers = []; grid.fill(null); for (const a of units) a.length = 0; fallen = [];
   for (const [k, c, r] of homes) place(c, r, k, true);
   recalcBuffs(); buildTools(); hud();
-  const rewardHtml = `<div class="grade ${g}">${g}</div><div class="reward">歼敌兵力 ${foeLost} · 折损兵力 ${lost}（含逃散）<br>战损比 <b>${lost ? '1 : ' + ratio.toFixed(1) : '无损'}</b><br>基础 ${base} 金${bonus ? ` + 评级 ${Math.round(bonus * 100)}%` : ''} ＝ <b>${got} 金</b></div>`;
-  const pool = CARDS.filter(c => c.ok()).sort(() => Math.random() - 0.5);
-  const recruit = pool.filter(c => c.kind === '招兵'), buff = pool.filter(c => c.kind === '强化');
-  const pick = [recruit[0], buff[0]];
-  pick.push(pool.find(c => !pick.includes(c)));
+  // 从卡的文字里认出是哪个兵种（画图标用），再把标题拆成「名字 / 效果」两行
+  const KEY = [['刀盾', 'shield'], ['枪', 'spear'], ['弓', 'bow'], ['骑', 'horse']];
+  const unitsOf = c => KEY.filter(([w]) => (c.t + c.d).includes(w)).map(([, k]) => k);
+  const split = c => { const t = c.t.includes('：') ? c.t.split('：') : c.kind === '强化' ? [c.t.split(' ')[0], c.t.split(' ').slice(1).join(' ')] : [c.t, c.d]; return [t[0], t[1] || c.d]; };
+  const face = (c, big) => { const us = unitsOf(c); return us.length === 1 ? `<span class="ht" style="background:${T[us[0]].color}"><i>${uicon(us[0], 42)}</i></span>` : `<span class="ht" style="background:#8a6a3a">${us.map(k => uicon(k, 24)).join('')}</span>`; };
+  const deal = () => { const pool = CARDS.filter(c => c.ok()).sort(() => Math.random() - 0.5), rc = pool.filter(c => c.kind === '招兵'), bf = pool.filter(c => c.kind === '强化'), p = [rc[0], bf[0]]; p.push(pool.find(c => !p.includes(c))); return p; };
+  let pick = deal(), rerolled = false;
   const paidPool = PAID.filter(c => c.ok()), paid = paidPool[Math.floor(Math.random() * paidPool.length)];
   const price = Math.round((45 + 15 * wave) / 5) * 5;
-  const lostHtml = back ? `<div class="reward">战死 ${back} 个，不补回：${Object.entries(lostBy).map(([k, n]) => `${T[k].name} -${n}`).join('、')}</div>` : '';
-  overlay(`<div class="panel"><h2>第 ${wave} 波 胜利</h2>${rewardHtml}${lostHtml}<div class="cards">${pick.map((c, k) =>
-    `<button class="card${c.isNew ? ' new' : ''}" id="card${k}" data-k="${k}"><b><i class="tag">${c.kind}</i>${c.t}</b>${c.d ? `<span>${c.d}</span>` : ''}</button>`).join('')}
-    <div class="paidlbl">另外可以花金币买（买不买都行）</div>
-    <button class="card paid" id="paid"><b><i class="tag">${paid.kind}</i>${paid.t}<em>${price} 金</em></b><span>${paid.d}</span></button></div></div>`);
-  pick.forEach((c, k) => document.getElementById('card' + k).onclick = () => { c.go(); buildTools(); overlay(null); startPrep(); });
+  const digits = String(gold).split('').map((ch, k) => { let d = ''; const n = 10 * (2 + k) + Number(ch) + 1; for (let q = 0; q < n; q++) d += `<span>${q % 10}</span>`;
+    return `<span><span style="transform:translateY(${-(n - 1) * 58}px);animation:roll ${1.4 + 0.45 * k}s cubic-bezier(.15,.7,.2,1) 1.4s backwards">${d}</span></span>`; }).join('');
+  const COINS = '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f5c445" stroke="#2a1e12" stroke-width="1.6"/><circle cx="12" cy="12" r="6.8" fill="none" stroke="#b8700a" stroke-width="1.2"/><rect x="9.7" y="9.7" width="4.6" height="4.6" rx=".8" fill="#fff4cc" stroke="#2a1e12" stroke-width="1.2"/></svg>';
+  const lostHtml = Object.entries(lostBy).map(([k, n]) => `<span>${uicon(k, 15)}${n}</span>`).join('');
+  const [pn, pe] = split(paid), full = document.getElementById('full');
+  full.innerHTML = `<div class="res">
+    <span class="grade" hidden>${g}</span><span class="reward" hidden>歼敌兵力 ${foeLost} · 折损兵力 ${lost}（含逃散） 战损比 ${lost ? '1 : ' + ratio.toFixed(1) : '无损'} 基础</span>
+    <div class="big"><small>第${CN(wave)}波</small><h1>胜利</h1></div>
+    <div class="row"><div class="sealw"><div class="seal">${g}</div></div>
+      <div class="goldw" aria-label="现有 ${gold} 金，这一波 +${got}"><span class="lab">${COINS}金币</span><span class="goldn"><span class="digits">${digits}</span><span class="plus">+${got}</span></span></div></div>
+    <div class="stats"><div class="hi">战损比<b>${lost ? '1 : ' + ratio.toFixed(1) : '无损'}</b></div><div>歼敌<b>${foeLost}</b></div><div>折损 <span class="num" style="font-size:16px;color:#fff3d6">${lost}</span><div class="lost">${lostHtml}</div></div></div>
+    <div class="hd"><h2>犒赏</h2><button class="act" id="reroll"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>刷新<em>1</em></button></div>
+    <div class="fan" id="fan"></div>
+    <div class="prem"><div style="display:flex">${unitsOf(paid).map(k => uicon(k, 32)).join('')}</div><div class="tt"><b>${pn}</b><i>精品</i><div>${pe}</div></div><button id="paid">${COINS}<span>${price}</span></button></div>
+  </div>`;
+  full.hidden = false; full.scrollTop = 0;
+  const done = () => { full.hidden = true; full.innerHTML = ''; buildTools(); };
+  const drawFan = () => {
+    document.getElementById('fan').innerHTML = pick.map((c, k) => { const [n, e] = split(c); return `<button class="rcard" id="card${k}">${face(c)}<em class="${c.kind === '招兵' ? 'g' : ''}">${c.kind}</em><b>${n}</b><span>${e}</span></button>`; }).join('');
+    pick.forEach((c, k) => document.getElementById('card' + k).onclick = () => { c.go(); done(); startPrep(); });
+  };
+  drawFan();
+  const rr = document.getElementById('reroll');   // 刷新：每次结算只能换一批
+  rr.onclick = () => { if (rerolled) return; rerolled = true; pick = deal(); drawFan(); rr.disabled = true; rr.querySelector('em').textContent = '0'; };
   const pb = document.getElementById('paid');
-  const upd = () => { pb.disabled = pb.dataset.done || gold < price; if (!pb.dataset.done && gold < price) pb.querySelector('em').textContent = `${price} 金（不够）`; };
-  pb.onclick = () => { if (gold < price || pb.dataset.done) return; gold -= price; paid.go(); buildTools(); hud(); pb.dataset.done = 1; pb.querySelector('em').textContent = '已买'; upd(); };
+  const upd = () => { pb.disabled = !!pb.dataset.done || gold < price; };
+  pb.onclick = () => { if (gold < price || pb.dataset.done) return; gold -= price; paid.go(); buildTools(); hud(); pb.dataset.done = 1; pb.querySelector('span').textContent = '已买'; upd(); };
   upd();
 }
 function overlay(html) { const o = document.getElementById('ov'); o.hidden = !html; if (html) o.innerHTML = html; }
@@ -966,7 +1095,7 @@ function showBook(back) {
   document.getElementById('bookClose').onclick = () => { paused = false; if (back) back(); else overlay(null); };
 }
 function showOver() {
-  state = 'over'; phaseUI(); document.getElementById('intel').hidden = true; fit();
+  state = 'over'; phaseUI(); fit();
   overlay(`<div class="panel"><h2>全军覆没</h2><div class="stat">撑到第 <b>${wave}</b> 波 · 斩敌 <b>${kills}</b></div><button class="go" id="againBtn">再来</button></div>`);
   document.getElementById('againBtn').onclick = () => { reset(); showStart(); };
 }
@@ -974,16 +1103,10 @@ function showOver() {
 // ---------- 底部的兵种按钮 ----------
 function buildTools() {
   const box = document.getElementById('tools');
-  const items = [['shield'], ['spear'], ['bow'], ['horse'], ['thick']];
-  box.innerHTML = items.map(([k, g, sm]) => {
-    if (k === 'thick') return `<button class="tool" id="t-thick"><span class="g">${thick ? '粗' : '细'}</span><small>${thick ? '3×3' : '1 格'}</small></button>`;
-    const t = T[k];
-    return `<button class="tool${tool === k ? ' on' : ''}" id="t-${k}" ${t.locked ? 'disabled' : ''}><i class="sw" style="background:${t.color}"></i><span class="g"${t.name.length > 1 ? ' style="font-size:17px"' : ''}>${t.name}</span><small>${t.locked ? '未解锁' : `${countOf(k)}/${ownOf(k)}`}</small></button>`;
-  }).join('');
-  for (const [k] of items) document.getElementById('t-' + k).onclick = () => {
-    if (k === 'thick') thick = !thick; else { tool = k; sel = null; }
-    buildTools();
-  };
+  box.innerHTML = ['shield', 'spear', 'bow', 'horse'].map(k => { const t = T[k];
+    return `<button class="hcard${tool === k ? ' on' : ''}" id="t-${k}" aria-label="${t.name}兵 ${countOf(k)}/${ownOf(k)}"><span class="ht" style="background:${t.color}"><i>${uicon(k, 28)}</i></span><b>${t.name}</b><small>${countOf(k)}<u> / ${ownOf(k)}</u></small></button>`; }).join('');
+  for (const k of ['shield', 'spear', 'bow', 'horse']) document.getElementById('t-' + k).onclick = () => { tool = k; sel = null; buildTools(); };
+  document.getElementById('thickBtn').textContent = thick ? '粗笔' : '细笔';
   buildForms(); buildRecruit();
 }
 // ---------- 金币招兵：战死的不补回，只能在备战时花金币招 ----------
@@ -993,17 +1116,16 @@ function buyTroops(k) {
   gold -= n * p; T[k].cap += n; buildTools(); hud(); return true;
 }
 function buildRecruit() {
-  const box = document.getElementById('recruit'), on = state === 'prep';
+  const box = document.getElementById('recruit'), on = state === 'prep'; if (!box) return;
   box.innerHTML = `<span>招兵</span>` + Object.entries(RECRUIT).map(([k, [n, p]]) => `<button id="r-${k}" ${!on || gold < n * p ? 'disabled' : ''}>${T[k].name}+${n}<small>${n * p}金</small></button>`).join('');
   for (const k in RECRUIT) document.getElementById('r-' + k).onclick = () => buyTroops(k);
-  if (typeof ctx !== 'undefined') fit(); // 按钮行多了少了，沙盘跟着缩放
 }
 
 // ---------- 阵型存档：存 3 套，点一下整套摆上（记在这台设备上） ----------
 let forms = [null, null, null], saving = false;
 try { const v = JSON.parse(localStorage.getItem('huazhen.forms')); if (Array.isArray(v)) forms = [0, 1, 2].map(k => v[k] || null); } catch (e) {}
 function buildForms() {
-  const box = document.getElementById('forms');
+  const box = document.getElementById('forms'); if (!box) return;
   box.classList.toggle('locked', state !== 'prep');
   box.innerHTML = `<span>阵型</span>` + forms.map((f, k) => `<button id="f${k}" class="${saving ? 'on' : ''}">${'一二三'[k]}<small>${f ? f.length + ' 兵' : '空'}</small></button>`).join('')
     + `<button class="save${saving ? ' on' : ''}" id="fsave">${saving ? '存到哪？' : '存'}</button>`;
@@ -1013,7 +1135,7 @@ function buildForms() {
       forms[k] = soldiers.filter(s => !s.dead).map(s => [s.type, s.c, s.r]); saving = false;
       try { localStorage.setItem('huazhen.forms', JSON.stringify(forms)); } catch (e) {}
       floats.push({ x: W / 2, y: H * 0.45, text: `已存为阵型${'一二三'[k]}`, life: 1.4, color: '#ffe8a8' });
-    } else if (f) loadForm(f);
+    } else if (f) { loadForm(f); overlay(null); return; }
     else floats.push({ x: W / 2, y: H * 0.45, text: '这格是空的：先点「存」再点它', life: 1.6, color: '#ffd9c8' });
     buildForms();
   });
@@ -1092,7 +1214,36 @@ function drawSel() {
 
 // ---------- 画 ----------
 document.getElementById('fight').onclick = startFight;
-document.getElementById('bookBtn').onclick = () => { if (state !== 'pick' && state !== 'over' && state !== 'start') showBook(null); else if (state === 'start') showBook(showStart); };
+// ---------- 顶上和底下的按钮：菜单、返回、变速、阵谱、招兵、粗细 ----------
+let speed = 1;
+const closeOv = () => { paused = false; overlay(null); };
+function showMenu() {
+  if (state !== 'prep' && state !== 'fight') return;
+  paused = state === 'fight';
+  overlay(`<div class="panel"><h2>${state === 'fight' ? '暂停' : '菜单'}</h2><button class="go" id="mGo">继续</button><button class="go ghost" id="mBook">兵书</button><button class="go ghost" id="mQuit">放弃这一局</button></div>`);
+  document.getElementById('mGo').onclick = closeOv;
+  document.getElementById('mBook').onclick = () => showBook(showMenu);
+  document.getElementById('mQuit').onclick = showLeave;
+}
+function showLeave() {   // 返回：先问一句，免得误触丢掉一整局
+  if (state !== 'prep' && state !== 'fight') return;
+  paused = state === 'fight';
+  overlay(`<div class="panel"><h2>放弃这一局？</h2><p style="text-align:center">已经打到第 ${wave} 波，退出后从头再来。</p><button class="go" id="lStay">接着打</button><button class="go ghost" id="lQuit">放弃</button></div>`);
+  document.getElementById('lStay').onclick = closeOv;
+  document.getElementById('lQuit').onclick = () => { paused = false; reset(); phaseUI(); showStart(); };
+}
+function showPanel(title, id) {
+  if (state !== 'prep') return;
+  overlay(`<div class="panel"><h2>${title}</h2><div id="${id}"></div><button class="go ghost" id="pClose" style="margin-top:12px">关上</button></div>`);
+  document.getElementById('pClose').onclick = closeOv; buildForms(); buildRecruit();
+}
+document.getElementById('menuBtn').onclick = showMenu;
+document.getElementById('pauseBtn').onclick = showMenu;
+document.getElementById('backBtn').onclick = showLeave;
+document.getElementById('speedBtn').onclick = e => { speed = speed % 3 + 1; e.currentTarget.textContent = '×' + speed; };
+document.getElementById('formBtn').onclick = () => showPanel('阵谱', 'forms');
+document.getElementById('recBtn').onclick = () => showPanel('招兵', 'recruit');
+document.getElementById('thickBtn').onclick = () => { thick = !thick; buildTools(); };
 const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 let scale = 1, pointer = null;
 function toLocal(ev) { const r = cv.getBoundingClientRect(); return { x: (ev.clientX - r.left) / r.width * W, y: (ev.clientY - r.top) / r.height * H }; }
@@ -1173,11 +1324,13 @@ function frame(now) {
   inkWarnT -= dt; bannerT -= dt;
   if (state === 'prep') for (const s of soldiers) s.pop = Math.max(0, s.pop - dt * 4);
   if (state === 'fight' && !paused) {
-    spawn(gdt);
-    buildBuckets(); updateTeams(gdt);
-    for (const s of soldiers) if (!s.dead) updateUnit(s, gdt);
-    for (const e of enemies) if (!e.dead) updateUnit(e, gdt);
-    buildBuckets(); separate(); updateShots(gdt);
+    for (let it = 0; it < speed; it++) {   // 变速：×2、×3 就是一帧里多算几遍
+      spawn(gdt);
+      buildBuckets(); updateTeams(gdt);
+      for (const s of soldiers) if (!s.dead) updateUnit(s, gdt);
+      for (const e of enemies) if (!e.dead) updateUnit(e, gdt);
+      buildBuckets(); separate(); updateShots(gdt);
+    }
     buffT -= dt; if (needBuffs || buffT <= 0) { recalcBuffs(); needBuffs = false; buffT = 0.5; } // 阵法加成：打起来以后按谁挨着谁重新算
     if (enemies.some(e => e.dead)) enemies = enemies.filter(e => !e.dead);
     // 两边都只剩不会打人的盾兵：打不下去了，算输
@@ -1195,18 +1348,19 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 function hud() {
-  document.getElementById('kills').textContent = kills;
   const mine = soldiers.filter(s => !s.dead).length, foes = enemies.length + foesLeft();
-  document.getElementById('mine').textContent = mine; document.getElementById('foes').textContent = sp && sp.mod.fog && state === 'prep' ? '?' : foes;
+  document.getElementById('mine').textContent = mine; document.getElementById('foes').textContent = foes;
   document.getElementById('vsFill').style.width = (mine + foes ? mine / (mine + foes) * 100 : 50) + '%';
   document.getElementById('goldTxt').textContent = gold;
-  // 士气槽：开打后是场上活着的兵的平均士气；备战时显示开局士气
-  const avg = (a, d) => { let n = 0, m = 0; for (const u of a) if (!u.dead) { n++; m += Math.max(0, Math.min(100, u.mor ?? d)); } return n ? m / n : d; };
-  const fight = state === 'fight';
-  for (const [id, v] of [['mMe', fight ? avg(soldiers, junxin) : junxin], ['mFoe', fight ? avg(enemies, sp ? sp.foeMor : 70) : (sp ? sp.foeMor : 70)]]) {
-    const el = document.getElementById(id); el.style.width = v + '%'; document.getElementById(id + 'N').textContent = Math.round(v);
-    el.parentNode.classList.toggle('hot', v >= HOT); el.parentNode.classList.toggle('low', v < 30);
-  }
+  document.getElementById('mMeN').textContent = junxin;   // 备战时：这一波开局的士气
+  if (state !== 'fight') return;
+  // 火盆：场上活着的兵的平均士气。火的大小跟着士气走，80 以上烧得最旺
+  let n = 0, m = 0; for (const u of soldiers) if (!u.dead) { n++; m += Math.max(0, Math.min(100, u.mor ?? junxin)); }
+  const v = n ? m / n : junxin, bz = document.getElementById('brazier');
+  document.getElementById('mFightN').textContent = Math.round(v);
+  bz.style.setProperty('--f', (0.35 + v / 100 * 0.65 + (v >= HOT ? 0.2 : 0)).toFixed(2)); bz.style.setProperty('--g', v >= HOT ? 1 : 0.35);
+  const c = {}; for (const u of soldiers) if (!u.dead) c[u.type] = (c[u.type] || 0) + 1;
+  document.getElementById('alive').innerHTML = ['shield', 'spear', 'bow', 'horse'].filter(k => T[k].cap > 0 || c[k]).map(k => `<span class="pill">${uicon(k, 24)}<b>${c[k] || 0}</b></span>`).join('');
 }
 
 // 准备阶段：敌阵的虚影（站着不动，开战才变成真兵）

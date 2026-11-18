@@ -1015,6 +1015,53 @@ const PAID = [
 // 敌我数值一样，看的是「战损比」：歼灭的敌方兵力 ÷ 我方折损的兵力（兵力按招兵花费算：盾枪 1、弓 2、骑 3）。
 // 一兵没死就是 S；同样兵力硬拼大约 1 : 1，靠阵法和兵种克制才能打出高比值
 const GRADES = [['S', 6, 1.0], ['A', 3.5, 0.6], ['B', 2, 0.3], ['C', 1.2, 0.1], ['D', 0, 0]];
+// ---------- 强化时的庆祝：屏幕中间拉开一条横幅，这个兵种的一队兵出来亮个相，再淡出；带鼓点和号角 ----------
+let AC = null;
+function cheerSound(k) {
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); AC.resume(); } catch (e) { return; }
+  const t = AC.currentTime + 0.04;
+  const tone = (at, f0, f1, dur, type, vol) => { const o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f0, at); o.frequency.exponentialRampToValueAtTime(f1, at + dur);
+    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, at + dur); o.connect(g).connect(AC.destination); o.start(at); o.stop(at + dur + 0.02); };
+  const noise = (at, dur, vol, fc) => { const n = Math.floor(AC.sampleRate * dur), buf = AC.createBuffer(1, n, AC.sampleRate), d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const src = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(); src.buffer = buf; f.type = 'lowpass'; f.frequency.value = fc; g.gain.value = vol; src.connect(f).connect(g).connect(AC.destination); src.start(at); };
+  const drum = (at, v = 0.5) => { tone(at, 150, 48, 0.24, 'sine', v); noise(at, 0.07, v * 0.5, 900); };
+  drum(t); drum(t + 0.16, 0.35);
+  if (k === 'bow') { tone(t + 0.5, 640, 300, 0.1, 'triangle', 0.22); for (let i = 0; i < 6; i++) noise(t + 0.52 + i * 0.05, 0.22, 0.1, 3800); }
+  else if (k === 'spear') for (const d of [0.42, 0.74, 1.06]) { drum(t + d, 0.55); tone(t + d, 220, 180, 0.12, 'square', 0.06); }
+  else if (k === 'shield') { tone(t + 0.55, 95, 32, 0.4, 'sine', 0.8); noise(t + 0.55, 0.16, 0.45, 600); drum(t + 0.95, 0.6); }
+  else for (let i = 0; i < 10; i++) drum(t + 0.3 + i * 0.085 + (i % 2) * 0.03, 0.22 + (i % 2) * 0.12);
+  [392, 523.25, 659.25].forEach((f, i) => { const at = t + 1.12 + i * 0.13, dur = i === 2 ? 0.55 : 0.13; tone(at, f, f, dur, 'sawtooth', 0.07); tone(at, f, f, dur, 'triangle', 0.16); });   // 号角：三个音往上走
+}
+function cheer(k, text, host) {
+  cheerSound(k);
+  const col = T[k].color, VW = innerWidth, band = document.createElement('div');
+  band.className = 'fx'; band.style.cssText = `left:0;top:${Math.round(innerHeight * 0.34)}px;width:100%;height:190px;background:linear-gradient(90deg,rgba(12,7,3,.75),rgba(12,7,3,.97) 16%,rgba(12,7,3,.97) 84%,rgba(12,7,3,.75));border-top:2px solid ${col};border-bottom:2px solid ${col};box-shadow:0 0 30px rgba(0,0,0,.6)`;
+  host.appendChild(band);
+  const add = (html, x, y, css) => { const e = document.createElement('div'); e.innerHTML = html; e.style.cssText = `position:absolute;left:${x}px;top:${y}px;${css || ''}`; band.appendChild(e); return e; };
+  const an = (e, kf, o) => e.animate(kf, Object.assign({ fill: 'both', easing: 'ease-out' }, o));
+  an(band, [{ transform: 'scaleY(0)', opacity: 0 }, { transform: 'scaleY(1)', opacity: 1, offset: 0.07 }, { transform: 'scaleY(1)', opacity: 1, offset: 0.84 }, { transform: 'scaleY(1)', opacity: 0 }], { duration: 2200, easing: 'linear' }).onfinish = () => band.remove();
+  const S = 36, Y = 62, row = (n, gap) => Array.from({ length: n }, (_, i) => VW / 2 - (n - 1) * gap / 2 - S / 2 + i * gap);
+  if (k === 'bow') {            // 弓兵：一排人拉满弓，一齐朝天放箭
+    row(7, 46).forEach((x, i) => { const d = 320 + i * 45, f = add(`<svg width="${S}" height="18" viewBox="0 0 36 18" style="display:block;margin-bottom:-4px"><path d="M4 16 Q18 -8 32 16" fill="none" stroke="#e8c98a" stroke-width="3" stroke-linecap="round"/><path d="M4 16 L32 16" stroke="#fff6dc" stroke-width="1"/></svg>${uicon(k, S)}`, x, Y - 14);
+      an(f, [{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1, offset: 0.25 }, { transform: 'translateY(7px) scaleY(.88)', offset: 0.6 }, { transform: 'translateY(-9px) scaleY(1.06)', offset: 0.75 }, { transform: 'translateY(0)' }], { duration: 760, delay: d - 320 });
+      const ar = add(`<svg width="10" height="34" viewBox="0 0 10 34"><path d="M5 0 L9 9 L6 8 L6 34 L4 34 L4 8 L1 9 Z" fill="#ffe9a8"/></svg>`, x + S / 2 - 5, Y - 34, 'opacity:0;filter:drop-shadow(0 0 4px #ffd24a)');
+      an(ar, [{ transform: 'translateY(0)', opacity: 1 }, { transform: 'translateY(-300px)', opacity: 0 }], { duration: 520, delay: d + 250, easing: 'ease-in' }); });
+  } else if (k === 'spear') {   // 枪兵：一排长枪跟着鼓点往上顶三下
+    row(7, 46).forEach((x, i) => { const d = 130 + i * 18, f = add(uicon(k, S), x, Y), sp = add(`<svg width="12" height="84" viewBox="0 0 12 84"><path d="M6 0 L11 16 L7 14 L7 84 L5 84 L5 14 L1 16 Z" fill="#efe3c8" stroke="#2a1e12" stroke-width="1"/><path d="M3 20 L9 20 L8 30 L4 30 Z" fill="#c9372a"/></svg>`, x + S - 6, Y - 46);
+      for (const [e, up] of [[f, 9], [sp, 30]]) an(e, [{ transform: 'translateY(50px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1, offset: 0.12 }, { transform: `translateY(-${up}px)`, offset: 0.2 }, { transform: 'translateY(0)', offset: 0.32 }, { transform: `translateY(-${up}px)`, offset: 0.44 }, { transform: 'translateY(0)', offset: 0.56 }, { transform: `translateY(-${up * 1.4}px)`, offset: 0.68 }, { transform: 'translateY(0)', offset: 0.82 }, { transform: 'translateY(0)' }], { duration: 1500, delay: d }); });
+  } else if (k === 'shield') {  // 刀盾兵：散开的盾一下子合成一堵墙，撞出一道白光
+    const xs = row(7, S + 2), mid = VW / 2 - S / 2;
+    xs.forEach(x => an(add(uicon(k, S + 6), x - 3, Y - 3), [{ transform: `translateX(${(x - mid) * 0.9}px) translateY(30px)`, opacity: 0 }, { transform: `translateX(${(x - mid) * 0.9}px)`, opacity: 1, offset: 0.2 }, { transform: `translateX(${(x - mid) * 0.9}px)`, offset: 0.32, easing: 'cubic-bezier(.7,0,1,.6)' }, { transform: 'translateX(0)', offset: 0.44 }, { transform: 'translateX(0) translateY(0)', offset: 0.62 }, { transform: 'translateY(-10px)', offset: 0.7 }, { transform: 'translateY(0)', offset: 0.78 }, { transform: 'translateY(0)' }], { duration: 1300 }));
+    an(add('', xs[0] - 20, Y - 8, `width:${7 * (S + 2) + 40}px;height:${S + 16}px;border-radius:10px;background:#fff;opacity:0;filter:blur(3px)`), [{ opacity: 0.95, transform: 'scaleX(.6)' }, { opacity: 0, transform: 'scaleX(1.3)' }], { duration: 380, delay: 570 });
+    an(band, [{ translate: '0 0' }, { translate: '5px 2px' }, { translate: '-5px -2px' }, { translate: '3px 0' }, { translate: '0 0' }], { duration: 220, delay: 570 });
+  } else {                      // 骑兵：一队马从左冲到右，后面拖着风
+    for (let i = 0; i < 5; i++) { const f = add(`<div style="position:absolute;right:${S - 4}px;top:${S / 2 - 3}px;width:90px;height:6px;border-radius:3px;background:linear-gradient(90deg,transparent,${col})"></div>${uicon(k, S + 4)}`, -60, Y - 22 + (i % 3) * 22);
+      an(f, [{ transform: 'translateX(0)' }, { transform: `translateX(${VW + 200}px)` }], { duration: 780, delay: 260 + i * 120, easing: 'cubic-bezier(.3,0,.5,1)' });
+      f.lastChild.animate([{ transform: 'translateY(0) rotate(-6deg)' }, { transform: 'translateY(-7px) rotate(4deg)' }, { transform: 'translateY(0) rotate(-6deg)' }], { duration: 170, iterations: 12 }); }
+  }
+  const tx = add(`${T[k].name}兵　${text}`, 0, 122, `width:100%;text-align:center;font:900 28px "Noto Serif SC","Songti SC",serif;letter-spacing:2px;color:#ffe9a8;text-shadow:0 0 12px ${col},0 2px 3px #000;opacity:0`);
+  an(tx, [{ transform: 'scale(2.2)', opacity: 0 }, { transform: 'scale(.94)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }], { duration: 300, delay: 1080 });
+}
 function showPick() {
   state = 'pick';
   const lost = fallen.reduce((n, f) => n + BASE_TYPES[f.type].cost, 0), ratio = lost ? foeLost / lost : Infinity;
@@ -1071,12 +1118,7 @@ function showPick() {
     if (add.length) {   // 招兵：小兵从令旗上跳下来，往屏幕下方跑，越跑越淡
       add.sort(() => Math.random() - 0.5).slice(0, 16).forEach((t, j) => { const x = r.left + 30 + Math.random() * 60, y = r.top + 30 + Math.random() * 40, dx = (Math.random() - 0.5) * 90;
         gone(fx(uicon(t, 20), x, y, 'opacity:0').animate([{ transform: 'translate(0,-10px) scale(.3)', opacity: 0 }, { transform: 'translate(0,26px) scale(1.15)', opacity: 1, offset: .18 }, { transform: `translate(${dx * .3}px,60px) scale(1)`, opacity: 1, offset: .3 }, { transform: `translate(${dx}px,${Math.max(160, innerHeight - y - 24)}px) scale(1)`, opacity: 0 }], { duration: 1000 + Math.random() * 300, delay: 120 + j * 70, easing: 'ease-in' })); });
-    } else {            // 强化：令旗上炸开两圈金光，效果的字往上飘
-      const cx = r.left + 48, cy = r.top + 42;
-      for (const d of [0, 160]) gone(fx('', cx - 22, cy - 22, 'width:44px;height:44px;border-radius:50%;border:3px solid #ffd24a;box-shadow:0 0 12px #ffd24a;opacity:0').animate([{ transform: 'scale(.4)', opacity: 1 }, { transform: 'scale(3.2)', opacity: 0 }], { duration: 650, delay: d, easing: 'ease-out' }));
-      for (let q = 0; q < 10; q++) { const a = q / 10 * 6.283, L = 50 + Math.random() * 30; gone(fx('', cx - 3, cy - 3, 'width:6px;height:6px;border-radius:50%;background:#ffe9a8;box-shadow:0 0 6px #ffd24a;opacity:0').animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * L}px,${Math.sin(a) * L}px)`, opacity: 0 }], { duration: 600, delay: 80, easing: 'ease-out' })); }
-      gone(fx(`▲ ${split(c)[1]}`, r.left, r.top + 30, `width:${r.width}px;text-align:center;font:900 20px "Barlow Semi Condensed",var(--ui);color:#ffe9a8;text-shadow:0 0 8px #ffb000,0 2px 2px #000;opacity:0`).animate([{ transform: 'translateY(10px) scale(.6)', opacity: 0 }, { transform: 'translateY(-14px) scale(1.15)', opacity: 1, offset: .25 }, { transform: 'translateY(-70px) scale(1)', opacity: 0 }], { duration: 1300, delay: 150, easing: 'ease-out' }));
-    }
+    } else cheer(unitsOf(c)[0] || 'spear', split(c)[1], document.getElementById('full'));   // 强化：这个兵种出来庆祝一下
   };
   const drawFan = () => {
     document.getElementById('fan').innerHTML = pick.map((c, k) => { const [n, e] = split(c); return `<button class="rcard" id="card${k}" aria-label="${c.kind} ${n} ${e}">${face(c)}<span class="tx"><em class="${c.kind === '招兵' ? 'g' : ''}">${c.kind}</em><b>${n}</b><span>${e}</span></span></button>`; }).join('');

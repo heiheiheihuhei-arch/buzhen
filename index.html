@@ -207,6 +207,10 @@ footer { position: relative; height: 158px; flex: none; display: block; }
 .hcard b { font: 900 13px/16px "Noto Serif SC", "Songti SC", serif; }
 .hcard small { font: 800 14px/16px "Barlow Semi Condensed", var(--ui); color: #ffd24a; } .hcard small u { text-decoration: none; opacity: .65; font-size: 11px; color: #e8d6ae; }
 .hcard.on { --up: 10px; --sc: 1.1; z-index: 2; filter: drop-shadow(0 0 4px #ffd24a) drop-shadow(0 0 9px rgba(255,210,74,.7)) drop-shadow(0 8px 6px rgba(0,0,0,.5)); }
+.hcard .buy { position: absolute; top: -4px; left: 50%; transform: translateX(-50%); padding: 1px 7px 1px 5px; border-radius: 10px; background: linear-gradient(180deg, #3f9a5a, #25693b); box-shadow: 0 0 0 1.5px #d9f5c8, 0 2px 4px rgba(0,0,0,.5); display: flex; align-items: center; gap: 3px; white-space: nowrap; font: 800 13px/16px "Barlow Semi Condensed", var(--ui); color: #fff; }
+.hcard .buy em { font-style: normal; color: #ffe08a; display: flex; align-items: center; gap: 2px; }
+.hcard .buy.no { filter: grayscale(1); opacity: .45; }
+.hcard .buy:active { transform: translateX(-50%) scale(.9); }
 .hcard.on .cnt { box-shadow: 0 0 0 2px #ffd24a; }
 #tools.locked .hcard { opacity: .45; pointer-events: none; }
 #brazier { position: absolute; left: 8px; bottom: 6px; width: 84px; height: 124px; }
@@ -1201,8 +1205,9 @@ function flagSvg(col, w = 78) {
 function buildTools() {
   const box = document.getElementById('tools');
   box.innerHTML = ['shield', 'spear', 'bow', 'horse'].map(k => { const t = T[k];
-    return `<button class="hcard${tool === k ? ' on' : ''}" id="t-${k}" aria-label="${t.name}兵 ${countOf(k)}/${ownOf(k)}">${figImg(k, 90)}<span class="cnt"><b>${t.name}</b><small>${countOf(k)}<u>/${ownOf(k)}</u></small></span></button>`; }).join('');
+    return `<button class="hcard${tool === k ? ' on' : ''}" id="t-${k}" aria-label="${t.name}兵 ${countOf(k)}/${ownOf(k)}">${figImg(k, 90)}<span class="cnt"><b>${t.name}</b><small>${countOf(k)}<u>/${ownOf(k)}</u></small></span><span class="buy${gold < RECRUIT[k][0] * RECRUIT[k][1] ? ' no' : ''}" role="button" data-k="${k}" aria-label="招${t.name}兵 ${RECRUIT[k][0]} 个，${RECRUIT[k][0] * RECRUIT[k][1]} 金">+${RECRUIT[k][0]}<em><svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f5c445" stroke="#2a1e12" stroke-width="2"/></svg>${RECRUIT[k][0] * RECRUIT[k][1]}</em></span></button>`; }).join('');
   for (const k of ['shield', 'spear', 'bow', 'horse']) document.getElementById('t-' + k).onclick = () => { tool = k; sel = null; buildTools(); };
+  for (const b of box.querySelectorAll('.buy')) b.onclick = ev => { ev.stopPropagation(); buyTroops(b.dataset.k); };   // 小兵头上的绿牌：花金币招这种兵
   buildForms(); buildRecruit();
 }
 // ---------- 金币招兵：战死的不补回，只能在备战时花金币招 ----------

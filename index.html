@@ -296,7 +296,7 @@ footer { position: relative; height: 158px; flex: none; display: block; }
   <div id="selPop" hidden><button id="selRecall">撤</button><button id="selCancel" aria-label="取消选择">✕</button></div>
 
   <footer>
-    <div id="acts" class="only-prep"><button class="act" id="formBtn">阵谱</button><button class="act green" id="recBtn">招兵</button><button class="act" id="thickBtn">粗笔</button></div>
+    <div id="acts" class="only-prep"><button class="act" id="formBtn">阵谱</button><button class="act green" id="recBtn">招兵</button></div>
     <button id="fight" class="only-prep" disabled>开战</button>
     <div id="tools" class="only-prep"></div>
     <div id="brazier" class="only-fight" aria-label="我军士气"><div class="glow"></div><div class="fl"><svg width="30" height="33" viewBox="0 0 24 26" aria-hidden="true"><path d="M12 2c1 5 6 7 6 13a6 6 0 0 1-12 0c0-3 1-4 2-5 0 2 1 3 2 3 0-4-1-6 2-11z" fill="#ffb02e"/></svg><svg width="56" height="62" viewBox="0 0 24 26" aria-hidden="true"><path d="M12 2c1 5 6 7 6 13a6 6 0 0 1-12 0c0-3 1-4 2-5 0 2 1 3 2 3 0-4-1-6 2-11z" fill="#ff6a1a"/><path d="M12 13c1 2 3 3 3 5a3 3 0 0 1-6 0c0-2 2-3 3-5z" fill="#ffe98a"/></svg><svg width="30" height="33" viewBox="0 0 24 26" aria-hidden="true"><path d="M12 2c1 5 6 7 6 13a6 6 0 0 1-12 0c0-3 1-4 2-5 0 2 1 3 2 3 0-4-1-6 2-11z" fill="#ff8a1f"/></svg></div><div class="bowl"></div><div class="foot"></div><b id="mFightN">80</b></div>
@@ -334,7 +334,7 @@ const FOES = {
 
 let T, grid, soldiers, enemies, shots, parts, floats;
 let wave, kills, gold, fightN, foeLost = 0, state, sp, shake, combos, needBuffs = false, buffT = 0;
-let tool = 'shield', thick = true, drawing = false, lastPt = null, inkWarnT = 0, bannerT = 0, bannerTxt = '';
+let tool = 'shield', drawing = false, lastPt = null, inkWarnT = 0, bannerT = 0, bannerTxt = '';
 const buckets = Array.from({ length: COLS * ROWS }, () => []);
 const usedB = [];
 
@@ -404,7 +404,7 @@ function cellAdd(i, s) { units[i].push(s); grid[i] = units[i][0]; }
 function cellDel(i, s) { const a = units[i], k = a.indexOf(s); if (k >= 0) a.splice(k, 1); grid[i] = a[0] || null; }
 function stamp(x, y) {
   const c = Math.floor(x / CS), r = Math.floor(y / CS);
-  const R = thick ? 1 : 0;
+  const R = 0;
   let placed = 0, short = false, capped = false;
   for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
     const cc = c + dx, rr = r + dy;
@@ -1105,7 +1105,6 @@ function buildTools() {
   box.innerHTML = ['shield', 'spear', 'bow', 'horse'].map(k => { const t = T[k];
     return `<button class="hcard${tool === k ? ' on' : ''}" id="t-${k}" aria-label="${t.name}兵 ${countOf(k)}/${ownOf(k)}"><span class="ht" style="background:${t.color}"><i>${uicon(k, 28)}</i></span><b>${t.name}</b><small>${countOf(k)}<u> / ${ownOf(k)}</u></small></button>`; }).join('');
   for (const k of ['shield', 'spear', 'bow', 'horse']) document.getElementById('t-' + k).onclick = () => { tool = k; sel = null; buildTools(); };
-  document.getElementById('thickBtn').textContent = thick ? '粗笔' : '细笔';
   buildForms(); buildRecruit();
 }
 // ---------- 金币招兵：战死的不补回，只能在备战时花金币招 ----------
@@ -1259,7 +1258,6 @@ document.getElementById('backBtn').onclick = showLeave;
 document.getElementById('speedBtn').onclick = e => { speed = speed % 3 + 1; e.currentTarget.textContent = '×' + speed; };
 document.getElementById('formBtn').onclick = () => showPanel('阵谱', 'forms');
 document.getElementById('recBtn').onclick = () => showPanel('招兵', 'recruit');
-document.getElementById('thickBtn').onclick = () => { thick = !thick; buildTools(); };
 const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 let scale = 1, pointer = null;
 function toLocal(ev) { const r = cv.getBoundingClientRect(); return { x: (ev.clientX - r.left) / r.width * W, y: (ev.clientY - r.top) / r.height * H }; }
@@ -1534,7 +1532,7 @@ function render() {
   // 画的时候：四周压暗一点表示时间变慢，手指下画出笔刷范围
   drawSel(); syncPop();
   if (pointer && state === 'prep' && !sel) {
-    const c = Math.floor(pointer.x / CS), r = Math.floor(pointer.y / CS), R = thick ? 1 : 0;
+    const c = Math.floor(pointer.x / CS), r = Math.floor(pointer.y / CS), R = 0;
     ctx.strokeStyle = 'rgba(255,248,225,.85)'; ctx.lineWidth = 1;
     ctx.strokeRect((c - R) * CS + 0.5, (r - R) * CS + 0.5, (2 * R + 1) * CS - 1, (2 * R + 1) * CS - 1);
   }
@@ -1551,5 +1549,5 @@ sandImg = makeSand();
 reset(); fit(); showStart(); hud();
 requestAnimationFrame(frame);
 // 测试用：外部可以直接调这些
-window.__hz = { TUNE, setThick: v => { thick = v; }, get list() { return enemies.map(e => [e.kind, Math.round(e.x), Math.round(e.y), +e.hp.toFixed(1), e.state]); }, get hits() { return hitStat; }, get cam() { return camK; }, get mstat() { return mstat; }, get state() { return state; }, startPrep: () => { overlay(null); startPrep(); }, startFight: () => startFight(), stamp: (x, y) => stamp(x, y), setTool: k => { tool = k; }, get enemies() { return enemies.length; }, get kills() { return kills; }, get wave() { return wave; }, get mine() { return soldiers.filter(s => !s.dead).length; } };
+window.__hz = { TUNE, get list() { return enemies.map(e => [e.kind, Math.round(e.x), Math.round(e.y), +e.hp.toFixed(1), e.state]); }, get hits() { return hitStat; }, get cam() { return camK; }, get mstat() { return mstat; }, get state() { return state; }, startPrep: () => { overlay(null); startPrep(); }, startFight: () => startFight(), stamp: (x, y) => stamp(x, y), setTool: k => { tool = k; }, get enemies() { return enemies.length; }, get kills() { return kills; }, get wave() { return wave; }, get mine() { return soldiers.filter(s => !s.dead).length; } };
 </script>

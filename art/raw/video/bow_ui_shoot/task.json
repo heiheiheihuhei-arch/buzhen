@@ -1,20 +1,20 @@
 {
-  "prompt": "Q版卡通游戏角色动画。这个三国弓兵小兵四分之三侧面朝右，始终朝着这个方向，不转身、不回头。射箭：先把弓弦再往后拉满，然后松手，把箭向右方射出去，弓弦弹回、身体跟着一震；接着从背后的箭袋里抽出一支新箭搭在弦上重新拉开，回到和视频开头完全一样的姿势。只射一箭，动作干脆。背景从头到尾都是纯白色，没有地面、没有阴影、没有任何其他东西；镜头完全固定不动，不推拉不平移；角色始终完整地在画面中间，大小不变，画面里只有这一个角色，不要出现任何特效和文字。 --resolution 480p --ratio 1:1 --duration 4 --camerafixed true --watermark false",
+  "prompt": "Q版卡通游戏角色动画。这个三国弓兵小兵四分之三侧面朝右，始终朝着这个方向，不转身、不回头。射箭：他先把弓弦用力再往后拉满、身体微微后仰蓄力，然后突然松开手指，箭离开弓弦、快速向右飞出画面，弓弦明显地向前弹回并抖动，他的身体跟着往前一震；放完箭后弓上没有箭。接着他伸手从背后的箭袋里抽出一支新箭，搭在弦上重新拉开，回到和视频开头完全一样的姿势。只射一箭，动作幅度大、干脆有力。角色从头顶的盔缨到脚底始终完整地在画面里，四周留有空白，不要放大、不要裁切。背景从头到尾都是纯白色，没有地面、没有阴影、没有任何其他东西；镜头完全固定不动，不推拉不平移；角色始终完整地在画面中间，大小不变，画面里只有这一个角色，不要出现任何特效和文字。 --resolution 480p --ratio 1:1 --duration 4 --camerafixed true --watermark false",
   "model": "doubao-seedance-1-0-pro-fast-251015",
   "result": {
-    "id": "cgt-20261118180235-n5bm2",
+    "id": "cgt-20261118182215-jr428",
     "model": "doubao-seedance-1-0-pro-fast-251015",
     "status": "succeeded",
     "content": {
-      "video_url": "https://ark-content-generation-cn-beijing.tos-cn-beijing.volces.com/doubao-seedance-1-0-pro-fast/02179499615717300000000000000000000ffffac180c8bd5e8ab.mp4"
+      "video_url": "https://ark-content-generation-cn-beijing.tos-cn-beijing.volces.com/doubao-seedance-1-0-pro-fast/02179499733653200000000000000000000ffffac180c8baa4eaf.mp4"
     },
     "usage": {
       "completion_tokens": 38800,
       "total_tokens": 38800
     },
-    "created_at": 1794996157,
-    "updated_at": 1794996178,
-    "seed": 58204,
+    "created_at": 1794997336,
+    "updated_at": 1794997354,
+    "seed": 16413,
     "resolution": "480p",
     "ratio": "1:1",
     "duration": 4,

@@ -1,0 +1,28 @@
+{
+  "prompt": "Q版卡通游戏角色动画。这个三国弓兵小兵四分之三侧面朝右，始终朝着这个方向，不转身、不回头。原地待命：保持拉着弓瞄准的姿势，轻微的呼吸起伏，身体微微上下动，偶尔眨一下眼，盔缨和领巾轻轻飘动。动作很小很平稳，结尾和开头的姿势一样，可以无缝循环。背景从头到尾都是纯白色，没有地面、没有阴影、没有任何其他东西；镜头完全固定不动，不推拉不平移；角色始终完整地在画面中间，大小不变，画面里只有这一个角色，不要出现任何特效和文字。 --resolution 480p --ratio 1:1 --duration 4 --camerafixed true --watermark false",
+  "model": "doubao-seedance-1-0-pro-fast-251015",
+  "result": {
+    "id": "cgt-20261118180235-hc98k",
+    "model": "doubao-seedance-1-0-pro-fast-251015",
+    "status": "succeeded",
+    "content": {
+      "video_url": "https://ark-content-generation-cn-beijing.tos-cn-beijing.volces.com/doubao-seedance-1-0-pro-fast/02179499615692700000000000000000000ffffac180c8b3aa2fe.mp4"
+    },
+    "usage": {
+      "completion_tokens": 38800,
+      "total_tokens": 38800
+    },
+    "created_at": 1794996156,
+    "updated_at": 1794996174,
+    "seed": 27979,
+    "resolution": "480p",
+    "ratio": "1:1",
+    "duration": 4,
+    "framespersecond": 24,
+    "service_tier": "default",
+    "execution_expires_after": 172800,
+    "draft": false,
+    "priority": 0,
+    "output_format": "mp4"
+  }
+}

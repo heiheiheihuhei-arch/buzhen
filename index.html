@@ -226,21 +226,21 @@ footer { position: relative; height: 158px; flex: none; display: block; }
 /* 结算 + 选卡：盖住整个屏幕 */
 #full { position: fixed; inset: 0; z-index: 80; display: flex; justify-content: center; overflow-y: auto; background: rgba(16,10,5,.9); }
 #full[hidden] { display: none; }
-.res { width: 100%; max-width: 420px; padding: 14px 14px 22px; display: flex; flex-direction: column; gap: 12px; color: #fff3d6; }
+.res { position: relative; width: 100%; max-width: 420px; padding: 14px 14px 22px; display: flex; flex-direction: column; gap: 12px; color: #fff3d6; }
 .res .rtop { display: flex; justify-content: flex-end; }
 .res .big { position: relative; align-self: center; width: 236px; height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #2a1e12; background: linear-gradient(180deg, #fbf3de, #eedfb8); box-shadow: 0 12px 26px rgba(0,0,0,.5); }
 .res .big::before, .res .big::after { content: ""; position: absolute; top: -6px; width: 16px; height: 108px; border-radius: 8px; background: linear-gradient(90deg, #8a5a2e, #c99a5a, #8a5a2e); }
 .res .big::before { left: -10px; } .res .big::after { right: -10px; }
 .res .big small { font-size: 12px; font-weight: 700; letter-spacing: 6px; color: #7a5a36; } .res .big h1 { margin: 0; font: 900 52px/1.1 "Noto Serif SC", "Songti SC", serif; letter-spacing: 14px; padding-left: 14px; color: #2a1e12; }
 .res .row { position: relative; height: 104px; margin-top: 6px; }
-.res .sealw { position: absolute; left: 6px; top: 6px; animation: push .35s cubic-bezier(.3,.8,.3,1) .9s backwards; }
+.res .sealw { position: absolute; left: 6px; top: 6px; animation: push .35s cubic-bezier(.3,.8,.3,1) .9s backwards, sealfloat 3s ease-in-out 1.5s infinite; }
 .res .seal { width: 92px; height: 92px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: #c9372a; color: #fff; font: 900 64px/1 "Noto Serif SC", "Songti SC", serif; transform: rotate(-6deg);
   box-shadow: inset 0 0 0 4px #c9372a, inset 0 0 0 6px rgba(255,255,255,.75), 0 10px 20px rgba(120,20,10,.5); animation: stamp .45s cubic-bezier(.2,.9,.3,1.2) .15s backwards; }
 .res .goldw { position: absolute; left: 118px; top: 4px; display: flex; flex-direction: column; align-items: flex-start; gap: 0; transform-origin: 0 50%; animation: pop .5s ease-out .95s backwards; }
-.res .goldw .lab { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: 3px; color: #c9bfa4; } .res .goldw .lab svg { animation: coinpop .5s ease-out 3.7s backwards; }
+.res .goldw .lab { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: 3px; color: #c9bfa4; } .res .goldw .lab svg { animation: coinpop .5s ease-out 3.7s backwards, coinflip 3.4s ease-in-out 4.6s infinite; }
 .res .goldn { display: flex; align-items: center; gap: 8px; } .res .digits { display: flex; font: 800 54px/1 "Barlow Semi Condensed", var(--ui); color: #ffd98a; }
 .res .digits > span { display: inline-block; height: 58px; overflow: hidden; } .res .digits > span > span { display: flex; flex-direction: column; } .res .digits > span > span > span { height: 58px; line-height: 58px; }
-.res .plus { padding: 0 10px; border-radius: 13px; background: #c9372a; color: #fff; font: 800 18px/26px "Barlow Semi Condensed", var(--ui); animation: rise .35s ease-out 3.8s backwards; }
+.res .plus { padding: 0 10px; border-radius: 13px; background: #c9372a; color: #fff; font: 800 18px/26px "Barlow Semi Condensed", var(--ui); animation: rise .35s ease-out 3.8s backwards, bob 1.7s ease-in-out 4.3s infinite; }
 .res .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; text-align: center; height: 58px; border-radius: 14px; background: rgba(20,12,6,.62); box-shadow: inset 0 0 0 1.5px rgba(255,236,190,.3); font-size: 12px; font-weight: 700; color: #c9bfa4; }
 .res .stats > div + div { border-left: 1.5px solid rgba(255,236,190,.2); } .res .stats b { display: block; font: 800 22px/24px "Barlow Semi Condensed", var(--ui); color: #fff3d6; } .res .stats .hi b { color: #ffd98a; }
 .res .stats .lost { display: flex; justify-content: center; gap: 8px; margin-top: 1px; } .res .stats .lost span { display: flex; align-items: center; gap: 1px; font: 800 15px "Barlow Semi Condensed", var(--ui); color: #fff3d6; }
@@ -248,7 +248,45 @@ footer { position: relative; height: 158px; flex: none; display: block; }
 .res .hd button { display: flex; align-items: center; gap: 6px; } .res .hd button em { font-style: normal; padding: 0 7px; border-radius: 9px; background: #ffd24a; color: #2a1e12; font: 800 14px/18px "Barlow Semi Condensed", var(--ui); } .res .hd button:disabled { opacity: .4; }
 .res .fan { display: flex; justify-content: center; padding: 10px 0 12px; }
 .rcard { appearance: none; position: relative; width: 124px; height: 196px; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; color: #f6e7c1; display: flex; flex-direction: column; align-items: center; transition: filter .25s, opacity .25s; filter: drop-shadow(0 7px 7px rgba(0,0,0,.5)); }
-.rcard .figs { height: 122px; display: flex; align-items: flex-end; justify-content: center; }
+.rcard .figs { position: relative; height: 122px; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.rcard .figs::before { content: ""; position: absolute; left: 50%; bottom: -6px; width: 112px; height: 34px; margin-left: -56px; border-radius: 50%; background: radial-gradient(ellipse, rgba(255,214,110,.75), rgba(255,214,110,0) 70%); animation: spot 2.2s ease-in-out infinite; }
+.rcard .figs::after { content: ""; position: absolute; left: 50%; bottom: 4px; width: 96px; height: 150px; margin-left: -48px; background: linear-gradient(to top, rgba(255,226,150,.3), rgba(255,226,150,0)); clip-path: polygon(22% 0, 78% 0, 100% 100%, 0 100%); animation: beam 3.1s ease-in-out infinite; pointer-events: none; }
+.rcard:nth-child(2) .figs::before, .rcard:nth-child(2) .figs::after { animation-delay: -.8s; } .rcard:nth-child(3) .figs::before, .rcard:nth-child(3) .figs::after { animation-delay: -1.5s; }
+.rcard .fig { position: relative; z-index: 1; transform-origin: 50% 100%; }
+.fig.a-hop { animation: figHop 1.7s ease-in-out infinite; }
+.fig.a-wob { animation: figWob 2.4s ease-in-out infinite; }
+.fig.a-shield { animation: figShield 2.2s ease-in-out infinite; } .fig.a-spear { animation: figSpear 2s ease-in-out infinite; }
+.fig.a-bow { animation: figBow 2.3s ease-in-out infinite; } .fig.a-horse { animation: figHorse 2.4s ease-in-out infinite; transform-origin: 68% 100%; }
+.rcard .figs .fig:nth-child(2) { animation-delay: -.35s; } .rcard .figs .fig:nth-child(3) { animation-delay: -.7s; }
+.rcard.off .fig, .rcard.off .figs::before, .rcard.off .figs::after { animation-play-state: paused; } .rcard.off .figs::before, .rcard.off .figs::after { opacity: 0; }
+.res .rays { position: absolute; left: 52px; top: 52px; width: 380px; height: 380px; margin: -190px 0 0 -190px; border-radius: 50%; pointer-events: none; opacity: var(--o, 1);
+  background: repeating-conic-gradient(from 0deg, rgba(255,214,110,.55) 0 7deg, rgba(255,214,110,0) 7deg 20deg); -webkit-mask-image: radial-gradient(circle, #000 12%, rgba(0,0,0,.5) 34%, transparent 66%); mask-image: radial-gradient(circle, #000 12%, rgba(0,0,0,.5) 34%, transparent 66%);
+  animation: spin 18s linear infinite, fadein .7s ease-out 1.3s backwards; }
+.res .rays.r2 { width: 300px; height: 300px; margin: -150px 0 0 -150px; background: repeating-conic-gradient(from 6deg, rgba(255,240,190,.5) 0 3deg, rgba(255,240,190,0) 3deg 30deg); animation: spin 11s linear infinite reverse, fadein .7s ease-out 1.5s backwards; }
+.res .seal { position: relative; overflow: hidden; }
+.res .seal .shine { position: absolute; top: -20%; left: -70%; width: 46%; height: 140%; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.65), rgba(255,255,255,0)); transform: skewX(-20deg); animation: sweep 3.2s ease-in-out 2s infinite; }
+.res .dusts { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.res .dusts i { position: absolute; bottom: -10px; width: 5px; height: 5px; border-radius: 50%; background: #ffe3a0; box-shadow: 0 0 6px 1px rgba(255,200,90,.8); opacity: 0; animation: dust linear infinite; }
+.res > :not(.dusts) { position: relative; }
+.res .again:not(:disabled) { animation: breath 1.5s ease-in-out infinite; }
+.prem { overflow: hidden; } .prem::after { content: ""; position: absolute; top: 0; left: -40%; width: 26%; height: 100%; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.6), rgba(255,255,255,0)); transform: skewX(-20deg); animation: sweep2 3.6s ease-in-out 2.5s infinite; pointer-events: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadein { from { opacity: 0; } }
+@keyframes sealfloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes coinflip { 0%, 70%, 100% { transform: rotateY(0); } 85% { transform: rotateY(180deg) scale(1.2); } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes sweep { 0%, 60% { left: -70%; } 100% { left: 140%; } }
+@keyframes sweep2 { 0%, 55% { left: -40%; } 100% { left: 130%; } }
+@keyframes spot { 0%, 100% { transform: scale(.9); opacity: .65; } 50% { transform: scale(1.1); opacity: 1; } }
+@keyframes beam { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+@keyframes dust { 0% { transform: translate(0, 0); opacity: 0; } 12% { opacity: .9; } 80% { opacity: .7; } 100% { transform: translate(var(--dx, 20px), -110vh); opacity: 0; } }
+@keyframes breath { 0%, 100% { transform: scale(1); box-shadow: inset 0 0 0 2px rgba(255,255,255,.22), 0 0 0 3px #e9c87a, 0 10px 18px rgba(0,0,0,.5); } 50% { transform: scale(1.045); box-shadow: inset 0 0 0 2px rgba(255,255,255,.3), 0 0 0 3px #ffe08a, 0 0 22px 4px rgba(255,200,90,.65), 0 10px 18px rgba(0,0,0,.5); } }
+@keyframes figHop { 0%, 100% { transform: scale(1, 1); } 30% { transform: scale(1.05, .94); } 52% { transform: translateY(-9px) scale(.97, 1.05); } 72% { transform: scale(1.04, .96); } 86% { transform: scale(.99, 1.01); } }
+@keyframes figWob { 0%, 100% { transform: rotate(0); } 18% { transform: rotate(-8deg); } 40% { transform: rotate(7deg); } 60% { transform: rotate(-4deg); } 78% { transform: rotate(2.5deg); } }
+@keyframes figShield { 0%, 50%, 100% { transform: none; } 62% { transform: translateX(6px) rotate(5deg); } 72% { transform: translateX(-13px) rotate(-7deg) scale(1.06); } 80% { transform: translateX(-9px) rotate(-4deg); } 92% { transform: translateX(1px); } }
+@keyframes figSpear { 0%, 45%, 100% { transform: none; } 60% { transform: translate(-6px, 2px) rotate(-7deg); } 70% { transform: translate(11px, -7px) rotate(5deg) scale(1.07, 1.02); } 78% { transform: translate(7px, -4px) rotate(3deg); } 92% { transform: translate(-1px, 0); } }
+@keyframes figBow { 0%, 100% { transform: none; } 25%, 55% { transform: rotate(-9deg) scale(.98, 1.02); } 62% { transform: rotate(6deg) translateX(3px); } 72% { transform: rotate(-2deg); } 82% { transform: rotate(1deg); } }
+@keyframes figHorse { 0%, 40%, 100% { transform: none; } 55%, 68% { transform: rotate(14deg) translateY(-5px); } 78% { transform: rotate(-3deg) scale(1.05, .94); } 88% { transform: scale(.98, 1.03); } }
 .rcard .figs .fig + .fig { margin-left: -20px; }
 .rcard .tx { margin-top: 2px; display: flex; flex-direction: column; align-items: center; text-shadow: 0 1px 2px #000; }
 .rcard em { font-style: normal; font-size: 11px; font-weight: 900; letter-spacing: 3px; color: #ffb066; } .rcard em.g { color: #7fe0a8; }
@@ -269,7 +307,7 @@ footer { position: relative; height: 158px; flex: none; display: block; }
 @keyframes push { from { transform: translateX(calc(50vw - 66px)); } }
 @keyframes pop { 0% { transform: scale(0); } 65% { transform: scale(1.2); } 82% { transform: scale(.94); } 100% { transform: scale(1); } }
 @keyframes coinpop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .res *, #brazier .fl svg { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { #brazier .fl svg { animation: none !important; } }
 </style>
 
 <div id="app" data-s="start">
@@ -1094,7 +1132,8 @@ function showPick() {
   const KEY = [['刀盾', 'shield'], ['枪', 'spear'], ['弓', 'bow'], ['骑', 'horse']];
   const unitsOf = c => KEY.filter(([w]) => (c.t + c.d).includes(w)).map(([, k]) => k);
   const split = c => { const t = c.t.includes('：') ? c.t.split('：') : c.kind === '强化' ? [c.t.split(' ')[0], c.t.split(' ').slice(1).join(' ')] : [c.t, c.d]; return [t[0], t[1] || c.d]; };
-  const face = c => { const us = unitsOf(c); return `<span class="figs">${us.map(k => figImg(k, us.length === 1 ? 118 : 70)).join('')}</span>`; };
+  // 小兵循环做动作，先放三组一起看：左 原地蹦、中 不倒翁晃、右 各兵种自己的招式
+  const face = (c, k) => { const us = unitsOf(c), cls = u => ['a-hop', 'a-wob', 'a-' + u][k]; return `<span class="figs">${us.map(u => figImg(u, us.length === 1 ? 118 : 70).replace('class="fig"', `class="fig ${cls(u)}"`)).join('')}</span>`; };
   const deal = () => { const pool = CARDS.filter(c => c.ok()).sort(() => Math.random() - 0.5), rc = pool.filter(c => c.kind === '招兵'), bf = pool.filter(c => c.kind === '强化'), p = [rc[0], bf[0]]; p.push(pool.find(c => !p.includes(c))); return p; };
   let pick = deal(), rerolled = false;
   const paidPool = PAID.filter(c => c.ok()), paid = paidPool[Math.floor(Math.random() * paidPool.length)];
@@ -1104,10 +1143,11 @@ function showPick() {
   const COINS = '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#f5c445" stroke="#2a1e12" stroke-width="1.6"/><circle cx="12" cy="12" r="6.8" fill="none" stroke="#b8700a" stroke-width="1.2"/><rect x="9.7" y="9.7" width="4.6" height="4.6" rx=".8" fill="#fff4cc" stroke="#2a1e12" stroke-width="1.2"/></svg>';
   const lostHtml = Object.entries(lostBy).map(([k, n]) => `<span>${uicon(k, 15)}${n}</span>`).join('');
   const [pn, pe] = split(paid), full = document.getElementById('full');
-  full.innerHTML = `<div class="res">
+  const dusts = Array.from({ length: 16 }, () => `<i style="left:${(Math.random() * 100).toFixed(1)}%;--dx:${(Math.random() * 80 - 40).toFixed(0)}px;animation-duration:${(6 + Math.random() * 6).toFixed(1)}s;animation-delay:${(-Math.random() * 10).toFixed(1)}s;width:${(3 + Math.random() * 4).toFixed(1)}px;height:${(3 + Math.random() * 4).toFixed(1)}px"></i>`).join('');
+  full.innerHTML = `<div class="res"><div class="dusts">${dusts}</div>
     <span class="grade" hidden>${g}</span><span class="reward" hidden>歼敌兵力 ${foeLost} · 折损兵力 ${lost}（含逃散） 战损比 ${lost ? '1 : ' + ratio.toFixed(1) : '无损'} 基础</span>
     <div class="big"><small>第${CN(wave)}波</small><h1>胜利</h1></div>
-    <div class="row"><div class="sealw"><div class="seal">${g}</div></div>
+    <div class="row"><div class="rays" style="--o:${{ S: 1, A: .85, B: .7, C: .5, D: .3 }[g]}"></div><div class="rays r2" style="--o:${{ S: 1, A: .8, B: .6, C: .4, D: .2 }[g]}"></div><div class="sealw"><div class="seal">${g}<i class="shine"></i></div></div>
       <div class="goldw" aria-label="现有 ${gold} 金，这一波 +${got}"><span class="lab">${COINS}金币</span><span class="goldn"><span class="digits">${digits}</span><span class="plus">+${got}</span></span></div></div>
     <div class="stats"><div class="hi">战损比<b>${lost ? '1 : ' + ratio.toFixed(1) : '无损'}</b></div><div>歼敌<b>${foeLost}</b></div><div>折损 <span class="num" style="font-size:16px;color:#fff3d6">${lost}</span><div class="lost">${lostHtml}</div></div></div>
     <div class="hd"><h2>犒赏</h2><button class="act" id="reroll"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>刷新<em>1</em></button></div>
@@ -1134,7 +1174,7 @@ function showPick() {
     } else cheer(unitsOf(c)[0] || 'spear', (c.t + c.d).includes('血') ? 'hp' : 'atk', document.getElementById('full'));   // 强化：这个兵种出来庆祝一下
   };
   const drawFan = () => {
-    document.getElementById('fan').innerHTML = pick.map((c, k) => { const [n, e] = split(c); return `<button class="rcard" id="card${k}" aria-label="${c.kind} ${n} ${e}">${face(c)}<span class="tx"><em class="${c.kind === '招兵' ? 'g' : ''}">${c.kind}</em><b>${n}</b><span>${e}</span></span></button>`; }).join('');
+    document.getElementById('fan').innerHTML = pick.map((c, k) => { const [n, e] = split(c); return `<button class="rcard" id="card${k}" aria-label="${c.kind} ${n} ${e}">${face(c, k)}<span class="tx"><em class="${c.kind === '招兵' ? 'g' : ''}">${c.kind}</em><b>${n}</b><span>${e}</span></span></button>`; }).join('');
     pick.forEach((c, k) => document.getElementById('card' + k).onclick = () => choose(c, k));
   };
   document.getElementById('again').onclick = () => { if (!picked) return; done(); startPrep(); };

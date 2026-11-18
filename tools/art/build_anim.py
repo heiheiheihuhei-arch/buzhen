@@ -65,6 +65,10 @@ for arg in sys.argv[2:]:
 x0, y0, x1, y1 = max(0, box[0] - 2), max(0, box[1] - 2), min(SZ - 1, box[2] + 2), min(SZ - 1, box[3] + 2); w, h = x1 - x0 + 1, y1 - y0 + 1
 meta_path = root / "art" / "game" / "anim.json"; meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
 tmp = root / "art" / "cut" / f"anim_{unit}"; tmp.mkdir(parents=True, exist_ok=True)
+# 站位：拿第一个动作的第一帧，量出人的头顶、脚底和两脚中间的位置（占单帧的比例），游戏里靠它把脚对准落点、按人的身高定大小
+r0 = next(iter(acts.values()))[0][0]; rows = [yy for yy in range(h) if any(r0[((y0 + yy) * SZ + x0 + xx) * 4 + 3] > 128 for xx in range(w))]
+top, bot = rows[0], rows[-1]; foot = [xx for yy in range(bot - max(2, (bot - top) // 14), bot + 1) for xx in range(w) if r0[((y0 + yy) * SZ + x0 + xx) * 4 + 3] > 128]
+anchor = {"top": round(top / h, 3), "bot": round((bot + 1) / h, 3), "fx": round((min(foot) + max(foot)) / 2 / w, 3)}; print("站位", anchor)
 for name, fs in acts.items():
     n = len(fs); strip = bytearray(w * n * h * 4)
     for k, (rgba, _) in enumerate(fs):
@@ -74,6 +78,6 @@ for name, fs in acts.items():
     fw = round(w * OUT_H / h); out = root / "art" / "game" / f"anim_{unit}_{name}.webp"
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(p), "-vf", f"scale={fw * n}:{OUT_H}:flags=lanczos", str(tmp / f"{name}_s.png")], check=True)
     subprocess.run(["cwebp", "-quiet", "-q", "78", "-alpha_q", "85", str(tmp / f"{name}_s.png"), "-o", str(out)], check=True)
-    meta[f"{unit}_{name}"] = {"n": n, "w": fw, "h": OUT_H}
+    meta[f"{unit}_{name}"] = {"n": n, "w": fw, "h": OUT_H, **anchor}
     print(name, "帧数", n, "单帧", fw, "x", OUT_H, "文件", out.stat().st_size // 1024, "KB")
 meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=1))

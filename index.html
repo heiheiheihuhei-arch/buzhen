@@ -1151,7 +1151,6 @@ function loadForm(f) {
 }
 
 // ---------- 长按选兵：按住一个兵 0.5 秒出选择框，滑动改框的大小；松手后弹出「撤 / ✕」，按住框拖动就整块挪 ----------
-// 松手时框里只有一个兵：直接撤回，不用再点
 const HOLD_MS = 500;
 let press = null; // 手指按在兵身上、还没分出是「长按选兵」还是「画」
 function recallSel() { for (const s of selSoldiers()) recall(s); sel = null; recalcBuffs(); buildTools(); }
@@ -1294,8 +1293,7 @@ cv.addEventListener('pointermove', ev => {
 const endDraw = () => {
   if (press) { clearTimeout(press.timer); if (!press.box && state === 'prep') stamp(press.p.x, press.p.y); press = null; } // 点一下就松手：照常画（换兵种）
   if (selDrag && state === 'prep') {
-    const box = !selDrag.drag; selUp();
-    if (box && sel && selSoldiers().length === 1) recallSel(); // 只框住一个：直接撤
+    selUp();
   }
   selDrag = null; drawing = false; lastPt = null;
 };

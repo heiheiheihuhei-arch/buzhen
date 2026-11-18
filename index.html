@@ -1170,7 +1170,7 @@ const inSel = (c, r) => sel && c >= sel.c0 && c <= sel.c1 && r >= sel.r0 && r <=
 const selSoldiers = () => sel ? soldiers.filter(s => !s.dead && inSel(s.c, s.r)) : [];
 function moveCheck(dc, dr) {
   const mine = new Set(selSoldiers()); let bad = 0;
-  for (const s of mine) { const c = s.c + dc, r = s.r + dr, o = drawable(c, r) && grid[r * COLS + c]; if (!drawable(c, r) || (o && !mine.has(o))) bad++; }
+  for (const s of mine) if (!drawable(s.c + dc, s.r + dr)) bad++;
   return { mine, bad };
 }
 function selDown(p) {
@@ -1189,9 +1189,18 @@ function selUp() {
   if (!d.drag) { if (!selSoldiers().length) sel = null; return; }
   if (!d.dc && !d.dr) return;
   const { mine, bad } = moveCheck(d.dc, d.dr);
-  if (bad) { floats.push({ x: (sel.c0 + sel.c1 + 1) * CS / 2, y: sel.r0 * CS - 6, text: `有 ${bad} 个兵放不下（红区、出界或压到别的兵）`, life: 1.6, color: '#ffd9c8' }); return; }
+  if (bad) { floats.push({ x: (sel.c0 + sel.c1 + 1) * CS / 2, y: sel.r0 * CS - 6, text: `有 ${bad} 个兵放不下`, life: 1.6, color: '#ffd9c8' }); return; }
+  // 新位置上原来有兵：换过来。被挤的兵顺着挪动的反方向退，退到这次腾出来的空格里
+  const src = new Set([...mine].map(s => s.i)), put = (s, c, r) => { s.c = s.hc = c; s.r = s.hr = r; s.i = r * COLS + c; s.x = c * CS + CS / 2; s.y = r * CS + CS / 2; }, swaps = [];
+  for (const s of mine) {
+    const o = grid[(s.r + d.dr) * COLS + s.c + d.dc]; if (!o || mine.has(o)) continue;
+    let c = s.c, r = s.r; while (src.has((r - d.dr) * COLS + c - d.dc)) { c -= d.dc; r -= d.dr; }
+    swaps.push([o, c, r]);
+  }
   for (const s of mine) cellDel(s.i, s);
-  for (const s of mine) { s.c = s.hc = s.c + d.dc; s.r = s.hr = s.r + d.dr; s.i = s.r * COLS + s.c; s.x = s.c * CS + CS / 2; s.y = s.r * CS + CS / 2; cellAdd(s.i, s); }
+  for (const [o] of swaps) cellDel(o.i, o);
+  for (const s of mine) { put(s, s.c + d.dc, s.r + d.dr); cellAdd(s.i, s); }
+  for (const [o, c, r] of swaps) { put(o, c, r); cellAdd(o.i, o); }
   sel = { c0: sel.c0 + d.dc, c1: sel.c1 + d.dc, r0: sel.r0 + d.dr, r1: sel.r1 + d.dr };
   recalcBuffs();
 }
@@ -1211,7 +1220,7 @@ function drawSel() {
   if (selDrag && selDrag.drag && (selDrag.dc || selDrag.dr)) {
     const { mine } = moveCheck(selDrag.dc, selDrag.dr);
     for (const s of mine) {
-      const c = s.c + selDrag.dc, r = s.r + selDrag.dr, o = drawable(c, r) && grid[r * COLS + c], ok = drawable(c, r) && (!o || mine.has(o));
+      const c = s.c + selDrag.dc, r = s.r + selDrag.dr, ok = drawable(c, r);
       ctx.globalAlpha = 0.55; ctx.fillStyle = ok ? T[s.type].color : '#d23a2a'; ctx.fillRect(c * CS + 1, r * CS + 1, CS - 2, CS - 2);
     }
   }

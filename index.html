@@ -241,13 +241,19 @@ footer { position: relative; height: 158px; flex: none; display: block; }
 .res .stats .lost { display: flex; justify-content: center; gap: 8px; margin-top: 1px; } .res .stats .lost span { display: flex; align-items: center; gap: 1px; font: 800 15px "Barlow Semi Condensed", var(--ui); color: #fff3d6; }
 .res .hd { display: flex; align-items: center; justify-content: space-between; } .res .hd h2 { margin: 0; font: 900 24px "Noto Serif SC", "Songti SC", serif; letter-spacing: 4px; }
 .res .hd button { display: flex; align-items: center; gap: 6px; } .res .hd button em { font-style: normal; padding: 0 7px; border-radius: 9px; background: #ffd24a; color: #2a1e12; font: 800 14px/18px "Barlow Semi Condensed", var(--ui); } .res .hd button:disabled { opacity: .4; }
-.res .fan { display: flex; justify-content: center; padding: 6px 0 16px; }
-.rcard { appearance: none; width: 112px; height: 168px; margin: 0 -2px; padding: 0; border: 0; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; align-items: center; cursor: pointer; color: #2a1e12;
-  background: linear-gradient(180deg, #fffbee, #f1e3bf); box-shadow: 0 0 0 2px #c9a25a, 0 14px 24px rgba(0,0,0,.5); transform: rotate(var(--r, 0deg)) translateY(var(--y, 0px)); }
-.rcard:nth-child(1) { --r: -6deg; --y: 12px; } .rcard:nth-child(3) { --r: 6deg; --y: 12px; }
-.rcard .ht { width: 100%; height: 78px; flex: none; display: flex; align-items: center; justify-content: center; gap: 2px; } .rcard .ht i { width: 58px; height: 58px; border-radius: 50%; background: rgba(255,255,255,.9); display: flex; align-items: center; justify-content: center; }
-.rcard em { margin-top: 8px; font-style: normal; font-size: 11px; font-weight: 900; letter-spacing: 3px; color: #b8700a; } .rcard em.g { color: #0e8a5a; }
-.rcard b { font: 900 19px/26px "Noto Serif SC", "Songti SC", serif; } .rcard span { font: 800 16px "Barlow Semi Condensed", var(--ui); color: #c9372a; padding: 0 4px; text-align: center; line-height: 1.15; }
+.res .fan { display: flex; justify-content: center; padding: 10px 0 12px; }
+.rcard { appearance: none; position: relative; width: 122px; height: 186px; margin: 0; padding: 0; border: 0; background: none; cursor: pointer; color: #f6e7c1; transition: filter .25s, opacity .25s; filter: drop-shadow(0 7px 7px rgba(0,0,0,.5)); }
+.rcard > svg { position: absolute; left: 4px; top: 0; }
+.rcard i { position: absolute; left: 27px; top: 21px; min-width: 42px; height: 42px; box-sizing: border-box; border-radius: 21px; background: #fff6dc; box-shadow: 0 0 0 1.5px #2a1e12; display: flex; align-items: center; justify-content: center; }
+.rcard i.m { padding: 0 5px; }
+.rcard .tx { position: absolute; left: 26px; right: 0; top: 94px; display: flex; flex-direction: column; align-items: center; text-shadow: 0 1px 2px #000; }
+.rcard em { font-style: normal; font-size: 11px; font-weight: 900; letter-spacing: 3px; color: #ffb066; } .rcard em.g { color: #7fe0a8; }
+.rcard b { font: 900 18px/24px "Noto Serif SC", "Songti SC", serif; } .rcard .tx span { font: 800 16px/1.15 "Barlow Semi Condensed", var(--ui); color: #ffd24a; text-align: center; }
+.rcard.got { filter: drop-shadow(0 0 6px #ffd24a) drop-shadow(0 0 12px rgba(255,210,74,.7)); }
+.rcard.off { filter: grayscale(1) brightness(.5); opacity: .7; pointer-events: none; }
+.res .again { appearance: none; align-self: center; margin-top: 18px; width: 220px; height: 54px; border: 0; border-radius: 27px; cursor: pointer; color: #fff6dc; font: 900 22px "Noto Serif SC", "Songti SC", serif; letter-spacing: 4px; background: linear-gradient(180deg, #f2735a, #b82a1c); box-shadow: inset 0 0 0 2px rgba(255,255,255,.22), 0 0 0 3px #e9c87a, 0 10px 18px rgba(0,0,0,.5); transition: opacity .25s; }
+.res .again:disabled { opacity: .35; cursor: default; }
+.fx { position: fixed; z-index: 90; pointer-events: none; }
 .prem { position: relative; height: 78px; padding: 0 10px 0 14px; border-radius: 14px; display: flex; align-items: center; gap: 10px; color: #2a1e12; background: linear-gradient(180deg, #fff0b8, #f0cc6a); box-shadow: 0 0 0 2px #ffe9a8, 0 0 0 4px #8a6222, 0 14px 24px rgba(0,0,0,.5); }
 .prem .tt { flex: 1; min-width: 0; } .prem .tt b { font: 900 20px "Noto Serif SC", "Songti SC", serif; } .prem .tt i { font-style: normal; font-size: 10px; font-weight: 900; letter-spacing: 2px; color: #fff; background: #c9372a; border-radius: 4px; padding: 1px 5px; margin-left: 8px; vertical-align: 3px; }
 .prem .tt div { font: 800 14px "Barlow Semi Condensed", var(--ui); color: #7a5212; }
@@ -1028,7 +1034,7 @@ function showPick() {
   const KEY = [['刀盾', 'shield'], ['枪', 'spear'], ['弓', 'bow'], ['骑', 'horse']];
   const unitsOf = c => KEY.filter(([w]) => (c.t + c.d).includes(w)).map(([, k]) => k);
   const split = c => { const t = c.t.includes('：') ? c.t.split('：') : c.kind === '强化' ? [c.t.split(' ')[0], c.t.split(' ').slice(1).join(' ')] : [c.t, c.d]; return [t[0], t[1] || c.d]; };
-  const face = (c, big) => { const us = unitsOf(c); return us.length === 1 ? `<span class="ht" style="background:${T[us[0]].color}"><i>${uicon(us[0], 42)}</i></span>` : `<span class="ht" style="background:#8a6a3a">${us.map(k => uicon(k, 24)).join('')}</span>`; };
+  const face = c => { const us = unitsOf(c); return flagSvg(us.length === 1 ? T[us[0]].color : '#8a6a3a', 114) + `<i${us.length === 1 ? '' : ' class="m"'}>${us.length === 1 ? uicon(us[0], 30) : us.map(k => uicon(k, 16)).join('')}</i>`; };
   const deal = () => { const pool = CARDS.filter(c => c.ok()).sort(() => Math.random() - 0.5), rc = pool.filter(c => c.kind === '招兵'), bf = pool.filter(c => c.kind === '强化'), p = [rc[0], bf[0]]; p.push(pool.find(c => !p.includes(c))); return p; };
   let pick = deal(), rerolled = false;
   const paidPool = PAID.filter(c => c.ok()), paid = paidPool[Math.floor(Math.random() * paidPool.length)];
@@ -1047,16 +1053,39 @@ function showPick() {
     <div class="hd"><h2>犒赏</h2><button class="act" id="reroll"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>刷新<em>1</em></button></div>
     <div class="fan" id="fan"></div>
     <div class="prem"><div style="display:flex">${unitsOf(paid).map(k => uicon(k, 32)).join('')}</div><div class="tt"><b>${pn}</b><i>精品</i><div>${pe}</div></div><button id="paid">${COINS}<span>${price}</span></button></div>
+    <button class="again" id="again" disabled>再来一把</button>
   </div>`;
   full.hidden = false; full.scrollTop = 0;
   const done = () => { full.hidden = true; full.innerHTML = ''; buildTools(); };
-  const drawFan = () => {
-    document.getElementById('fan').innerHTML = pick.map((c, k) => { const [n, e] = split(c); return `<button class="rcard" id="card${k}">${face(c)}<em class="${c.kind === '招兵' ? 'g' : ''}">${c.kind}</em><b>${n}</b><span>${e}</span></button>`; }).join('');
-    pick.forEach((c, k) => document.getElementById('card' + k).onclick = () => { c.go(); done(); startPrep(); });
+  let picked = false;
+  const fx = (html, x, y, css) => { const e = document.createElement('div'); e.className = 'fx'; e.innerHTML = html; e.style.cssText = `left:${x}px;top:${y}px;${css || ''}`; full.appendChild(e); return e; };
+  const gone = a => { a.onfinish = () => a.effect.target.remove(); };
+  const choose = (c, k) => {
+    if (picked) return; picked = true;
+    const btn = document.getElementById('card' + k), r = btn.getBoundingClientRect(), cap0 = {}; for (const t in T) cap0[t] = T[t].cap;
+    c.go(); buildTools(); hud();
+    pick.forEach((_, j) => document.getElementById('card' + j).classList.add(j === k ? 'got' : 'off'));
+    rr.disabled = true; document.getElementById('again').disabled = false;
+    btn.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.2)' }, { transform: 'scale(.94)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
+    const add = []; for (const t in T) for (let q = T[t].cap - cap0[t]; q > 0; q--) add.push(t);
+    if (add.length) {   // 招兵：小兵从令旗上跳下来，往屏幕下方跑，越跑越淡
+      add.sort(() => Math.random() - 0.5).slice(0, 16).forEach((t, j) => { const x = r.left + 30 + Math.random() * 60, y = r.top + 30 + Math.random() * 40, dx = (Math.random() - 0.5) * 90;
+        gone(fx(uicon(t, 20), x, y, 'opacity:0').animate([{ transform: 'translate(0,-10px) scale(.3)', opacity: 0 }, { transform: 'translate(0,26px) scale(1.15)', opacity: 1, offset: .18 }, { transform: `translate(${dx * .3}px,60px) scale(1)`, opacity: 1, offset: .3 }, { transform: `translate(${dx}px,${Math.max(160, innerHeight - y - 24)}px) scale(1)`, opacity: 0 }], { duration: 1000 + Math.random() * 300, delay: 120 + j * 70, easing: 'ease-in' })); });
+    } else {            // 强化：令旗上炸开两圈金光，效果的字往上飘
+      const cx = r.left + 48, cy = r.top + 42;
+      for (const d of [0, 160]) gone(fx('', cx - 22, cy - 22, 'width:44px;height:44px;border-radius:50%;border:3px solid #ffd24a;box-shadow:0 0 12px #ffd24a;opacity:0').animate([{ transform: 'scale(.4)', opacity: 1 }, { transform: 'scale(3.2)', opacity: 0 }], { duration: 650, delay: d, easing: 'ease-out' }));
+      for (let q = 0; q < 10; q++) { const a = q / 10 * 6.283, L = 50 + Math.random() * 30; gone(fx('', cx - 3, cy - 3, 'width:6px;height:6px;border-radius:50%;background:#ffe9a8;box-shadow:0 0 6px #ffd24a;opacity:0').animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * L}px,${Math.sin(a) * L}px)`, opacity: 0 }], { duration: 600, delay: 80, easing: 'ease-out' })); }
+      gone(fx(`▲ ${split(c)[1]}`, r.left, r.top + 30, `width:${r.width}px;text-align:center;font:900 20px "Barlow Semi Condensed",var(--ui);color:#ffe9a8;text-shadow:0 0 8px #ffb000,0 2px 2px #000;opacity:0`).animate([{ transform: 'translateY(10px) scale(.6)', opacity: 0 }, { transform: 'translateY(-14px) scale(1.15)', opacity: 1, offset: .25 }, { transform: 'translateY(-70px) scale(1)', opacity: 0 }], { duration: 1300, delay: 150, easing: 'ease-out' }));
+    }
   };
-  drawFan();
+  const drawFan = () => {
+    document.getElementById('fan').innerHTML = pick.map((c, k) => { const [n, e] = split(c); return `<button class="rcard" id="card${k}" aria-label="${c.kind} ${n} ${e}">${face(c)}<span class="tx"><em class="${c.kind === '招兵' ? 'g' : ''}">${c.kind}</em><b>${n}</b><span>${e}</span></span></button>`; }).join('');
+    pick.forEach((c, k) => document.getElementById('card' + k).onclick = () => choose(c, k));
+  };
+  document.getElementById('again').onclick = () => { if (!picked) return; done(); startPrep(); };
   const rr = document.getElementById('reroll');   // 刷新：每次结算只能换一批
-  rr.onclick = () => { if (rerolled) return; rerolled = true; pick = deal(); drawFan(); rr.disabled = true; rr.querySelector('em').textContent = '0'; };
+  drawFan();
+  rr.onclick = () => { if (rerolled || picked) return; rerolled = true; pick = deal(); drawFan(); rr.disabled = true; rr.querySelector('em').textContent = '0'; };
   const pb = document.getElementById('paid');
   const upd = () => { pb.disabled = !!pb.dataset.done || gold < price; };
   pb.onclick = () => { if (gold < price || pb.dataset.done) return; gold -= price; paid.go(); buildTools(); hud(); pb.dataset.done = 1; pb.querySelector('span').textContent = '已买'; upd(); };
@@ -1099,10 +1128,10 @@ function showOver() {
 
 // ---------- 底部的兵种按钮 ----------
 // 令旗：旗杆 + 三角旗，斜边是一排牙边
-function flagSvg(col) {
+function flagSvg(col, w = 78) {
   const A = [72, 9], B = [14, 67], n = 7; let d = `M14 9 L${A[0]} ${A[1]}`;
   for (let k = 0; k < n; k++) { const m = (k + .5) / n, e = (k + 1) / n; d += ` L${(A[0] + (B[0] - A[0]) * m + 3.6).toFixed(1)} ${(A[1] + (B[1] - A[1]) * m + 3.6).toFixed(1)} L${(A[0] + (B[0] - A[0]) * e).toFixed(1)} ${(A[1] + (B[1] - A[1]) * e).toFixed(1)}`; }
-  return `<svg width="78" height="108" viewBox="0 0 78 108" aria-hidden="true"><path d="${d} Z" fill="${col}" stroke="#2a1e12" stroke-width="1.6" stroke-linejoin="round"/>`
+  return `<svg width="${w}" height="${Math.round(w * 108 / 78)}" viewBox="0 0 78 108" aria-hidden="true"><path d="${d} Z" fill="${col}" stroke="#2a1e12" stroke-width="1.6" stroke-linejoin="round"/>`
     + `<path d="M17.5 12.5 L62 12.5 L17.5 57 Z" fill="none" stroke="#ffd98a" stroke-width="1.3" stroke-linejoin="round" opacity=".85"/>`
     + `<path d="M14 9 L72 9 L60 21 L14 21 Z" fill="rgba(255,255,255,.14)"/>`
     + `<rect x="9" y="6" width="5" height="100" rx="2" fill="#7a5632" stroke="#2a1e12" stroke-width="1.4"/><rect x="10.3" y="8" width="1.4" height="96" fill="rgba(255,255,255,.28)"/>`

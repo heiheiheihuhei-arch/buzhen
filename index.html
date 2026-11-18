@@ -1155,7 +1155,7 @@ const HOLD_MS = 500;
 let press = null; // 手指按在兵身上、还没分出是「长按选兵」还是「画」
 function recallSel() { for (const s of selSoldiers()) recall(s); sel = null; recalcBuffs(); buildTools(); }
 function syncPop() {
-  const pop = document.getElementById('selPop'), show = state === 'prep' && sel && !selDrag;
+  const pop = document.getElementById('selPop'), show = state === 'prep' && sel && !sel.quiet && !selDrag;
   if (pop.hidden === !show && !show) return;
   pop.hidden = !show; if (!show) return;
   const cr = cv.getBoundingClientRect(), k = cr.height / H, top = cr.top + sel.r0 * CS * k, bot = cr.top + (sel.r1 + 1) * CS * k;
@@ -1212,10 +1212,12 @@ function drawSel() {
     const mx = (sel.c0 + sel.c1 + 1) * CS / 2, my = (sel.r0 + sel.r1 + 1) * CS / 2;
     ctx.translate(mx, my); ctx.scale(sc, sc); ctx.translate(-mx, -my); ctx.globalAlpha = Math.min(1, age * 3);
   }
-  ctx.fillStyle = 'rgba(255,216,107,.16)'; ctx.fillRect(sel.c0 * CS, sel.r0 * CS, (sel.c1 - sel.c0 + 1) * CS, (sel.r1 - sel.r0 + 1) * CS);
-  ctx.setLineDash([4, 2]); ctx.strokeStyle = COL.gold; ctx.lineWidth = 1.5;
-  ctx.strokeRect(sel.c0 * CS + 0.5, sel.r0 * CS + 0.5, (sel.c1 - sel.c0 + 1) * CS - 1, (sel.r1 - sel.r0 + 1) * CS - 1);
-  ctx.setLineDash([]);
+  if (!sel.quiet) {
+    ctx.fillStyle = 'rgba(255,216,107,.16)'; ctx.fillRect(sel.c0 * CS, sel.r0 * CS, (sel.c1 - sel.c0 + 1) * CS, (sel.r1 - sel.r0 + 1) * CS);
+    ctx.setLineDash([4, 2]); ctx.strokeStyle = COL.gold; ctx.lineWidth = 1.5;
+    ctx.strokeRect(sel.c0 * CS + 0.5, sel.r0 * CS + 0.5, (sel.c1 - sel.c0 + 1) * CS - 1, (sel.r1 - sel.r0 + 1) * CS - 1);
+    ctx.setLineDash([]);
+  }
   if (selDrag && selDrag.drag && (selDrag.dc || selDrag.dr)) {
     const { mine } = moveCheck(selDrag.dc, selDrag.dr);
     for (const s of mine) {
@@ -1283,7 +1285,11 @@ cv.addEventListener('pointermove', ev => {
   if (selDrag) { selMove(p); return; }
   if (press) { // 没到 0.5 秒手指就划走了：当成画
     if (Math.hypot(p.x - press.p.x, p.y - press.p.y) < CS * 0.8) return;
-    clearTimeout(press.timer); lastPt = press.p; press = null; drawing = true; stamp(lastPt.x, lastPt.y);
+    clearTimeout(press.timer); const [c0, r0] = cellOf(press.p.x, press.p.y);
+    if (grid[r0 * COLS + c0]) { // 从兵身上划开：直接拖走这个兵，不出选择框
+      press = null; sel = { c0, r0, c1: c0, r1: r0, quiet: true }; selDrag = { drag: true, sc: c0, sr: r0, dc: 0, dr: 0 }; selMove(p); return;
+    }
+    lastPt = press.p; press = null; drawing = true; stamp(lastPt.x, lastPt.y);
   }
   if (!drawing) return;
   const dx = p.x - lastPt.x, dy = p.y - lastPt.y, L = Math.hypot(dx, dy), n = Math.max(1, Math.ceil(L / (CS * 0.5)));
@@ -1293,7 +1299,7 @@ cv.addEventListener('pointermove', ev => {
 const endDraw = () => {
   if (press) { clearTimeout(press.timer); if (!press.box && state === 'prep') stamp(press.p.x, press.p.y); press = null; } // 点一下就松手：照常画（换兵种）
   if (selDrag && state === 'prep') {
-    selUp();
+    const quiet = sel && sel.quiet; selUp(); if (quiet) sel = null;
   }
   selDrag = null; drawing = false; lastPt = null;
 };

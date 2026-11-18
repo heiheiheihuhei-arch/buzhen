@@ -1015,7 +1015,7 @@ const PAID = [
 // 敌我数值一样，看的是「战损比」：歼灭的敌方兵力 ÷ 我方折损的兵力（兵力按招兵花费算：盾枪 1、弓 2、骑 3）。
 // 一兵没死就是 S；同样兵力硬拼大约 1 : 1，靠阵法和兵种克制才能打出高比值
 const GRADES = [['S', 6, 1.0], ['A', 3.5, 0.6], ['B', 2, 0.3], ['C', 1.2, 0.1], ['D', 0, 0]];
-// ---------- 强化时的庆祝：屏幕中间拉开一条横幅，这个兵种的一队兵出来亮个相，再淡出；带鼓点和号角 ----------
+// ---------- 强化时的庆祝：这个兵种的一队兵在屏幕中间亮个相，再冒一片向上的箭头（攻击红、血量绿），四周渐隐；带鼓点和号角 ----------
 let AC = null;
 function cheerSound(k) {
   try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); AC.resume(); } catch (e) { return; }
@@ -1032,15 +1032,16 @@ function cheerSound(k) {
   else for (let i = 0; i < 10; i++) drum(t + 0.3 + i * 0.085 + (i % 2) * 0.03, 0.22 + (i % 2) * 0.12);
   [392, 523.25, 659.25].forEach((f, i) => { const at = t + 1.12 + i * 0.13, dur = i === 2 ? 0.55 : 0.13; tone(at, f, f, dur, 'sawtooth', 0.07); tone(at, f, f, dur, 'triangle', 0.16); });   // 号角：三个音往上走
 }
-function cheer(k, text, host) {
+function cheer(k, kind, host) {
   cheerSound(k);
   const col = T[k].color, VW = innerWidth, band = document.createElement('div');
-  band.className = 'fx'; band.style.cssText = `left:0;top:${Math.round(innerHeight * 0.34)}px;width:100%;height:190px;background:linear-gradient(90deg,rgba(12,7,3,.75),rgba(12,7,3,.97) 16%,rgba(12,7,3,.97) 84%,rgba(12,7,3,.75));border-top:2px solid ${col};border-bottom:2px solid ${col};box-shadow:0 0 30px rgba(0,0,0,.6)`;
+  const MASK = 'linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent),linear-gradient(transparent,#000 26%,#000 78%,transparent)';
+  band.className = 'fx'; band.style.cssText = `left:0;top:${Math.round(innerHeight * 0.34) - 100}px;width:100%;height:340px;background:radial-gradient(ellipse 75% 50% at 50% 50%,rgba(10,6,3,.97),rgba(10,6,3,.94) 60%,rgba(10,6,3,0));-webkit-mask-image:${MASK};mask-image:${MASK};-webkit-mask-composite:source-in;mask-composite:intersect`;
   host.appendChild(band);
   const add = (html, x, y, css) => { const e = document.createElement('div'); e.innerHTML = html; e.style.cssText = `position:absolute;left:${x}px;top:${y}px;${css || ''}`; band.appendChild(e); return e; };
   const an = (e, kf, o) => e.animate(kf, Object.assign({ fill: 'both', easing: 'ease-out' }, o));
-  an(band, [{ transform: 'scaleY(0)', opacity: 0 }, { transform: 'scaleY(1)', opacity: 1, offset: 0.07 }, { transform: 'scaleY(1)', opacity: 1, offset: 0.84 }, { transform: 'scaleY(1)', opacity: 0 }], { duration: 2200, easing: 'linear' }).onfinish = () => band.remove();
-  const S = 36, Y = 62, row = (n, gap) => Array.from({ length: n }, (_, i) => VW / 2 - (n - 1) * gap / 2 - S / 2 + i * gap);
+  an(band, [{ opacity: 0 }, { opacity: 1, offset: 0.08 }, { opacity: 1, offset: 0.82 }, { opacity: 0 }], { duration: 2200, easing: 'linear' }).onfinish = () => band.remove();
+  const S = 36, Y = 168, row = (n, gap) => Array.from({ length: n }, (_, i) => VW / 2 - (n - 1) * gap / 2 - S / 2 + i * gap);
   if (k === 'bow') {            // 弓兵：一排人拉满弓，一齐朝天放箭
     row(7, 46).forEach((x, i) => { const d = 320 + i * 45, f = add(`<svg width="${S}" height="18" viewBox="0 0 36 18" style="display:block;margin-bottom:-4px"><path d="M4 16 Q18 -8 32 16" fill="none" stroke="#e8c98a" stroke-width="3" stroke-linecap="round"/><path d="M4 16 L32 16" stroke="#fff6dc" stroke-width="1"/></svg>${uicon(k, S)}`, x, Y - 14);
       an(f, [{ transform: 'translateY(40px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1, offset: 0.25 }, { transform: 'translateY(7px) scaleY(.88)', offset: 0.6 }, { transform: 'translateY(-9px) scaleY(1.06)', offset: 0.75 }, { transform: 'translateY(0)' }], { duration: 760, delay: d - 320 });
@@ -1059,8 +1060,16 @@ function cheer(k, text, host) {
       an(f, [{ transform: 'translateX(0)' }, { transform: `translateX(${VW + 200}px)` }], { duration: 780, delay: 260 + i * 120, easing: 'cubic-bezier(.3,0,.5,1)' });
       f.lastChild.animate([{ transform: 'translateY(0) rotate(-6deg)' }, { transform: 'translateY(-7px) rotate(4deg)' }, { transform: 'translateY(0) rotate(-6deg)' }], { duration: 170, iterations: 12 }); }
   }
-  const tx = add(`${T[k].name}兵　${text}`, 0, 122, `width:100%;text-align:center;font:900 28px "Noto Serif SC","Songti SC",serif;letter-spacing:2px;color:#ffe9a8;text-shadow:0 0 12px ${col},0 2px 3px #000;opacity:0`);
-  an(tx, [{ transform: 'scale(2.2)', opacity: 0 }, { transform: 'scale(.94)', opacity: 1, offset: 0.6 }, { transform: 'scale(1)', opacity: 1 }], { duration: 300, delay: 1080 });
+  // 攻击变强：红箭头往上蹿；血量变厚：绿箭头和绿加号往上飘，底下泛一片绿光
+  const hp = kind === 'hp', c1 = hp ? '#5fe08a' : '#ff5a3c', c2 = hp ? '#d6ffe0' : '#ffd0b8', R = Math.random;
+  const arrow = sz => `<svg width="${sz}" height="${sz * 1.5}" viewBox="0 0 20 30" style="filter:drop-shadow(0 0 5px ${c1})"><path d="M10 1 L19 13 L13.5 13 L13.5 29 L6.5 29 L6.5 13 L1 13 Z" fill="${c1}" stroke="${c2}" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
+  const plus = sz => `<svg width="${sz}" height="${sz}" viewBox="0 0 20 20" style="filter:drop-shadow(0 0 4px ${c1})"><path d="M7.5 2 H12.5 V7.5 H18 V12.5 H12.5 V18 H7.5 V12.5 H2 V7.5 H7.5 Z" fill="${c2}" stroke="${c1}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+  const T0 = 980, W0 = 300, L0 = VW / 2 - W0 / 2;
+  if (hp) an(add('', L0 - 20, Y - 40, `width:${W0 + 40}px;height:110px;border-radius:50%;background:radial-gradient(ellipse,rgba(95,224,138,.55),rgba(95,224,138,0) 70%);opacity:0`), [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1.05)', offset: 0.35 }, { opacity: 0, transform: 'scale(1.2)' }], { duration: 900, delay: T0 - 80 });
+  for (let i = 0; i < (hp ? 6 : 9); i++) { const sz = i < 3 ? 30 : 14 + R() * 8, x = i < 3 ? VW / 2 - 15 + (i - 1) * 78 : L0 + R() * W0, rise = hp ? 90 + R() * 40 : 130 + R() * 60;
+    an(add(arrow(sz), x, Y + 10 + R() * 20, 'opacity:0'), [{ transform: 'translateY(26px) scale(.5)', opacity: 0 }, { transform: 'translateY(0) scale(1.1)', opacity: 1, offset: 0.25 }, { transform: `translateY(-${rise}px) scale(1)`, opacity: 0 }], { duration: hp ? 950 : 700, delay: T0 + (i < 3 ? i * 70 : 80 + R() * 320), easing: hp ? 'ease-out' : 'cubic-bezier(.2,.8,.3,1)' }); }
+  if (hp) for (let i = 0; i < 12; i++) { const sz = 9 + R() * 11, dx = (R() - 0.5) * 30;
+    an(add(plus(sz), L0 + R() * W0, Y + R() * 40, 'opacity:0'), [{ transform: 'translate(0,14px) scale(.3)', opacity: 0 }, { transform: 'translate(0,0) scale(1)', opacity: 1, offset: 0.3 }, { transform: `translate(${dx}px,-${70 + R() * 60}px) scale(.8)`, opacity: 0 }], { duration: 900 + R() * 300, delay: T0 + R() * 450 }); }
 }
 function showPick() {
   state = 'pick';
@@ -1118,7 +1127,7 @@ function showPick() {
     if (add.length) {   // 招兵：小兵从令旗上跳下来，往屏幕下方跑，越跑越淡
       add.sort(() => Math.random() - 0.5).slice(0, 16).forEach((t, j) => { const x = r.left + 30 + Math.random() * 60, y = r.top + 30 + Math.random() * 40, dx = (Math.random() - 0.5) * 90;
         gone(fx(uicon(t, 20), x, y, 'opacity:0').animate([{ transform: 'translate(0,-10px) scale(.3)', opacity: 0 }, { transform: 'translate(0,26px) scale(1.15)', opacity: 1, offset: .18 }, { transform: `translate(${dx * .3}px,60px) scale(1)`, opacity: 1, offset: .3 }, { transform: `translate(${dx}px,${Math.max(160, innerHeight - y - 24)}px) scale(1)`, opacity: 0 }], { duration: 1000 + Math.random() * 300, delay: 120 + j * 70, easing: 'ease-in' })); });
-    } else cheer(unitsOf(c)[0] || 'spear', split(c)[1], document.getElementById('full'));   // 强化：这个兵种出来庆祝一下
+    } else cheer(unitsOf(c)[0] || 'spear', (c.t + c.d).includes('血') ? 'hp' : 'atk', document.getElementById('full'));   // 强化：这个兵种出来庆祝一下
   };
   const drawFan = () => {
     document.getElementById('fan').innerHTML = pick.map((c, k) => { const [n, e] = split(c); return `<button class="rcard" id="card${k}" aria-label="${c.kind} ${n} ${e}">${face(c)}<span class="tx"><em class="${c.kind === '招兵' ? 'g' : ''}">${c.kind}</em><b>${n}</b><span>${e}</span></span></button>`; }).join('');

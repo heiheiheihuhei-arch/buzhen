@@ -5,7 +5,8 @@
 """
 import json, pathlib, struct, subprocess, sys, zlib
 from collections import deque
-SZ, STEP, OUT_H, HOLE = 400, 3, 200, 45      # 抽帧时缩到多大、每几帧取一帧（24 帧/秒取三分之一 = 8 帧/秒）、成品单帧高、白洞至少多少像素
+BLEND = 3
+SZ, STEP, OUT_H, HOLE = 400, 2, 170, 45      # 抽帧时缩到多大、每几帧取一帧（24 帧/秒取一半 = 12 帧/秒；取三分之一看着卡）、成品单帧高、白洞至少多少像素
 root = pathlib.Path(__file__).resolve().parents[2]; unit = sys.argv[1]
 def frames(video):
     raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", video, "-vf", f"select='not(mod(n,{STEP}))',scale={SZ}:{SZ}:flags=lanczos", "-vsync", "0", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], capture_output=True, check=True).stdout
@@ -60,7 +61,15 @@ def png(path, w, h, rgba):
     path.write_bytes(b"\x89PNG\r\n\x1a\n" + ch(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0)) + ch(b"IDAT", zlib.compress(rows, 6)) + ch(b"IEND", b""))
 acts = {}; box = [SZ, SZ, 0, 0]
 for arg in sys.argv[2:]:
-    name, video = arg.split("=", 1); acts[name] = [matte(f) for f in frames(video)]
+    name, video = arg.split("=", 1); fs = frames(video)
+    # 循环接缝：视频最后一帧常常回不到开头的姿势，循环时会跳一下。在后四成里找和第一帧最像的那帧收尾，再把末尾 BLEND 帧渐变回第一帧
+    def dist(a, b): return sum(abs(a[i] - b[i]) for i in range(0, len(a), 37))
+    lo = int(len(fs) * 0.6); end = min(range(lo, len(fs)), key=lambda k: dist(fs[k], fs[0])); print(name, "原", len(fs), "帧，收在第", end + 1, "帧，接缝差", dist(fs[end], fs[0]) // 1000, "（最后一帧是", dist(fs[-1], fs[0]) // 1000, "）")
+    ms = [matte(f) for f in fs[:end + 1]]
+    for j in range(1, BLEND + 1):
+        t = 1 - j / (BLEND + 1); src, tgt = ms[len(ms) - j][0], ms[0][0]   # 倒数第 j 帧，越靠后越接近第一帧
+        ms[len(ms) - j] = (bytearray(round(src[i] * (1 - t) + tgt[i] * t) for i in range(len(src))), ms[len(ms) - j][1])
+    acts[name] = ms
     for _, (a, b, c, d) in acts[name]: box = [min(box[0], a), min(box[1], b), max(box[2], c), max(box[3], d)]
 x0, y0, x1, y1 = max(0, box[0] - 2), max(0, box[1] - 2), min(SZ - 1, box[2] + 2), min(SZ - 1, box[3] + 2); w, h = x1 - x0 + 1, y1 - y0 + 1
 meta_path = root / "art" / "game" / "anim.json"; meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
@@ -77,7 +86,7 @@ for name, fs in acts.items():
     p = tmp / f"{name}.png"; png(p, w * n, h, strip)
     fw = round(w * OUT_H / h); out = root / "art" / "game" / f"anim_{unit}_{name}.webp"
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(p), "-vf", f"scale={fw * n}:{OUT_H}:flags=lanczos", str(tmp / f"{name}_s.png")], check=True)
-    subprocess.run(["cwebp", "-quiet", "-q", "78", "-alpha_q", "85", str(tmp / f"{name}_s.png"), "-o", str(out)], check=True)
-    meta[f"{unit}_{name}"] = {"n": n, "w": fw, "h": OUT_H, **anchor}
+    subprocess.run(["cwebp", "-quiet", "-q", "74", "-alpha_q", "85", str(tmp / f"{name}_s.png"), "-o", str(out)], check=True)
+    meta[f"{unit}_{name}"] = {"n": n, "w": fw, "h": OUT_H, "fps": 24 // STEP, **anchor}
     print(name, "帧数", n, "单帧", fw, "x", OUT_H, "文件", out.stat().st_size // 1024, "KB")
 meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=1))

@@ -72,6 +72,7 @@ b { font-variant-numeric: tabular-nums; font-weight: 700; }
 #terrain { position: absolute; left: -75%; right: -75%; top: -45%; bottom: -45%;
   background: linear-gradient(180deg, rgba(70,20,14,.55) 0%, rgba(70,20,14,.55) 23.68%, rgba(70,20,14,.08) 28.07%, rgba(70,20,14,0) 31%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .12 0 0 0 .22 -.05'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"), #c9b085; }
+#banner { position: absolute; left: 0; right: 0; top: 24%; z-index: 3; padding: 6px 0 8px; text-align: center; font: 38px/1.2 "Ma Shan Zheng", KaiTi, serif; color: #f3e3bf; background: rgba(30,18,10,.55); pointer-events: none; opacity: 0; }
 #gl { display: none; position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; touch-action: none; } .g3 #gl { display: block; } .g3 #ground { display: none; }
 #cv { position: relative; display: block; touch-action: none; box-shadow: 0 0 0 1px rgba(80,58,30,.32); }
 #desk { position: absolute; inset: 0; z-index: 2; pointer-events: none; transform: scale(1.32); transform-origin: 50% 72%; will-change: transform;
@@ -336,7 +337,7 @@ footer { position: relative; height: 158px; flex: none; display: block; }
     <div class="only-fight" id="vs"><span class="flag me"><b id="mine">0</b></span><div class="bar vs"><i id="vsFill"></i></div><span class="flag foe"><b id="foes">0</b></span></div>
   </div>
   <div id="stage">
-    <canvas id="gl"></canvas>
+    <canvas id="gl"></canvas><div id="banner" aria-hidden="true"></div>
     <div id="ground"><div id="terrain"><svg viewBox="-270 -270 900 1140" preserveAspectRatio="none" style="position:absolute;left:0;top:0;width:100%;height:100%" aria-hidden="true"><path d="M-110 640 Q-105 380 -40 120" fill="none" stroke="#8a6f45" stroke-width="1.4" stroke-dasharray="3 6" stroke-linecap="round" opacity=".55"/><path d="M-103 640 Q-98 380 -33 120" fill="none" stroke="#8a6f45" stroke-width="1.4" stroke-dasharray="3 6" stroke-linecap="round" opacity=".55"/><path d="M450 640 Q465 390 400 140" fill="none" stroke="#8a6f45" stroke-width="1.4" stroke-dasharray="3 6" stroke-linecap="round" opacity=".55"/><path d="M457 640 Q472 390 407 140" fill="none" stroke="#8a6f45" stroke-width="1.4" stroke-dasharray="3 6" stroke-linecap="round" opacity=".55"/><path d="M60 690 Q180 725 300 760" fill="none" stroke="#8a6f45" stroke-width="1.4" stroke-dasharray="3 6" stroke-linecap="round" opacity=".55"/><path d="M67 690 Q187 725 307 760" fill="none" stroke="#8a6f45" stroke-width="1.4" stroke-dasharray="3 6" stroke-linecap="round" opacity=".55"/><g transform="translate(20,-96) scale(1.20)"><ellipse cx="1" cy="1" rx="5" ry="1.6" fill="rgba(70,48,20,.3)"/><path d="M0 0 V-22" stroke="#5a4326" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -22 h11 l-3 4 3 4 h-11 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(180,-96) scale(1.20)"><ellipse cx="1" cy="1" rx="5" ry="1.6" fill="rgba(70,48,20,.3)"/><path d="M0 0 V-22" stroke="#5a4326" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -22 h11 l-3 4 3 4 h-11 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(340,-96) scale(1.20)"><ellipse cx="1" cy="1" rx="5" ry="1.6" fill="rgba(70,48,20,.3)"/><path d="M0 0 V-22" stroke="#5a4326" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -22 h11 l-3 4 3 4 h-11 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(93,-66) scale(1.05)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#c96a52"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(262,-63) scale(1.02)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#c96a52"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(157,-56) scale(1.13)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#c96a52"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(212,-53) scale(1.05)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#c96a52"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(320,-52) scale(0.97)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#c96a52"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(38,-49) scale(1.11)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#c96a52"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#a33a28" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(426,-24) scale(1.02)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(505,-17) scale(1.18)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-68,4) scale(0.99)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(506,25) scale(1.18)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-39,28) scale(0.86)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-59,28) scale(1.15)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(436,36) scale(0.93)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-116,40) scale(1.30)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(394,68) scale(1.09)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(437,98) scale(0.85)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-130,98) scale(1.06)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(402,110) scale(0.85)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(447,121) scale(1.17)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-148,131) scale(0.97)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-98,137) scale(0.91)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-94,147) scale(0.99)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-83,148) scale(0.92)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(472,189) scale(0.80)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(-128,192) scale(1.08)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(420,217) scale(1.16)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-111,219) scale(0.92)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(426,236) scale(0.91)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-90,238) scale(1.09)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-111,254) scale(1.03)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(395,277) scale(1.02)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-73,302) scale(1.02)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(444,304) scale(1.24)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-64,308) scale(1.25)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(471,312) scale(0.90)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-57,315) scale(0.91)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-141,317) scale(1.25)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(487,350) scale(0.88)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(-131,367) scale(0.83)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(397,373) scale(0.86)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-48,378) scale(0.84)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(444,384) scale(1.04)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(485,400) scale(1.09)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(379,413) scale(1.11)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-105,423) scale(1.15)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(471,468) scale(1.11)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(472,468) scale(1.04)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-103,468) scale(0.92)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(435,475) scale(1.13)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-28,534) scale(0.79)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(406,545) scale(1.24)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(462,561) scale(0.80)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-43,564) scale(0.97)"><ellipse cx="4" cy="9" rx="34" ry="8" fill="rgba(70,48,20,.22)"/><path d="M-30 8 Q-22 -16 -4 -18 Q16 -20 30 8 Z" fill="#d9c59a" stroke="#8a6f45" stroke-width="1.2"/><path d="M-18 0 Q-10 -10 0 -11 M2 -4 Q10 -9 18 -2" fill="none" stroke="#8a6f45" stroke-width="1" stroke-linecap="round" opacity=".7"/><path d="M-22 4 Q-8 -14 8 -15" fill="none" stroke="#f1e3c0" stroke-width="2" stroke-linecap="round" opacity=".7"/></g><g transform="translate(-132,575) scale(1.18)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-112,577) scale(0.98)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(461,582) scale(1.16)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(473,603) scale(0.96)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(-74,622) scale(1.16)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-85,622) scale(0.90)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(-107,624) scale(1.08)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(-39,625) scale(1.05)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(401,628) scale(0.85)"><ellipse cx="1" cy="5" rx="8" ry="2.6" fill="rgba(70,48,20,.26)"/><path d="M-7 4 Q-8 -3 -2 -5 Q5 -6 7 0 Q8 4 2 5 Z" fill="#b3a488" stroke="#6a5a40" stroke-width="1"/></g><g transform="translate(436,639) scale(0.84)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(95,647) scale(1.11)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#6f8cc4"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(208,651) scale(1.12)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#6f8cc4"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(148,651) scale(1.10)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#6f8cc4"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(263,653) scale(1.14)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#6f8cc4"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(455,653) scale(0.89)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(33,662) scale(0.97)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#6f8cc4"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(325,662) scale(0.96)"><ellipse cx="2" cy="10" rx="15" ry="4" fill="rgba(70,48,20,.3)"/><path d="M-13 9 L0 -10 L13 9 Z" fill="#efe2c2" stroke="#5a4326" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 -10 L-4 9 L4 9 Z" fill="#6f8cc4"/><path d="M0 -10 V-19" stroke="#5a4326" stroke-width="1.2"/><path d="M0 -19 h8 l-2.5 3 2.5 3 h-8 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(16,700) scale(1.20)"><ellipse cx="1" cy="1" rx="5" ry="1.6" fill="rgba(70,48,20,.3)"/><path d="M0 0 V-22" stroke="#5a4326" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -22 h11 l-3 4 3 4 h-11 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(180,700) scale(1.20)"><ellipse cx="1" cy="1" rx="5" ry="1.6" fill="rgba(70,48,20,.3)"/><path d="M0 0 V-22" stroke="#5a4326" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -22 h11 l-3 4 3 4 h-11 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(344,700) scale(1.20)"><ellipse cx="1" cy="1" rx="5" ry="1.6" fill="rgba(70,48,20,.3)"/><path d="M0 0 V-22" stroke="#5a4326" stroke-width="1.4" stroke-linecap="round"/><path d="M0 -22 h11 l-3 4 3 4 h-11 z" fill="#3f62a0" stroke="#5a4326" stroke-width=".8"/></g><g transform="translate(330,716) scale(1.10)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(226,726) scale(1.10)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(338,736) scale(1.10)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(117,746) scale(1.10)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g><g transform="translate(315,756) scale(1.10)"><ellipse cx="2" cy="8" rx="9" ry="3" fill="rgba(70,48,20,.28)"/><rect x="-1.2" y="1" width="2.4" height="7" fill="#6a4a2a"/><circle cx="0" cy="-3" r="7" fill="#7f9a5a" stroke="#3f5a2c" stroke-width="1.1"/><circle cx="-2" cy="-5" r="2.4" fill="#a9c07a" opacity=".8"/></g></svg></div><canvas id="cv"></canvas></div>
 <div id="desk" aria-hidden="true"><svg viewBox="0 0 390 700" preserveAspectRatio="xMidYMid slice" style="position:absolute;left:3%;top:2.5%;width:94%;height:95%" aria-hidden="true"><defs><filter id="mp"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="7"/><feColorMatrix values="0 0 0 0 .45  0 0 0 0 .32  0 0 0 0 .16  0 0 0 .2 -.05"/></filter></defs>
 <g transform="rotate(-2.2 195 350)"><path d="M-14.0 6.6 L1.0 11.3 L13.8 7.2 L29.8 13.1 L42.9 10.1 L53.2 5.0 L64.8 10.9 L73.4 12.9 L83.6 7.3 L91.8 15.0 L107.3 13.8 L121.5 5.3 L132.7 10.0 L141.7 14.5 L153.4 6.5 L169.7 6.2 L187.1 9.5 L200.7 8.4 L213.5 6.9 L221.7 13.7 L231.9 12.8 L241.9 14.7 L259.0 12.5 L274.7 10.8 L290.1 6.2 L302.9 13.3 L312.8 14.2 L329.8 9.1 L341.4 9.5 L353.2 14.9 L365.0 5.3 L373.8 12.2 L391.9 10.0 L404.5 10.0 L401.2 25.6 L404.6 39.7 L400.8 54.0 L402.5 63.6 L402.5 81.0 L402.1 95.0 L399.7 103.9 L406.8 120.1 L405.8 131.8 L408.0 146.7 L403.1 164.4 L408.6 182.5 L407.8 196.5 L402.8 209.4 L407.8 219.7 L399.7 229.2 L406.7 245.4 L407.4 258.2 L401.6 266.6 L403.2 277.4 L399.7 287.0 L408.0 298.3 L406.5 316.3 L401.5 329.1 L404.3 346.9 L399.3 362.2 L407.4 372.2 L407.8 388.3 L403.3 402.4 L407.5 416.2 L404.3 427.2 L406.7 437.9 L405.9 445.8 L399.2 463.5 L405.4 477.5 L404.8 494.1 L403.1 504.6 L408.1 522.4 L399.9 531.6 L399.3 540.4 L400.4 552.8 L405.6 569.6 L404.4 578.7 L403.9 589.9 L400.7 600.0 L402.8 609.7 L404.5 624.9 L406.1 633.2 L406.7 650.1 L399.1 666.1 L404.0 665.6 L388.3 666.8 L373.1 667.5 L358.0 668.1 L349.8 668.9 L338.8 674.0 L327.9 670.0 L314.4 674.5 L305.5 671.0 L292.5 672.3 L274.6 668.1 L259.5 670.3 L245.9 665.6 L229.6 674.8 L218.1 668.2 L200.0 666.1 L191.4 665.7 L175.1 672.6 L162.7 671.2 L154.7 671.4 L142.3 670.2 L130.4 669.0 L120.3 665.5 L108.0 667.5 L92.8 673.2 L77.5 669.6 L67.3 668.9 L54.4 671.3 L36.6 665.9 L23.8 669.9 L8.5 673.9 L-7.4 671.3 L-12.3 670.0 L-12.0 653.3 L-16.5 638.4 L-15.1 621.0 L-10.8 606.8 L-9.1 589.0 L-15.9 581.1 L-15.1 570.1 L-13.5 560.8 L-16.0 552.2 L-11.6 534.6 L-17.9 521.9 L-12.0 504.2 L-15.6 494.3 L-12.2 479.8 L-9.5 469.3 L-16.5 458.1 L-17.5 441.5 L-17.0 426.7 L-16.2 412.6 L-9.6 400.9 L-14.6 388.2 L-16.2 374.0 L-15.2 364.4 L-17.1 353.8 L-18.7 336.0 L-9.7 319.8 L-18.8 304.6 L-18.6 291.6 L-12.0 277.5 L-18.9 267.2 L-18.1 253.7 L-14.5 242.7 L-15.3 225.6 L-11.1 216.4 L-13.7 200.1 L-17.1 191.7 L-13.5 179.8 L-11.0 169.6 L-9.7 153.0 L-18.8 136.1 L-18.2 122.2 L-11.5 105.0 L-17.1 89.3 L-10.8 80.9 L-12.8 66.8 L-11.0 54.1 L-16.3 42.8 L-16.0 31.3 L-10.1 17.0 Z" fill="rgba(0,0,0,.28)" transform="translate(3,5)"/><path d="M-14.0 6.6 L1.0 11.3 L13.8 7.2 L29.8 13.1 L42.9 10.1 L53.2 5.0 L64.8 10.9 L73.4 12.9 L83.6 7.3 L91.8 15.0 L107.3 13.8 L121.5 5.3 L132.7 10.0 L141.7 14.5 L153.4 6.5 L169.7 6.2 L187.1 9.5 L200.7 8.4 L213.5 6.9 L221.7 13.7 L231.9 12.8 L241.9 14.7 L259.0 12.5 L274.7 10.8 L290.1 6.2 L302.9 13.3 L312.8 14.2 L329.8 9.1 L341.4 9.5 L353.2 14.9 L365.0 5.3 L373.8 12.2 L391.9 10.0 L404.5 10.0 L401.2 25.6 L404.6 39.7 L400.8 54.0 L402.5 63.6 L402.5 81.0 L402.1 95.0 L399.7 103.9 L406.8 120.1 L405.8 131.8 L408.0 146.7 L403.1 164.4 L408.6 182.5 L407.8 196.5 L402.8 209.4 L407.8 219.7 L399.7 229.2 L406.7 245.4 L407.4 258.2 L401.6 266.6 L403.2 277.4 L399.7 287.0 L408.0 298.3 L406.5 316.3 L401.5 329.1 L404.3 346.9 L399.3 362.2 L407.4 372.2 L407.8 388.3 L403.3 402.4 L407.5 416.2 L404.3 427.2 L406.7 437.9 L405.9 445.8 L399.2 463.5 L405.4 477.5 L404.8 494.1 L403.1 504.6 L408.1 522.4 L399.9 531.6 L399.3 540.4 L400.4 552.8 L405.6 569.6 L404.4 578.7 L403.9 589.9 L400.7 600.0 L402.8 609.7 L404.5 624.9 L406.1 633.2 L406.7 650.1 L399.1 666.1 L404.0 665.6 L388.3 666.8 L373.1 667.5 L358.0 668.1 L349.8 668.9 L338.8 674.0 L327.9 670.0 L314.4 674.5 L305.5 671.0 L292.5 672.3 L274.6 668.1 L259.5 670.3 L245.9 665.6 L229.6 674.8 L218.1 668.2 L200.0 666.1 L191.4 665.7 L175.1 672.6 L162.7 671.2 L154.7 671.4 L142.3 670.2 L130.4 669.0 L120.3 665.5 L108.0 667.5 L92.8 673.2 L77.5 669.6 L67.3 668.9 L54.4 671.3 L36.6 665.9 L23.8 669.9 L8.5 673.9 L-7.4 671.3 L-12.3 670.0 L-12.0 653.3 L-16.5 638.4 L-15.1 621.0 L-10.8 606.8 L-9.1 589.0 L-15.9 581.1 L-15.1 570.1 L-13.5 560.8 L-16.0 552.2 L-11.6 534.6 L-17.9 521.9 L-12.0 504.2 L-15.6 494.3 L-12.2 479.8 L-9.5 469.3 L-16.5 458.1 L-17.5 441.5 L-17.0 426.7 L-16.2 412.6 L-9.6 400.9 L-14.6 388.2 L-16.2 374.0 L-15.2 364.4 L-17.1 353.8 L-18.7 336.0 L-9.7 319.8 L-18.8 304.6 L-18.6 291.6 L-12.0 277.5 L-18.9 267.2 L-18.1 253.7 L-14.5 242.7 L-15.3 225.6 L-11.1 216.4 L-13.7 200.1 L-17.1 191.7 L-13.5 179.8 L-11.0 169.6 L-9.7 153.0 L-18.8 136.1 L-18.2 122.2 L-11.5 105.0 L-17.1 89.3 L-10.8 80.9 L-12.8 66.8 L-11.0 54.1 L-16.3 42.8 L-16.0 31.3 L-10.1 17.0 Z" fill="#E2CFA0"/><clipPath id="mpc"><path d="M-14.0 6.6 L1.0 11.3 L13.8 7.2 L29.8 13.1 L42.9 10.1 L53.2 5.0 L64.8 10.9 L73.4 12.9 L83.6 7.3 L91.8 15.0 L107.3 13.8 L121.5 5.3 L132.7 10.0 L141.7 14.5 L153.4 6.5 L169.7 6.2 L187.1 9.5 L200.7 8.4 L213.5 6.9 L221.7 13.7 L231.9 12.8 L241.9 14.7 L259.0 12.5 L274.7 10.8 L290.1 6.2 L302.9 13.3 L312.8 14.2 L329.8 9.1 L341.4 9.5 L353.2 14.9 L365.0 5.3 L373.8 12.2 L391.9 10.0 L404.5 10.0 L401.2 25.6 L404.6 39.7 L400.8 54.0 L402.5 63.6 L402.5 81.0 L402.1 95.0 L399.7 103.9 L406.8 120.1 L405.8 131.8 L408.0 146.7 L403.1 164.4 L408.6 182.5 L407.8 196.5 L402.8 209.4 L407.8 219.7 L399.7 229.2 L406.7 245.4 L407.4 258.2 L401.6 266.6 L403.2 277.4 L399.7 287.0 L408.0 298.3 L406.5 316.3 L401.5 329.1 L404.3 346.9 L399.3 362.2 L407.4 372.2 L407.8 388.3 L403.3 402.4 L407.5 416.2 L404.3 427.2 L406.7 437.9 L405.9 445.8 L399.2 463.5 L405.4 477.5 L404.8 494.1 L403.1 504.6 L408.1 522.4 L399.9 531.6 L399.3 540.4 L400.4 552.8 L405.6 569.6 L404.4 578.7 L403.9 589.9 L400.7 600.0 L402.8 609.7 L404.5 624.9 L406.1 633.2 L406.7 650.1 L399.1 666.1 L404.0 665.6 L388.3 666.8 L373.1 667.5 L358.0 668.1 L349.8 668.9 L338.8 674.0 L327.9 670.0 L314.4 674.5 L305.5 671.0 L292.5 672.3 L274.6 668.1 L259.5 670.3 L245.9 665.6 L229.6 674.8 L218.1 668.2 L200.0 666.1 L191.4 665.7 L175.1 672.6 L162.7 671.2 L154.7 671.4 L142.3 670.2 L130.4 669.0 L120.3 665.5 L108.0 667.5 L92.8 673.2 L77.5 669.6 L67.3 668.9 L54.4 671.3 L36.6 665.9 L23.8 669.9 L8.5 673.9 L-7.4 671.3 L-12.3 670.0 L-12.0 653.3 L-16.5 638.4 L-15.1 621.0 L-10.8 606.8 L-9.1 589.0 L-15.9 581.1 L-15.1 570.1 L-13.5 560.8 L-16.0 552.2 L-11.6 534.6 L-17.9 521.9 L-12.0 504.2 L-15.6 494.3 L-12.2 479.8 L-9.5 469.3 L-16.5 458.1 L-17.5 441.5 L-17.0 426.7 L-16.2 412.6 L-9.6 400.9 L-14.6 388.2 L-16.2 374.0 L-15.2 364.4 L-17.1 353.8 L-18.7 336.0 L-9.7 319.8 L-18.8 304.6 L-18.6 291.6 L-12.0 277.5 L-18.9 267.2 L-18.1 253.7 L-14.5 242.7 L-15.3 225.6 L-11.1 216.4 L-13.7 200.1 L-17.1 191.7 L-13.5 179.8 L-11.0 169.6 L-9.7 153.0 L-18.8 136.1 L-18.2 122.2 L-11.5 105.0 L-17.1 89.3 L-10.8 80.9 L-12.8 66.8 L-11.0 54.1 L-16.3 42.8 L-16.0 31.3 L-10.1 17.0 Z"/></clipPath><rect x="-24" y="0" width="438" height="680" filter="url(#mp)" clip-path="url(#mpc)"/>
@@ -368,6 +369,76 @@ footer { position: relative; height: 158px; flex: none; display: block; }
 // ---------- 场地：36×60 的小格子，每格 10 个单位，一格站一个兵 ----------
 const COLS = 36, ROWS = 60, CS = 10, W = COLS * CS, H = ROWS * CS;
 const SPAWN_ROWS = 5;
+// ---------- 地形高度 ----------
+const LV = 16;                                             // 一层高度 = 多少个单位（一格是 10）
+const HGT = new Float32Array(COLS * ROWS), CORN = new Float32Array(COLS * ROWS * 4);   // 每格的高度（层）；每格四个角的实际高度（西北、东北、西南、东南）
+const linked = (a, b) => Math.abs(a - b) <= 0.3;           // 两格高度差不到 0.3 层：连着（平地或坡）；再大就是崖
+function buildHeights() {
+  HGT.fill(0);
+  const box = (c0, r0, c1, r1, h) => { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) HGT[r * COLS + c] = h; };
+  // 测试地形：左右各一块高地，中间夹出一个 12 格宽的谷口；每块高地朝南有一道 4 格宽的坡
+  box(0, 24, 11, 37, 1); box(24, 24, 35, 37, 1);
+  for (let k = 0; k < 4; k++) { box(4, 38 + k, 7, 38 + k, 0.8 - 0.2 * k); box(28, 38 + k, 31, 38 + k, 0.8 - 0.2 * k); }
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const h = HGT[r * COLS + c];
+    for (let q = 0; q < 4; q++) {
+      let sum = 0, n = 0;
+      for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
+        const cc = c - 1 + (q & 1) + i, rr = r - 1 + (q >> 1) + j;
+        if (cc < 0 || cc >= COLS || rr < 0 || rr >= ROWS) continue;
+        const o = HGT[rr * COLS + cc]; if (linked(h, o)) { sum += o; n++; }
+      }
+      CORN[(r * COLS + c) * 4 + q] = sum / n * LV;
+    }
+  }
+}
+buildHeights();
+// 规则位置 (x, y) 处的地面有多高
+function hAt(x, y) {
+  const c = Math.max(0, Math.min(COLS - 1, Math.floor(x / CS))), r = Math.max(0, Math.min(ROWS - 1, Math.floor(y / CS)));
+  const fx = Math.max(0, Math.min(1, x / CS - c)), fy = Math.max(0, Math.min(1, y / CS - r)), i = (r * COLS + c) * 4;
+  return (CORN[i] * (1 - fx) + CORN[i + 1] * fx) * (1 - fy) + (CORN[i + 2] * (1 - fx) + CORN[i + 3] * fx) * fy;
+}
+// ---------- 地形规则：崖挡路、绕行、高低差 ----------
+const cellI = (x, y) => Math.max(0, Math.min(ROWS - 1, Math.floor(y / CS))) * COLS + Math.max(0, Math.min(COLS - 1, Math.floor(x / CS)));
+// 从格 p 能不能一步走到相邻的格 q（斜着走时，两边的直角格也得通，不能擦着崖角穿过去）
+function stepOK(p, q) {
+  if (p === q) return true; if (!linked(HGT[p], HGT[q])) return false;
+  const dc = q % COLS - p % COLS, dr = (q / COLS | 0) - (p / COLS | 0);
+  return !(dc && dr) || (linked(HGT[p], HGT[p + dc]) && linked(HGT[p], HGT[p + dr * COLS]));
+}
+const passOK = (x0, y0, x1, y1) => stepOK(cellI(x0, y0), cellI(x1, y1));
+// 两点之间走直线会不会撞崖
+function lineClear(x0, y0, x1, y1) {
+  const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / (CS * 0.45)); let p = cellI(x0, y0);
+  for (let k = 1; k <= n; k++) { const q = cellI(x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n); if (q !== p) { if (Math.abs(q % COLS - p % COLS) > 1 || Math.abs((q / COLS | 0) - (p / COLS | 0)) > 1 || !stepOK(p, q)) return false; p = q; } }
+  return true;
+}
+// 到某一格的「路程表」：从那格往外一圈圈量，每格记下离它几步（崖过不去）。地形不变，量过的存着
+const navCache = new Map();
+function navTo(goal) {
+  let d = navCache.get(goal); if (d) return d;
+  if (navCache.size > 500) navCache.clear();
+  d = new Int16Array(COLS * ROWS).fill(-1); d[goal] = 0; const q = [goal];
+  for (let h = 0; h < q.length; h++) { const p = q[h], c = p % COLS, r = p / COLS | 0;
+    for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const cc = c + dc, rr = r + dr; if (cc < 0 || cc >= COLS || rr < 0 || rr >= ROWS) continue; const n = rr * COLS + cc; if (d[n] < 0 && linked(HGT[p], HGT[n])) { d[n] = d[p] + 1; q.push(n); } } }
+  navCache.set(goal, d); return d;
+}
+// 直线走不通时：顺着路程表往下走，返回眼下该朝哪个点走（能直线看到的最远一步）
+function waypoint(x, y, tx, ty) {
+  const d = navTo(cellI(tx, ty)); let p = cellI(x, y); if (d[p] <= 0) return null;
+  let best = null;
+  for (let k = 0; k < 6; k++) {
+    const c = p % COLS, r = p / COLS | 0; let nb = -1, nd = d[p];
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { if (!dc && !dr) continue; const cc = c + dc, rr = r + dr; if (cc < 0 || cc >= COLS || rr < 0 || rr >= ROWS) continue; const n = rr * COLS + cc; if (d[n] >= 0 && d[n] < nd && stepOK(p, n)) { nd = d[n]; nb = n; } }
+    if (nb < 0) break;
+    const wx = (nb % COLS + 0.5) * CS, wy = ((nb / COLS | 0) + 0.5) * CS;
+    if (best && !lineClear(x, y, wx, wy)) break;
+    best = [wx, wy]; p = nb;
+  }
+  return best;
+}
+const highBy = (u, e) => (hAt(u.x, u.y) - hAt(e.x, e.y)) / LV;   // u 比 e 高几层
 
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const COL = { shield: css('--shield'), spear: css('--spear'), bow: css('--bow'), fire: css('--fire'), horse: css('--horse'), gold: css('--gold'), red: css('--red') };
@@ -791,7 +862,8 @@ const dmgOf = u => (u.side ? u.dmg : T[u.type].dmg * (u.dmgMul || 1)) * (u.mor >
 const cdOf = u => u.side ? u.cd : T[u.type].cd;
 const bowRange = u => (u.side ? u.f.range : T.bow.range) * (sp.mod.rain ? 0.75 : 1);
 // 够得着：弓看射程，枪隔一格能戳，盾和骑要贴身
-const reachTo = (u, e) => u.type === 'bow' ? bowRange(u) : u.type === 'spear' ? (u.side ? u.f.reach : T.spear.range) : u.rad + e.rad + 2.5;
+const reachTo = (u, e) => u.type === 'bow' ? bowRange(u) * (1 + (highBy(u, e) > 0.3 ? 0.3 : highBy(u, e) < -0.3 ? -0.2 : 0)) :   // 弓：高打低射得远三成，低打高近两成
+   u.type === 'spear' ? (u.side ? u.f.reach : T.spear.range) : u.rad + e.rad + 2.5;
 
 function buildBuckets() {
   for (const k of usedB) buckets[k].length = 0;
@@ -841,21 +913,27 @@ function hurt(u, d, src, by) {
   if (u.f.pts >= 3) floats.push({ x: u.x, y: u.y - 6, text: '斩', life: 1, color: COL.gold });
 }
 function strike(u, e) {
-  const d = dmgOf(u), L = Math.hypot(e.x - u.x, e.y - u.y) || 1; u.vx = (e.x - u.x) / L; u.vy = (e.y - u.y) / L;
+  let d = dmgOf(u); const L = Math.hypot(e.x - u.x, e.y - u.y) || 1, hb = highBy(u, e), dive = u.type !== 'bow' && performance.now() - (u.downT || 0) < 700;
+  if (u.type !== 'bow') d *= dive ? 1.5 : hb > 0.3 ? 1.25 : hb < -0.3 ? 0.8 : 1;   // 近战：从坡上冲下来五成加伤，站得高多两成半，仰攻少两成
+  u.vx = (e.x - u.x) / L; u.vy = (e.y - u.y) / L;
   if (u.type === 'bow') u.shotT = performance.now();
-  if (u.type === 'bow') shots.push({ k: u.side ? 'earrow' : 'arrow', side: u.side, by: u, x: u.x, y: u.y, e, tx: e.x, ty: e.y, spd: u.side ? 220 : 300, dmg: d });
+  if (u.type === 'bow') shots.push({ k: u.side ? 'earrow' : 'arrow', side: u.side, by: u, x: u.x, y: u.y, sx: u.x, sy: u.y, e, tx: e.x, ty: e.y, spd: u.side ? 220 : 300, dmg: d });
   else if (u.type === 'spear') { near(e.x, e.y, 5, e.side, o => hurt(o, d, 'melee', u)); shots.push({ k: 'thrust', x: u.x, y: u.y, tx: e.x, ty: e.y, life: 0.12 }); }
   else if (u.type === 'horse' && u.run >= CHARGE) { // 跑够 3 格撞上去：三倍，踩到旁边一片
     near(e.x, e.y, 8, e.side, o => hurt(o, d * 3, 'melee', u));
-    floats.push({ x: e.x, y: e.y - 6, text: '冲', life: 0.6, color: u.side ? '#ffb0a0' : COL.gold }); burst(e.x, e.y, u.side ? '#f2d29b' : COL.horse, 6);
+    floats.push({ x: e.x, y: e.y - 6, text: dive ? '俯冲' : '冲', life: 0.6, color: u.side ? '#ffb0a0' : COL.gold }); burst(e.x, e.y, u.side ? '#f2d29b' : COL.horse, 6);
   }
   else hurt(e, d, 'melee', u); // 盾：推搡一下，伤害很低
   if (u.type === 'horse') u.run = 0;
 }
 // 走一步。avoid：前面被自己人挡住，就斜着绕一下
 function stepTo(u, tx, ty, spd, dt, avoid) {
+  if (!lineClear(u.x, u.y, tx, ty)) { const w = waypoint(u.x, u.y, tx, ty); if (w) { tx = w[0]; ty = w[1]; } }   // 前面是崖：绕路
   let dx = tx - u.x, dy = ty - u.y; const L = Math.hypot(dx, dy); if (L < 0.3) return;
-  dx /= L; dy /= L; const step = Math.min(L, spd * dt);
+  dx /= L; dy /= L;
+  { const ax = u.x + dx * 5, ay = u.y + dy * 5;   // 上坡慢，下坡快
+    if (passOK(u.x, u.y, ax, ay)) { const dh = hAt(ax, ay) - hAt(u.x, u.y); if (dh > 1) spd *= 0.6; else if (dh < -1) { spd *= 1.35; u.downT = performance.now(); } } }
+  const step = Math.min(L, spd * dt);
   if (avoid) {
     const p = u.rad * 2 + 1;
     for (const a of [0, 0.6, -0.6, 1.2, -1.2]) {
@@ -864,11 +942,11 @@ function stepTo(u, tx, ty, spd, dt, avoid) {
       if (!hit) { dx = nx; dy = ny; break; }
     }
   }
-  u.x += dx * step; u.y += dy * step; u.vx = dx; u.vy = dy; u.mvT = performance.now();
+  let nx = u.x + dx * step, ny = u.y + dy * step;
+  if (!passOK(u.x, u.y, nx, ny)) { if (passOK(u.x, u.y, nx, u.y)) ny = u.y; else if (passOK(u.x, u.y, u.x, ny)) nx = u.x; else return; }   // 撞崖：贴着崖边滑
+  u.x = nx; u.y = ny; u.vx = dx; u.vy = dy; u.mvT = performance.now();
   if (u.type === 'horse') u.run += step;
 }
-
-// 开战编队：我方按画的格子，相隔 2 格以内连成一片算一队；骑兵和步兵分开
 function makeTeam(side, mem, fwd) {
   const cx = mem.reduce((a, u) => a + u.x, 0) / mem.length, cy = mem.reduce((a, u) => a + u.y, 0) / mem.length;
   const t = { side, mem, horse: mem[0].type === 'horse', go: mem[0].type !== 'horse', x: cx, y: cy, hx: 0, hy: 0, fx: fwd[0], fy: fwd[1], spd: Math.min(...mem.map(u => u.spd)), aimT: 0 };
@@ -907,14 +985,16 @@ function updateTeams(dt) {
       }
       let ax, ay;
       if (best) { ax = best.x - t.x; ay = best.y - t.y; } else if (n) { ax = sx / n - t.x; ay = sy / n - t.y; } else if (any) { ax = t.fx; ay = t.fy; } else ax = ay = 0;
+      let via = false;   // 队伍正前方是崖：整队先朝绕路的方向走
+      if ((best || n) && !lineClear(t.x, t.y, t.x + ax, t.y + ay)) { const w = waypoint(t.x, t.y, t.x + ax, t.y + ay); if (w) { ax = w[0] - t.x; ay = w[1] - t.y; via = true; } }
       const L = Math.hypot(ax, ay);
-      if (L < (best ? 14 : 0.01)) t.hx = t.hy = 0; else { t.hx = ax / L; t.hy = ay / L; }
+      if (L < (best && !via ? 14 : 0.01)) t.hx = t.hy = 0; else { t.hx = ax / L; t.hy = ay / L; }
       // 队伍已经走到敌人跟前停下，就全队散开各自打，免得离得远的队员一直干站着
       if (best && !t.hx && !t.hy) { for (const u of t.mem) u.state = 'fight'; t.mem = []; continue; }
     }
     // 队员被挡住、落在后面太多：队中心等一等
     const lag = t.mem.reduce((a, u) => a + Math.hypot(t.x + u.ox - u.x, t.y + u.oy - u.y), 0) / t.mem.length;
-    if (lag < 18) { t.x += t.hx * t.spd * dt; t.y += t.hy * t.spd * dt; t.waitT = 0; }
+    if (lag < 18) { const nx = t.x + t.hx * t.spd * dt, ny = t.y + t.hy * t.spd * dt; if (passOK(t.x, t.y, nx, ny)) { t.x = nx; t.y = ny; } else t.aimT = 0; t.waitT = 0; }
     else if ((t.waitT = (t.waitT || 0) + dt) > 2.5) { for (const u of t.mem) u.state = 'fight'; t.mem = []; } // 等了 2.5 秒还跟不上：散开各自打
   }
 }
@@ -966,6 +1046,8 @@ function updateUnit(u, dt) {
       if (!t.go) return;
       // 跟队走：守着自己在队里的位置；敌方的兵跟得有快有慢、左右晃一点，看着像一群人
       let tx = t.x + u.ox, ty = t.y + u.oy, spd = u.spd * 1.3;
+      // 自己在队里的位置被崖隔开了（比如队伍在过谷口）：往队伍中间靠，挤着过
+      if (!lineClear(t.x, t.y, tx, ty)) for (const k of [0.75, 0.5, 0.25, 0]) { tx = t.x + u.ox * k; ty = t.y + u.oy * k; if (lineClear(t.x, t.y, tx, ty)) break; }
       if (u.side) { u.wob += dt * 2.2; const b = (1 - u.lag) * 14; tx += -t.hx * b + Math.sin(u.wob) * 2.5; ty += -t.hy * b + Math.cos(u.wob * 0.7) * 2; spd *= u.lag; }
       stepTo(u, tx, ty, spd, dt, false);
       if (t.hx || t.hy) { u.vx = t.hx; u.vy = t.hy; }
@@ -986,10 +1068,10 @@ function updateUnit(u, dt) {
   }
   let e = u.aim;
   // 被盾缠住：贴着对面的盾兵，就得先把它砍倒
-  if (u.type !== 'bow') { const sh = nearestOpp(u, u.rad + 6, o => o.type === 'shield'); if (sh) e = sh; }
+  if (u.type !== 'bow') { const sh = nearestOpp(u, u.rad + 6, o => o.type === 'shield' && lineClear(u.x, u.y, o.x, o.y)); if (sh) e = sh; }
   if (!e) return;
   const d = Math.hypot(e.x - u.x, e.y - u.y);
-  if (d <= reachTo(u, e)) {
+  if (d <= reachTo(u, e) && (u.type === 'bow' || lineClear(u.x, u.y, e.x, e.y))) {   // 近战隔着崖打不着，得绕上去
     u.vx = (e.x - u.x) / (d || 1); u.vy = (e.y - u.y) / (d || 1);
     if (u.type === 'horse' && u.run >= CHARGE) u.cdT = 0; // 冲到跟前，立刻撞
     u.cdT -= dt * (u.rateMul || 1);
@@ -1003,7 +1085,7 @@ function updateUnit(u, dt) {
 function separate() {
   for (const a of [soldiers, enemies]) for (const u of a) {
     if (u.dead) continue;
-    const [c, r] = cellOf(u.x, u.y);
+    const [c, r] = cellOf(u.x, u.y), ox0 = u.x, oy0 = u.y;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
       const cc = c + dx, rr = r + dy; if (cc < 0 || cc >= COLS || rr < 0 || rr >= ROWS) continue;
       for (const o of buckets[rr * COLS + cc]) {
@@ -1015,6 +1097,7 @@ function separate() {
       }
     }
     u.x = Math.max(u.rad, Math.min(W - u.rad, u.x)); u.y = Math.max(u.rad, Math.min(H - u.rad, u.y));
+    if (!passOK(ox0, oy0, u.x, u.y)) { if (passOK(ox0, oy0, u.x, oy0)) u.y = oy0; else if (passOK(ox0, oy0, ox0, u.y)) u.x = ox0; else { u.x = ox0; u.y = oy0; } }   // 挤不过崖
   }
 }
 function updateShots(dt) {
@@ -1025,7 +1108,7 @@ function updateShots(dt) {
     if (L <= step + 2) { p.life = 0; if (p.e && !p.e.dead) hurt(p.e, p.dmg, 'arrow', p.by); continue; }
     p.x += dx / L * step; p.y += dy / L * step; p.life = 1;
     // 箭飞过对面的盾兵：被盾挡下，盾只吃三成
-    let blk = null; near(p.x, p.y, 2, 1 - p.side, o => { if (!blk && o.type === 'shield' && o !== p.e) blk = o; });
+    let blk = null; near(p.x, p.y, 2, 1 - p.side, o => { if (!blk && o.type === 'shield' && o !== p.e && hAt(p.sx, p.sy) - hAt(o.x, o.y) < LV * 0.5) blk = o; });   // 从高处射下来的箭越过盾兵头顶，挡不住
     if (blk) { hurt(blk, p.dmg * 0.3, 'arrow', p.by); p.life = 0; if (Math.random() < 0.3) floats.push({ x: blk.x, y: blk.y - 5, text: '挡', life: 0.5, color: '#e8e0c8' }); }
   }
   shots = shots.filter(p => p.life > 0);
@@ -1456,36 +1539,7 @@ let scale = 1, pointer = null;
 const G3 = typeof THREE !== 'undefined';
 document.body.classList.toggle('g3', G3);
 const pad = G3 ? document.getElementById('gl') : cv;      // 手指事件落在哪块画布上
-const LV = 16;                                             // 一层高度 = 多少个单位（一格是 10）
-const HGT = new Float32Array(COLS * ROWS), CORN = new Float32Array(COLS * ROWS * 4);   // 每格的高度（层）；每格四个角的实际高度（西北、东北、西南、东南）
-const linked = (a, b) => Math.abs(a - b) <= 0.3;           // 两格高度差不到 0.3 层：连着（平地或坡）；再大就是崖
-function buildHeights() {
-  HGT.fill(0);
-  const box = (c0, r0, c1, r1, h) => { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) HGT[r * COLS + c] = h; };
-  // 测试地形：左右各一块高地，中间夹出一个 12 格宽的谷口；每块高地朝南有一道 4 格宽的坡
-  box(0, 24, 11, 37, 1); box(24, 24, 35, 37, 1);
-  for (let k = 0; k < 4; k++) { box(4, 38 + k, 7, 38 + k, 0.8 - 0.2 * k); box(28, 38 + k, 31, 38 + k, 0.8 - 0.2 * k); }
-  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-    const h = HGT[r * COLS + c];
-    for (let q = 0; q < 4; q++) {
-      let sum = 0, n = 0;
-      for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
-        const cc = c - 1 + (q & 1) + i, rr = r - 1 + (q >> 1) + j;
-        if (cc < 0 || cc >= COLS || rr < 0 || rr >= ROWS) continue;
-        const o = HGT[rr * COLS + cc]; if (linked(h, o)) { sum += o; n++; }
-      }
-      CORN[(r * COLS + c) * 4 + q] = sum / n * LV;
-    }
-  }
-}
-buildHeights();
-// 规则位置 (x, y) 处的地面有多高
-function hAt(x, y) {
-  const c = Math.max(0, Math.min(COLS - 1, Math.floor(x / CS))), r = Math.max(0, Math.min(ROWS - 1, Math.floor(y / CS)));
-  const fx = Math.max(0, Math.min(1, x / CS - c)), fy = Math.max(0, Math.min(1, y / CS - r)), i = (r * COLS + c) * 4;
-  return (CORN[i] * (1 - fx) + CORN[i + 1] * fx) * (1 - fy) + (CORN[i + 2] * (1 - fx) + CORN[i + 3] * fx) * fy;
-}
-const g3 = {}, bills = [];
+const g3 = {}, bills = [], darts = [], DMAX = 400;
 const GTEX_K = 2.5, BMAX = 900, ATL = { cw: 80, ch: 100 };
 if (G3) {
   g3.renderer = new THREE.WebGLRenderer({ canvas: pad, antialias: true, alpha: true });
@@ -1529,6 +1583,12 @@ if (G3) {
     vertexShader: 'attribute vec3 iPos; attribute vec2 iSz; attribute vec4 iUV; attribute vec3 iFx; varying vec2 vUv; varying float vA;\nvoid main(){ float u = position.x + .5; vec4 mv = viewMatrix * vec4(iPos, 1.); mv.x += (u - iFx.x) * iSz.x * (iFx.y > .5 ? -1. : 1.); mv.y += position.y * iSz.y; mv.z += 1.5; vUv = iUV.xy + vec2(u, position.y) * iUV.zw; vA = iFx.z; gl_Position = projectionMatrix * mv; }',
     fragmentShader: 'uniform sampler2D map; varying vec2 vUv; varying float vA;\nvoid main(){ vec4 c = texture2D(map, vUv); c.a *= vA; if (c.a < .02) discard; gl_FragColor = c; }' }));
   g3.bills.frustumCulled = false; g3.scene.add(g3.bills);
+  // 箭：飞在空中的细长片（带一点抛物线），不再贴在地上
+  const dg = new THREE.BufferGeometry();
+  g3.dP = new THREE.BufferAttribute(new Float32Array(DMAX * 18), 3); g3.dC = new THREE.BufferAttribute(new Float32Array(DMAX * 18), 3);
+  g3.dP.setUsage(THREE.DynamicDrawUsage); g3.dC.setUsage(THREE.DynamicDrawUsage); dg.setAttribute('position', g3.dP); dg.setAttribute('color', g3.dC); dg.setDrawRange(0, 0);
+  g3.darts = new THREE.Mesh(dg, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide })); g3.darts.frustumCulled = false; g3.scene.add(g3.darts);
+  g3.bn = document.getElementById('banner'); g3.fw = new THREE.Vector3(); g3.a = new THREE.Vector3(); g3.b = new THREE.Vector3(); g3.s = new THREE.Vector3();
   g3.ray = new THREE.Raycaster(); g3.v = new THREE.Vector3(); g3.plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 }
 // 图集：每个有美术图的兵种占两行（背面、正面），每行六个样子
@@ -1582,6 +1642,15 @@ function g3draw() {
   const n = Math.min(BMAX, bills.length), P = g3.aPos.array, S = g3.aSz.array, U = g3.aUV.array, F = g3.aFx.array;
   for (let i = 0; i < n; i++) { const b = bills[i], t = g3.rects[b.key] || [0, 0, 0, 0];
     P[i * 3] = b.x; P[i * 3 + 1] = b.y; P[i * 3 + 2] = b.z; S[i * 2] = b.w; S[i * 2 + 1] = b.h; U.set(t, i * 4); F[i * 3] = b.anc; F[i * 3 + 1] = b.flip ? 1 : 0; F[i * 3 + 2] = b.a; }
+  { // 箭在路上的位置：从射手胸口到目标身上，中间拱起来一点
+    const P = g3.dP.array, C = g3.dC.array, m = Math.min(DMAX, darts.length), A = g3.a, B = g3.b, Sd = g3.s, fw = g3.cam.getWorldDirection(g3.fw);
+    const at = (p, k, out) => { const D = Math.hypot(p.tx - p.sx, p.ty - p.sy) || 1, x = p.sx + (p.tx - p.sx) * k, y = p.sy + (p.ty - p.sy) * k;
+      return out.set(x, (hAt(p.sx, p.sy) + 8) * (1 - k) + (hAt(p.tx, p.ty) + 5) * k + Math.sin(k * Math.PI) * Math.min(26, D * 0.14), y); };
+    for (let i = 0; i < m; i++) { const p = darts[i], D = Math.hypot(p.tx - p.sx, p.ty - p.sy) || 1, k = Math.max(0, Math.min(1, 1 - Math.hypot(p.tx - p.x, p.ty - p.y) / D));
+      at(p, k, A); at(p, Math.max(0, k - 8 / D), B); Sd.subVectors(B, A).cross(fw).normalize().multiplyScalar(0.55);
+      const q = [A.x + Sd.x, A.y + Sd.y, A.z + Sd.z, A.x - Sd.x, A.y - Sd.y, A.z - Sd.z, B.x + Sd.x, B.y + Sd.y, B.z + Sd.z, B.x + Sd.x, B.y + Sd.y, B.z + Sd.z, A.x - Sd.x, A.y - Sd.y, A.z - Sd.z, B.x - Sd.x, B.y - Sd.y, B.z - Sd.z];
+      P.set(q, i * 18); const col = p.k === 'arrow' ? [0.16, 0.1, 0.05] : [0.36, 0.08, 0.2]; for (let j = 0; j < 6; j++) C.set(col, i * 18 + j * 3); }
+    g3.darts.geometry.setDrawRange(0, m * 6); g3.dP.needsUpdate = g3.dC.needsUpdate = true; }
   g3.bills.geometry.instanceCount = n; g3.aPos.needsUpdate = g3.aSz.needsUpdate = g3.aUV.needsUpdate = g3.aFx.needsUpdate = true;
   g3.renderer.render(g3.scene, g3.cam);
 }
@@ -1862,7 +1931,7 @@ function drawFoe(e, ghost) {
   }
 }
 function render() {
-  bills.length = 0;
+  bills.length = 0; darts.length = 0;
   ctx.save();
   if (shake > 0 && !reduceMotion) ctx.translate((Math.random() - 0.5) * shake * 14, (Math.random() - 0.5) * shake * 14);
   ctx.drawImage(sandImg, 0, 0, W, H);
@@ -1894,6 +1963,7 @@ function render() {
   // 箭、枪
   for (const p of shots) {
     if (p.k === 'thrust') { ctx.strokeStyle = 'rgba(250,236,200,.85)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + (p.tx - p.x) * 0.9, p.y + (p.ty - p.y) * 0.9); ctx.stroke(); }
+    else if (G3 && (p.k === 'arrow' || p.k === 'earrow')) darts.push(p);
     else if (p.k === 'arrow') { const dx = p.tx - p.x, dy = p.ty - p.y, L = Math.hypot(dx, dy) || 1; ctx.strokeStyle = '#3a2a18'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - dx / L * 6, p.y - dy / L * 6); ctx.stroke(); }
     else if (p.k === 'earrow') { const dx = p.tx - p.x, dy = p.ty - p.y, L = Math.hypot(dx, dy) || 1; ctx.strokeStyle = '#6e2350'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - dx / L * 5, p.y - dy / L * 5); ctx.stroke(); }
     else if (p.k === 'rock') { const k = 1 - Math.min(1, Math.hypot(p.tx - p.x, p.ty - p.y) / Math.max(1, Math.hypot(p.tx - p.sx, p.ty - p.sy))); ctx.fillStyle = '#3a2810'; ctx.beginPath(); ctx.arc(p.x, p.y - Math.sin(k * Math.PI) * 30, 3, 0, 6.283); ctx.fill(); }
@@ -1915,7 +1985,8 @@ function render() {
     ctx.strokeStyle = 'rgba(255,248,225,.85)'; ctx.lineWidth = 1;
     ctx.strokeRect((c - R) * CS + 0.5, (r - R) * CS + 0.5, (2 * R + 1) * CS - 1, (2 * R + 1) * CS - 1);
   }
-  if (bannerT > 0) {
+  if (G3) { const o = bannerT > 0 ? Math.min(1, bannerT * 2).toFixed(2) : '0'; if (g3.bn.textContent !== bannerTxt) g3.bn.textContent = bannerTxt; if (g3.bnO !== o) g3.bn.style.opacity = g3.bnO = o; }
+  else if (bannerT > 0) {
     ctx.globalAlpha = Math.min(1, bannerT * 2);
     ctx.font = '40px "Ma Shan Zheng", KaiTi, serif'; ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(30,18,10,.55)'; ctx.fillRect(0, H * 0.3 - 34, W, 50);

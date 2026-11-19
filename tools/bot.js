@@ -1,6 +1,7 @@
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)); await sleep(2000);
 const q=new URLSearchParams(location.search), hz=__hz; for (const k of ['p0','pG']) if (q.has(k)) hz.TUNE[k]=+q.get(k);
 const draw=q.get('draw')==='1', to=+(q.get('to')||5), log=[];
+if (typeof g3 !== 'undefined') g3.skip = true;
 hz.startPrep();
 const fill=()=>{ for (const k of ['shield','spear','bow','horse']) { const B=ROWS-20, M=COLS/2, rows=(k==='bow'?[1,2,3,4]:k==='horse'?[6,7]:[-7,-6,-5,-2,-1,0]).map(o=>B+o);
   for (const r of rows) for (let d=0; d<18 && countOf(k)<ownOf(k); d++) for (const c of [M-1-d,M+d]) if (countOf(k)<ownOf(k) && !grid[r*COLS+c] && drawable(c,r)) place(c,r,k); }

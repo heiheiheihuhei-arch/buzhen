@@ -420,7 +420,7 @@ function lineClear(x0, y0, x1, y1) {
 const navCache = new Map();
 function navTo(goal) {
   let d = navCache.get(goal); if (d) return d;
-  if (navCache.size > 500) navCache.clear();
+  if (navCache.size > 1500) navCache.clear();
   d = new Int16Array(COLS * ROWS).fill(-1); d[goal] = 0; const q = [goal];
   for (let h = 0; h < q.length; h++) { const p = q[h], c = p % COLS, r = p / COLS | 0;
     for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const cc = c + dc, rr = r + dr; if (cc < 0 || cc >= COLS || rr < 0 || rr >= ROWS) continue; const n = rr * COLS + cc; if (d[n] < 0 && linked(HGT[p], HGT[n])) { d[n] = d[p] + 1; q.push(n); } } }
@@ -887,6 +887,13 @@ function nearestOpp(u, rad, pred) {
   near(u.x, u.y, rad, 1 - u.side, o => { if (pred && !pred(o)) return; const d = (o.x - u.x) ** 2 + (o.y - u.y) ** 2; if (d < bd && canSee(u.side, o)) { bd = d; best = o; } });
   return best;
 }
+// 离 (x, y) 最近的对手：直线走得通就按直线距离；最近的那个被崖隔着，就改按实际要走的路程比（绕到坡口的路也算上）
+function nearestReach(list, x, y, pred) {
+  const e = nearestIn(list, x, y, pred); if (!e || lineClear(x, y, e.x, e.y)) return e;
+  const d = navTo(cellI(x, y)); let best = null, bd = 1e9;
+  for (const o of list) { if (o.dead || (pred && !pred(o))) continue; const k = d[cellI(o.x, o.y)]; if (k >= 0 && k < bd) { bd = k; best = o; } }
+  return best || e;
+}
 function nearestIn(list, x, y, pred) {
   let best = null, bd = 1e12;
   for (const o of list) { if (o.dead || (pred && !pred(o))) continue; const d = (o.x - x) ** 2 + (o.y - y) ** 2; if (d < bd) { bd = d; best = o; } }
@@ -978,16 +985,13 @@ function updateTeams(dt) {
     }
     t.aimT -= dt;
     if (t.aimT <= 0) {
-      // 往哪走：15 格内看得见敌人，朝最近的那个；没有就朝看得见的敌人整体；一个都看不见就往正前方走；场上根本没敌人就原地等
-      t.aimT = 0.4; let best = null, bd = AIM_NEAR * AIM_NEAR, sx = 0, sy = 0, n = 0, any = false;
-      for (const o of opp) {
-        if (o.dead) continue; any = true; if (!canSee(t.side, o)) continue;
-        const d = (o.x - t.x) ** 2 + (o.y - t.y) ** 2; if (d < bd) { bd = d; best = o; } sx += o.x; sy += o.y; n++;
-      }
+      // 往哪走：朝最近的那个看得见的敌人走（被崖隔着的按实际要走的路程算远近）；一个都看不见就往正前方走；场上根本没敌人就原地等
+      // 以前离得远时是朝「敌人整体的中心」走：地图大了以后两军会隔着地形擦肩而过，各自走到对方身后的空地再折回来，所以改掉了
+      t.aimT = 0.4; const any = opp.some(o => !o.dead), best = nearestReach(opp, t.x, t.y, o => canSee(t.side, o));
       let ax, ay;
-      if (best) { ax = best.x - t.x; ay = best.y - t.y; } else if (n) { ax = sx / n - t.x; ay = sy / n - t.y; } else if (any) { ax = t.fx; ay = t.fy; } else ax = ay = 0;
+      if (best) { ax = best.x - t.x; ay = best.y - t.y; } else if (any) { ax = t.fx; ay = t.fy; } else ax = ay = 0;
       let via = false;   // 队伍正前方是崖：整队先朝绕路的方向走
-      if ((best || n) && !lineClear(t.x, t.y, t.x + ax, t.y + ay)) { const w = waypoint(t.x, t.y, t.x + ax, t.y + ay); if (w) { ax = w[0] - t.x; ay = w[1] - t.y; via = true; } }
+      if (best && !lineClear(t.x, t.y, t.x + ax, t.y + ay)) { const w = waypoint(t.x, t.y, t.x + ax, t.y + ay); if (w) { ax = w[0] - t.x; ay = w[1] - t.y; via = true; } }
       const L = Math.hypot(ax, ay);
       if (L < (best && !via ? 14 : 0.01)) t.hx = t.hy = 0; else { t.hx = ax / L; t.hy = ay / L; }
       // 队伍已经走到敌人跟前停下，就全队散开各自打，免得离得远的队员一直干站着
@@ -1001,8 +1005,8 @@ function updateTeams(dt) {
 }
 function pickTarget(u) {
   const opp = oppOf(u), see = o => canSee(u.side, o);
-  if (u.type === 'horse') { const b = nearestIn(opp, u.x, u.y, o => o.type === 'bow' && see(o)); if (b) return b; } // 骑：先找对面弓兵
-  return nearestIn(opp, u.x, u.y, see);
+  if (u.type === 'horse') { const b = nearestReach(opp, u.x, u.y, o => o.type === 'bow' && see(o)); if (b) return b; } // 骑：先找对面弓兵
+  return nearestReach(opp, u.x, u.y, see);
 }
 function moraleTick(u, dt) {
   u.mT = (u.mT || 0) - dt; if (u.mT > 0) return;

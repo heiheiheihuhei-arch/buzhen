@@ -76,7 +76,7 @@ def main():
         prompt = f"{job['prompt']}。{style}" if style else job["prompt"]
         for n in range(job.get("count", 1)):
             body = {
-                "model": batch.get("model", DEFAULT_MODEL),
+                "model": job.get("model", batch.get("model", DEFAULT_MODEL)),
                 "prompt": prompt,
                 "size": job.get("size", "2K"),
                 "response_format": "b64_json",
@@ -86,6 +86,10 @@ def main():
             # 组图开关只有 4.x 认，5.0 Flash 传了会报参数错误
             if "seedream-4" in body["model"]:
                 body["sequential_image_generation"] = "disabled"
+            # 5.5 能直接出透明底：批次里写 "background": "transparent"（要配 "output_format": "png"）
+            for k in ("background", "output_format"):
+                if job.get(k, batch.get(k)):
+                    body[k] = job.get(k, batch.get(k))
             if job.get("refs"):
                 body["image"] = [image_ref(r) for r in job["refs"]]
             name = f"{job['id']}_{n + 1}"

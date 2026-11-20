@@ -382,51 +382,76 @@ const LV = 16;                                             // 一层高度 = 多
 const HGT = new Float32Array(COLS * ROWS), CORN = new Float32Array(COLS * ROWS * 4);   // 每格的高度（层）；每格四个角的实际高度（西北、东北、西南、东南）
 const linked = (a, b) => Math.abs(a - b) <= 0.3;           // 两格高度差不到 0.3 层：连着（平地或坡）；再大就是崖
 // ---------- 地图：每张是一段「怎么堆地形」的说明 ----------
-// box 台地（能上，得有坡）；ramp 坡道（dir：坡朝哪边往下走）；peak 上不去的山峰（椭圆）；river 河（过不去）；河上再 box 一段高度 0 就是桥
-// 画面会把缺口抹圆，所以谷口、桥、坡道至少留 4 格宽
+// 地形一共这几种：
+//   崖台 hill/box：四周是崖，得走坡道 ramp 上去（坡道是从台子边上切进去的一段，至少 5 格长）
+//   缓丘 mound：四面都是缓坡，哪儿都能上，上坡慢、下坡快
+//   山峰 peak：上不去，长满树
+//   河 river：过不去；桥 bridge、浅水 ford/pond 能过（浅水里走得慢、挨打更疼）；road 是把水填平的干路
+//   树林 wood：走得慢，挡箭，藏兵
+// 画面会把缺口抹圆，所以谷口、桥、坡道、干路至少留 4 格宽
+const TAG = new Uint8Array(COLS * ROWS);                    // 每格的记号：1 树林，2 土路（坡道、干路）
+let BRIDGES = [];
 const MAPS = [
-  { id: 'drill', name: '演武场', era: '练兵', tip: '两山夹一谷，中间一座小土台，四平八稳',
-    build: ({ box, ramp }) => {
-      box(0, 22, 20, 36, 1); ramp(8, 37, 11, 40, 'S'); box(39, 22, 59, 36, 1); ramp(48, 37, 51, 40, 'S');
-      box(24, 48, 35, 56, 1); ramp(20, 51, 23, 53, 'W'); ramp(36, 51, 39, 53, 'E');
-      box(0, 62, 13, 71, 1); ramp(14, 65, 17, 67, 'E'); box(46, 66, 59, 75, 1); ramp(51, 62, 54, 65, 'N'); } },
-  { id: 'hulao', name: '虎牢关', era: '初平元年 · 190', tip: '群山横断，只留一道关口。关后两侧有台地，可以架弓',
-    build: ({ box, ramp, peak }) => {
-      peak(9, 45, 15, 8); peak(50, 45, 15, 8); peak(2, 40, 5, 10); peak(57, 40, 5, 10);   // 关口在中间，10 格宽
-      box(12, 53, 24, 62, 1); ramp(16, 63, 19, 66, 'S'); box(35, 53, 47, 62, 1); ramp(40, 63, 43, 66, 'S'); },
-    deco: put => { put('tower', 22.5, 47); put('tower', 37.5, 47); put('fence', 20, 50.5); put('fence', 40, 50.5); } },
-  { id: 'bowang', name: '博望坡', era: '建安七年 · 202', tip: '一条长谷夹在两道山梁中间。敌军只能走谷里，梁上往下射',
-    build: ({ box, ramp, peak }) => {
-      box(0, 28, 23, 64, 1); box(36, 28, 59, 64, 1); peak(3, 38, 6, 8); peak(57, 52, 6, 9); peak(12, 29, 7, 3); peak(47, 29, 7, 3);   // 梁上几处上不去的林子山头
-      ramp(9, 65, 13, 68, 'S'); ramp(46, 65, 50, 68, 'S'); },
-    deco: (put, rnd) => { for (let r = 30; r < 64; r += 3.4) for (const c of [24.6, 35.4]) if (rnd() < 0.75) put(rnd() < 0.3 ? 'hay' : 'reed', c + (rnd() - 0.5), r + rnd() * 2); } },   // 谷边的干草芦苇：火烧博望
-  { id: 'changban', name: '长坂桥', era: '建安十三年 · 208', tip: '一条河拦腰横过，中间一座桥，东边还有一处浅滩。东南的林子高地可以藏兵',
-    build: ({ box, ramp, river }) => {
-      river(0, 43, 59, 48); box(26, 43, 32, 48, 0); box(50, 43, 53, 48, 0);
-      box(40, 58, 55, 68, 1); ramp(36, 61, 39, 64, 'W'); },
-    bridges: [[26, 43, 32, 48]],
-    deco: (put, rnd) => { for (let i = 0; i < 9; i++) put(i % 3 ? 'leaf' : 'pineB', 42 + rnd() * 12, 59 + rnd() * 3); put('stele', 34.5, 50.5); } },
-  { id: 'dingjun', name: '定军山', era: '建安二十四年 · 219', tip: '我方脚下就是山。把兵摆上去，等敌军到山脚再冲下来',
-    build: ({ box, ramp, peak }) => {
-      box(13, 62, 46, 77, 1); ramp(19, 58, 23, 61, 'N'); ramp(36, 58, 40, 61, 'N'); ramp(28, 78, 31, 81, 'S');
-      box(22, 26, 37, 34, 1); ramp(28, 35, 31, 38, 'S');   // 对面的天荡山
-      peak(1, 46, 5, 11); peak(58, 46, 5, 11); },
-    deco: put => { put('tentBig', 30, 74.5); put('tent', 22, 75); put('tent', 38, 75); put('drum', 26, 76); put('fence', 17, 62.3); put('fence', 43, 62.3); put('tent', 27, 28); put('tent', 33, 28); } },
-  { id: 'jieting', name: '街亭', era: '建兴六年 · 228', tip: '大路从山和溪水之间穿过。守在路上，还是上山？',
-    build: ({ box, ramp, peak, river }) => {
-      box(32, 46, 53, 64, 1); ramp(28, 53, 31, 56, 'W');   // 南山：只有西面一条路上下
-      river(7, 30, 11, 72);                                 // 溪水：挡住西边
-      peak(58, 55, 4, 16); peak(1, 22, 4, 8); },
-    deco: put => { put('stele', 20, 44); put('fence', 30, 50); put('tent', 44, 50); put('tent', 49, 51); } },
+  { id: 'drill', green: 0.45, name: '演武场', era: '练兵', tip: '一丘、一林、一塘、一座崖台，各种地形都能试试',
+    build: ({ hill, ramp, mound, wood, pond, lake }) => {
+      hill(9, 32, 11, 8); ramp(7, 37, 11, 41, 'S'); wood(8, 30, 7, 5);
+      mound(31, 51, 14, 9); wood(49, 64, 10, 9); mound(12, 71, 10, 7);
+      pond(48, 33, 10, 6); lake(49, 33, 4, 2.5); },
+    deco: put => { put('stele', 31, 49); put('drum', 27, 88); put('tent', 9, 28, 0.8); } },
+  { id: 'hulao', green: 0.3, name: '虎牢关', era: '初平元年 · 190', tip: '群山横断，正面一道关口；西边林间小道也能绕，只是走得慢。关后两肩是高台，正好往关口里射',
+    build: ({ hill, ramp, peak, mound, wood }) => {
+      peak(15, 43, 10, 9); peak(47, 43, 14, 9); wood(2, 43, 3, 12);            // 关口 c26～32；西边 c0～4 是林间小道
+      hill(18, 55, 7, 5); ramp(16, 58, 20, 62, 'S'); hill(40, 55, 7, 5); ramp(38, 58, 42, 62, 'S');
+      mound(45, 24, 10, 6); wood(12, 25, 9, 6); mound(30, 77, 16, 7); wood(54, 71, 7, 8); wood(5, 73, 6, 7); },
+    deco: put => { put('tower', 24.5, 46.5); put('tower', 34.5, 46.5); put('fence', 23, 50.5); put('fence', 36, 50.5); put('tentBig', 30, 91); put('drum', 25, 91); } },
+  { id: 'bowang', green: 0.55, name: '博望坡', era: '建安七年 · 202', tip: '一条弯弯的长谷，两边坡上全是林子。谷里放几个兵当饵，林子里藏主力：藏着的兵，敌人走到跟前才看得见',
+    build: ({ mound, wood, peak }) => {
+      mound(6, 48, 14, 26); mound(16, 62, 12, 9); wood(5, 48, 10, 24); wood(17, 62, 9, 7);      // 西梁，南段往谷里探出一块
+      mound(54, 46, 14, 26); mound(44, 36, 10, 9); wood(55, 46, 10, 24); wood(44, 36, 8, 7);    // 东梁，北段往谷里探出一块：谷是弯的
+      peak(0, 16, 3, 4); peak(59, 80, 3, 5); },
+    deco: (put, rnd) => { for (let r = 30; r < 70; r += 2.6) { const mid = r < 48 ? 26 : 36; put(rnd() < 0.25 ? 'hay' : rnd() < 0.5 ? 'reed' : 'grass', mid + (rnd() - 0.5) * 12, r + rnd() * 2, 0.8); } put('stele', 30, 78); } },
+  { id: 'changban', green: 0.6, name: '长坂桥', era: '建安十三年 · 208', tip: '河过不去，只有西边一座桥和东边一片浅滩。蹚水的兵走得慢、挨打多三成：等他们下了水再打',
+    build: ({ hill, ramp, mound, wood, river, ford, bridge }) => {
+      river([[-3, 40], [12, 44], [24, 41], [36, 46], [48, 42], [63, 46]], 2.6);
+      bridge(16, 39, 21, 47); ford([[40, 45.5], [51, 42.5]], 3.4);
+      hill(47, 54, 10, 5); ramp(45, 56, 49, 60, 'S');                          // 南岸的土崖：正对着浅滩
+      wood(11, 54, 10, 6); mound(28, 26, 11, 6); wood(50, 28, 9, 7); mound(22, 72, 12, 7); wood(51, 75, 7, 6); },
+    deco: put => { put('stele', 23.5, 49.5); put('fence', 24, 48.5); put('tent', 30, 90); put('tent', 36, 91); } },
+  { id: 'dingjun', green: 0.5, name: '定军山', era: '建安二十四年 · 219', tip: '我方脚下是一座两层的山：山腰是缓坡，谁都能上；山顶四面是崖，只有南面一条路。从坡上冲下去，伤害多五成',
+    build: ({ hill, ramp, peak, mound, wood }) => {
+      mound(30, 64, 24, 14); hill(30, 62, 9, 5, 2); ramp(28, 64, 32, 68, 'S', 1);
+      wood(11, 66, 5, 8); wood(49, 66, 5, 8);                                 // 山腰两侧的林子
+      mound(44, 25, 11, 7); wood(13, 28, 10, 7);                              // 对面的天荡山和林子
+      peak(0, 42, 3, 8); peak(59, 42, 3, 8); },
+    deco: put => { put('tentBig', 30, 60.5); put('drum', 26, 61); put('tent', 44, 24, 0.8); put('tent', 41, 25, 0.8); put('fence', 22, 51); put('fence', 38, 51); } },
+  { id: 'huarong', green: 0.25, name: '华容道', era: '建安十三年 · 208', tip: '一大片泥沼，只有中间和西边两条干路。蹚水的走得慢、挨打多三成，骑兵也冲不起来；沼里的深潭过不去',
+    build: ({ pond, lake, road, wood, mound }) => {
+      pond(30, 46, 36, 12); lake(16, 45, 5, 4); lake(45, 49, 6, 3);
+      road([[30, 32], [26, 40], [33, 49], [29, 60]], 2.6); road([[5, 32], [8, 46], [5, 60]], 2.2);
+      road([[47, 40], [50, 40]], 3.2); wood(48, 40, 5, 3);                     // 沼中小洲，长着树
+      mound(30, 75, 17, 7); wood(9, 72, 8, 7); wood(52, 73, 8, 7); wood(30, 24, 9, 4); },
+    deco: put => { put('stele', 30, 30); put('fence', 30, 63); } },
 ];
 let mapI = 0; try { mapI = Math.max(0, MAPS.findIndex(m => m.id === (new URLSearchParams(location.search).get('map') || localStorage.getItem('huazhen.map')))); } catch (e) {}
 function buildHeights() {
-  HGT.fill(0);
+  HGT.fill(0); TAG.fill(0); BRIDGES = [];
+  const each = fn => { for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) fn(c, r, r * COLS + c); };
+  const ell = (c, r, cx, cy, rx, ry) => Math.hypot((c - cx) / rx, (r - cy) / ry);
+  const seg = (c, r, pts) => { let best = 1e9; for (let k = 0; k < pts.length - 1; k++) { const [ax, ay] = pts[k], [bx, by] = pts[k + 1], dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((c - ax) * dx + (r - ay) * dy) / (dx * dx + dy * dy || 1))); best = Math.min(best, Math.hypot(c - ax - dx * t, r - ay - dy * t)); } return best; };
   const box = (c0, r0, c1, r1, h) => { for (let r = Math.max(0, r0); r <= Math.min(ROWS - 1, r1); r++) for (let c = Math.max(0, c0); c <= Math.min(COLS - 1, c1); c++) HGT[r * COLS + c] = h; };
-  const ramp = (c0, r0, c1, r1, dir) => { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const n = dir === 'S' || dir === 'N' ? r1 - r0 + 1 : c1 - c0 + 1, k = dir === 'S' ? r - r0 : dir === 'N' ? r1 - r : dir === 'E' ? c - c0 : c1 - c; HGT[r * COLS + c] = 0.8 - 0.6 * k / Math.max(1, n - 1); } };
-  const peak = (cx, cy, rx, ry) => { for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (((c - cx) / rx) ** 2 + ((r - cy) / ry) ** 2 <= 1) HGT[r * COLS + c] = 2; };
-  const river = (c0, r0, c1, r1) => box(c0, r0, c1, r1, -1);
-  MAPS[mapI].build({ box, ramp, peak, river });
+  const hill = (cx, cy, rx, ry, h = 1) => each((c, r, i) => { if (ell(c, r, cx, cy, rx, ry) <= 1) HGT[i] = h; });
+  const mound = (cx, cy, rx, ry, h = 1) => { const e = Math.min(1, 4.5 * h / Math.min(rx, ry)); each((c, r, i) => { const d = ell(c, r, cx, cy, rx, ry); if (d < 1 && HGT[i] >= 0) HGT[i] = Math.max(HGT[i], h * Math.min(1, (1 - d) / e)); }); };
+  const ramp = (c0, r0, c1, r1, dir, base = 0) => { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const n = dir === 'S' || dir === 'N' ? r1 - r0 + 1 : c1 - c0 + 1, k = dir === 'S' ? r - r0 : dir === 'N' ? r1 - r : dir === 'E' ? c - c0 : c1 - c; HGT[r * COLS + c] = base + 0.8 - 0.6 * k / Math.max(1, n - 1); TAG[r * COLS + c] |= 2; } };
+  const peak = (cx, cy, rx, ry) => hill(cx, cy, rx, ry, 2.4);
+  const river = (pts, hw) => each((c, r, i) => { if (seg(c, r, pts) <= hw) HGT[i] = -1; });
+  const ford = (pts, hw) => each((c, r, i) => { if (seg(c, r, pts) <= hw && HGT[i] < 0) HGT[i] = -0.3; });
+  const road = (pts, hw) => each((c, r, i) => { if (seg(c, r, pts) <= hw) { HGT[i] = 0; TAG[i] |= 2; } });
+  const pond = (cx, cy, rx, ry) => each((c, r, i) => { if (ell(c, r, cx, cy, rx, ry) <= 1) HGT[i] = -0.3; });
+  const lake = (cx, cy, rx, ry) => hill(cx, cy, rx, ry, -1);
+  const bridge = (c0, r0, c1, r1) => { box(c0, r0, c1, r1, 0); BRIDGES.push([c0, r0, c1, r1]); };
+  const wood = (cx, cy, rx, ry) => each((c, r, i) => { if (ell(c, r, cx, cy, rx, ry) <= 1) TAG[i] |= 1; });
+  MAPS[mapI].build({ box, hill, mound, ramp, peak, river, ford, road, pond, lake, bridge, wood });
+  for (let i = 0; i < HGT.length; i++) if (HGT[i] < 0 || HGT[i] > 2.2) TAG[i] &= ~1;   // 水里、山峰上不算树林
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
     const h = HGT[r * COLS + c];
     for (let q = 0; q < 4; q++) {
@@ -455,6 +480,7 @@ function stepOK(p, q) {
   const dc = q % COLS - p % COLS, dr = (q / COLS | 0) - (p / COLS | 0);
   return !(dc && dr) || (linked(HGT[p], HGT[p + dc]) && linked(HGT[p], HGT[p + dr * COLS]));
 }
+const inWood = (x, y) => (TAG[cellI(x, y)] & 1) === 1, inWater = (x, y) => HGT[cellI(x, y)] < -0.05;   // 站在树林里 / 浅水里
 const passOK = (x0, y0, x1, y1) => stepOK(cellI(x0, y0), cellI(x1, y1));
 // 两点之间走直线会不会撞崖
 function lineClear(x0, y0, x1, y1) {
@@ -915,7 +941,16 @@ let junxin = 80;
 let teams = [], hitStat = [0, 0, 0]; // hitStat：挨打时 正面/侧面/背后 各几次（先只记下来，给以后的士气用）
 const oppOf = u => u.side ? soldiers : enemies;
 const ownOf2 = u => u.side ? enemies : soldiers;
-const canSee = (side, u) => true; // 迷雾（第三步）接在这里：side 这一方看不看得见 u
+// 藏兵：站在树林里、3 秒内没出过手、三格内没有对手的兵，对方看不见（不会被当成目标）。一方要是全藏起来了，就算全被看见——不然对面没处去
+let seenAll = [false, false];
+const HIDE_R = 30, canSee = (side, u) => !u.hid || seenAll[u.side]; // 迷雾（第三步）也接在这里：side 这一方看不看得见 u
+function hideTick() {
+  const now = performance.now(), vis = [0, 0];
+  for (const a of [soldiers, enemies]) for (const u of a) { if (u.dead) continue;
+    let h = inWood(u.x, u.y) && now > (u.showT || 0); if (h) near(u.x, u.y, HIDE_R, 1 - u.side, () => { h = false; });
+    u.hid = h; if (h) u.hidT = now; else vis[u.side]++; }
+  seenAll = [vis[0] === 0, vis[1] === 0];
+}
 const HOT = 80; // 士气 80 以上 = 士气高昂：伤害 +15%，身上冒火星
 const dmgOf = u => (u.side ? u.dmg : T[u.type].dmg * (u.dmgMul || 1)) * (u.mor >= HOT ? 1.15 : 1);
 const cdOf = u => u.side ? u.cd : T[u.type].cd;
@@ -967,6 +1002,8 @@ function hurt(u, d, src, by) {
     if (u.state !== 'rout') u.mor -= k === 1 ? MOR.side : k === 2 ? MOR.back : 0; // 侧面、背后挨打更慌
   }
   if (u.wall) d *= 0.75;
+  if (src === 'arrow' && inWood(u.x, u.y)) d *= 0.5;   // 树林挡箭
+  if (inWater(u.x, u.y)) d *= 1.3;                      // 半渡而击：蹚水的时候挨打更疼
   if (u.state === 'rout') d *= 1.5;
   u.hp -= d; u.flash = 0.1;
   if (u.thorn && by && src === 'melee') hurt(by, 1, 'thorn', null);
@@ -981,6 +1018,9 @@ function hurt(u, d, src, by) {
 function strike(u, e) {
   let d = dmgOf(u); const L = Math.hypot(e.x - u.x, e.y - u.y) || 1, hb = highBy(u, e), dive = u.type !== 'bow' && performance.now() - (u.downT || 0) < 700;
   if (u.type !== 'bow') d *= dive ? 1.5 : hb > 0.3 ? 1.25 : hb < -0.3 ? 0.8 : 1;   // 近战：从坡上冲下来五成加伤，站得高多两成半，仰攻少两成
+  { const now = performance.now();   // 伏击：刚从藏身的林子里出手（2 秒内），这一下多五成，挨打的还要慌一下
+    if (now - (u.hidT || -1e9) < 2000 && now > (u.showT || 0)) { d *= 1.5; if (e.state !== 'rout') e.mor -= 6; if (Math.random() < 0.4) floats.push({ x: u.x, y: u.y - 8, text: '伏', life: 0.7, color: u.side ? '#ffb0a0' : COL.gold }); }
+    u.showT = now + 3000; }
   u.vx = (e.x - u.x) / L; u.vy = (e.y - u.y) / L;
   if (u.type === 'bow') u.shotT = performance.now();
   if (u.type === 'bow') shots.push({ k: u.side ? 'earrow' : 'arrow', side: u.side, by: u, x: u.x, y: u.y, sx: u.x, sy: u.y, e, tx: e.x, ty: e.y, spd: u.side ? 220 : 300, dmg: d });
@@ -999,6 +1039,7 @@ function stepTo(u, tx, ty, spd, dt, avoid) {
   dx /= L; dy /= L;
   { const ax = u.x + dx * 5, ay = u.y + dy * 5;   // 上坡慢，下坡快
     if (passOK(u.x, u.y, ax, ay)) { const dh = hAt(ax, ay) - hAt(u.x, u.y); if (dh > 1) spd *= 0.6; else if (dh < -1) { spd *= 1.35; u.downT = performance.now(); } } }
+  const bog = inWater(u.x, u.y) ? 0.55 : inWood(u.x, u.y) ? (u.type === 'horse' ? 0.5 : 0.75) : 1; spd *= bog;   // 蹚水、钻林子都慢
   const step = Math.min(L, spd * dt);
   if (avoid) {
     const p = u.rad * 2 + 1;
@@ -1011,7 +1052,7 @@ function stepTo(u, tx, ty, spd, dt, avoid) {
   let nx = u.x + dx * step, ny = u.y + dy * step;
   if (!passOK(u.x, u.y, nx, ny)) { if (passOK(u.x, u.y, nx, u.y)) ny = u.y; else if (passOK(u.x, u.y, u.x, ny)) nx = u.x; else return; }   // 撞崖：贴着崖边滑
   u.x = nx; u.y = ny; u.vx = dx; u.vy = dy; u.mvT = performance.now();
-  if (u.type === 'horse') u.run += step;
+  if (u.type === 'horse') u.run = bog < 1 ? 0 : u.run + step;   // 水里林里冲不起来
 }
 function makeTeam(side, mem, fwd) {
   const cx = mem.reduce((a, u) => a + u.x, 0) / mem.length, cy = mem.reduce((a, u) => a + u.y, 0) / mem.length;
@@ -1120,7 +1161,7 @@ function updateUnit(u, dt) {
     u.state = 'fight';
   }
   u.aimT = (u.aimT || 0) - dt;
-  if (u.aimT <= 0 || !u.aim || u.aim.dead) {
+  if (u.aimT <= 0 || !u.aim || u.aim.dead || !canSee(u.side, u.aim)) {
     u.aimT = 0.3 + Math.random() * 0.2; u.aim = pickTarget(u);
     // 弓兵不跑到自己的近战兵前面去
     u.behind = false;
@@ -1371,7 +1412,7 @@ function showStart() {
 const RULES_HTML = `<ul>
       <li>敌军和你一样是<b>刀盾、枪、弓、骑</b>，基础数值也一样；你赢在<b>怎么摆、怎么搭配，加上过关强化</b>。两边对砍，<b>谁剩下谁赢</b></li>
       <li><b>刀盾兵</b>主要负责挡，也能砍几下（下面简称「盾」）</li>
-      <li>手里<b>有多少兵就能摆多少</b>（按钮上的 场上/手里）。每波打完<b>活着的回到原位、全军回满血；战死的不补回</b>，要靠过关招兵补；过关时可以招兵、强化</li><li>过关得金币；<b>评级看战损比</b>（歼敌兵力 ÷ 自己折损的兵力，刀盾、枪算 1，弓 2，骑 3）：比值越高，金币多给 10%～100%；过关时可以花金币买一张更强的卡</li><li><b>士气</b>（上面的士气槽）：<b>80 以上士气高昂，伤害 +15%</b>，会冒火；身边有人倒下、被围、被从侧面背后打，兵会慌；慌到底就<b>溃逃</b>，逃出场外就没了。评级越高，下一波<b>军心</b>越高</li><li>战死、逃散的兵不补回：备战时可以<b>花金币招兵</b></li><li>兵活下来就留到下一波。一波比一波难，<b>兵死光就输</b></li><li>布阵时「撤」能擦掉兵；直接在别的兵上画会把它换成新兵种</li><li>「移」：先拉框圈住一块兵，再按住框里拖，整块挪走</li><li>下面「阵型」能存 3 套阵：点「存」再点一格存下，以后点那格一键摆上</li><li>敌人三波一轮：换一种打法后，接下来两波是同一路数、人更多，微调就行</li>
+      <li>手里<b>有多少兵就能摆多少</b>（按钮上的 场上/手里）。每波打完<b>活着的回到原位、全军回满血；战死的不补回</b>，要靠过关招兵补；过关时可以招兵、强化</li><li>过关得金币；<b>评级看战损比</b>（歼敌兵力 ÷ 自己折损的兵力，刀盾、枪算 1，弓 2，骑 3）：比值越高，金币多给 10%～100%；过关时可以花金币买一张更强的卡</li><li><b>士气</b>（上面的士气槽）：<b>80 以上士气高昂，伤害 +15%</b>，会冒火；身边有人倒下、被围、被从侧面背后打，兵会慌；慌到底就<b>溃逃</b>，逃出场外就没了。评级越高，下一波<b>军心</b>越高</li><li>战死、逃散的兵不补回：备战时可以<b>花金币招兵</b></li><li>兵活下来就留到下一波。一波比一波难，<b>兵死光就输</b></li><li>布阵时「撤」能擦掉兵；直接在别的兵上画会把它换成新兵种</li><li>「移」：先拉框圈住一块兵，再按住框里拖，整块挪走</li><li>下面「阵型」能存 3 套阵：点「存」再点一格存下，以后点那格一键摆上</li><li>敌人三波一轮：换一种打法后，接下来两波是同一路数、人更多，微调就行</li><li><b>树林</b>：走得慢（骑兵更慢，冲不起来）；射进林子的箭只有一半伤害；站在林子里不动手的兵，<b>敌人走到三格内才看得见</b>。从藏身处出手的头一下<b>伏击多五成</b>。用「守」把兵按在林子里，等敌人走过去再点「出击」</li><li><b>浅水</b>：走得慢，骑兵冲不起来，<b>在水里挨打多三成</b>；深水和山峰过不去</li><li><b>高处</b>：弓射得远三成；近战站得高多两成半，从坡上冲下去多五成；上坡慢、下坡快</li>
     </ul>`;
 const MY_TIPS = { shield: '主要负责挡，也能砍几下。敌人贴上来就被缠住，箭飞过会被挡下', spear: '隔一格就能戳，戳中一小片。站在刀盾后面最好', bow: '射得远、血薄，站住放箭，不会跑到近战兵前面去', horse: '对面有弓兵就直接冲过去打弓兵，没有就等步兵先撞上再冲。跑满 3 格撞第一下三倍伤害，还踩到旁边一片' };
 let paused = false;
@@ -1634,7 +1675,7 @@ let gAt = hAt;   // 画面上 (x, y) 处的地面有多高：3D 时换成细的�
 document.body.classList.toggle('g3', G3);
 const pad = G3 ? document.getElementById('gl') : cv;      // 手指事件落在哪块画布上
 const g3 = {}, bills = [], darts = [], DMAX = 400;
-const GTEX_K = 2, BMAX = 900, ATL = { cw: 80, ch: 100 }, MINI_Y = 1080;   // 图集：0～480 摆件，480～1080 地标，再往下是小兵
+const GTEX_K = 2, BMAX = 1500, ATL = { cw: 80, ch: 100 }, MINI_Y = 1080;   // 图集：0～480 摆件，480～1080 地标，再往下是小兵
 if (G3) {
   g3.renderer = new THREE.WebGLRenderer({ canvas: pad, antialias: true }); g3.renderer.setClearColor(0x2e1e12, 1);
   g3.scene = new THREE.Scene(); g3.cam = new THREE.PerspectiveCamera(20, 1, 20, 9000);
@@ -1670,12 +1711,14 @@ if (G3) {
   g3.build = () => {   // 换地图时重新做一遍
   if (g3.terrain) { g3.scene.remove(g3.terrain); g3.terrain.geometry.dispose(); g3.terrain.material.dispose(); }
   if (g3.water) { g3.scene.remove(g3.water); g3.water.geometry.dispose(); g3.water = null; }
-  const raw = new Float32Array(FN), rampM = new Float32Array(FN);
+  const GREEN = MAPS[mapI].green == null ? 0.4 : MAPS[mapI].green;
+  const raw = new Float32Array(FN), rampM = new Float32Array(FN), dirtM = new Float32Array(FN), woodM = new Float32Array(FN);
   for (let j = 0; j < FH; j++) for (let i = 0; i < FW; i++) {   // 规则高度，取样位置先用噪声挪一挪：崖的边线就不再是直的
     const x = TX0 + i * FS, z = TZ0 + j * FS, wx = x + (fbm(x / 30, z / 30, 11) - 0.5) * 34, wz = z + (fbm(x / 30, z / 30, 17) - 0.5) * 34, k = j * FW + i;
-    raw[k] = hAt(wx, wz); const hc = HGT[cellI(wx, wz)]; rampM[k] = hc > 0.05 && hc < 0.9 ? 1 : 0;
+    raw[k] = hAt(wx, wz); const ci = cellI(wx, wz), hc = HGT[ci], fr = hc - Math.floor(hc); rampM[k] = hc < 2.2 && fr > 0.05 && fr < 0.9 ? 1 : 0;   // 坡道、缓丘、浅水：照规则高度原样画，不收成崖
+    dirtM[k] = TAG[ci] & 2 ? 1 : 0; woodM[k] = TAG[ci] & 1 ? 1 : 0;
   }
-  const wide = blur(raw, 2, 2), rampS = blur(rampM, 2, 1), VS = 1.5, DK = 0.35;   // VS：画面上把高度拉高一些，山才立得起来（规则里还是 1 层）
+  const wide = blur(raw, 2, 2), rampS = blur(rampM, 2, 1), dirtS = blur(dirtM, 2, 1), woodS = blur(woodM, 2, 1), VS = 1.5, DK = 0.35, WL = -1;   // WL：水面的高度   // VS：画面上把高度拉高一些，山才立得起来（规则里还是 1 层）
   let VH = new Float32Array(FN);
   for (let j = 0; j < FH; j++) for (let i = 0; i < FW; i++) {
     const x = TX0 + i * FS, z = TZ0 + j * FS, k = j * FW + i, t = wide[k] / LV, fl = Math.floor(t), st = sstep(0.34, 0.6, t - fl);
@@ -1686,7 +1729,7 @@ if (G3) {
   for (let k = 0; k < FN; k++) raw[k] *= raw[k] < 0 ? DK : VS;
   VH = blur(VH, 1, 1);
   for (let j = 0; j < FH; j++) for (let i = 0; i < FW; i++) {
-    const x = TX0 + i * FS, z = TZ0 + j * FS, k = j * FW + i, inside = Math.max(0, Math.min(1, (wide[k] / LV - 0.55) / 0.45)), low = Math.max(0, 1 - wide[k] / LV * 3);
+    const x = TX0 + i * FS, z = TZ0 + j * FS, k = j * FW + i, inside = Math.max(0, Math.min(1, (wide[k] / LV - 0.55) / 0.45)), low = wide[k] < -1 ? 0.25 : Math.max(0, 1 - wide[k] / LV * 3);
     const out = Math.max(-x, x - W, -z, z - H, 0);
     VH[k] += inside * (1 + 9 * fbm(x / 50, z / 50, 29) + out * 0.35) + low * (fbm(x / 45, z / 45, 31) - 0.5) * 2.4;   // 山顶缓缓鼓起，出了场地继续往上长；沙地有一点起伏
   }
@@ -1707,11 +1750,15 @@ if (G3) {
       const lit = Math.min(1.35, Math.max(0, nx * LT[0] + ny * LT[1] + nz * LT[2]) / LT[1]) * sh, ao = Math.max(0.5, 1 - Math.max(0, occ[k] - h) / LV * 1.5);
       P[k * 3] = x; P[k * 3 + 1] = h; P[k * 3 + 2] = z; N[k * 3] = nx; N[k * 3 + 1] = ny; N[k * 3 + 2] = nz;
       C[k * 3] = ao * (0.26 + 0.74 * lit); C[k * 3 + 1] = ao * (0.29 + 0.71 * lit); C[k * 3 + 2] = ao * (0.42 + 0.58 * lit);   // 背光和影子里偏冷
-      const hn = h / (LV * VS), rock = Math.max(sstep(0.12, 0.3, 1 - ny), sstep(1.35, 1.9, hn + (fbm(x / 12, z / 12, 43) - 0.5) * 0.5) * 0.75), dirt = Math.min(1, rampS[k] * 1.3 + sstep(0.04, 0.2, hn) * (hn < 0.5 ? 0.9 : 0) + sstep(-0.3, -1.6, h));
+      const hn = h / (LV * VS), rock = Math.max(sstep(0.12, 0.3, 1 - ny), sstep(1.35, 1.9, hn + (fbm(x / 12, z / 12, 43) - 0.5) * 0.5) * 0.75), dirt = Math.min(1, dirtS[k] * 1.3 + sstep(0.04, 0.2, hn) * (hn < 0.5 ? 0.9 : 0) * (1 - rampS[k]) + sstep(-0.3, -1.6, h));
       const near = Math.min(1, wide[k] / LV * 3) * (raw[k] < LV * 0.5 ? 1 : 0);
       const tuft = Math.max(sstep(0.5, 0.68, fbm(x / 13, z / 13, 51)) * near * 0.75, sstep(0.66, 0.8, fbm(x / 24, z / 24, 61)) * 0.55);   // 崖脚和零星几处长一点草
-      const grass = (h < -0.4 ? 0 : 1) * Math.max(sstep(0.6, 0.86, Math.min(h, LV * VS) / (LV * VS) + (fbm(x / 16, z / 16, 41) - 0.5) * 0.22) * (1 - Math.min(1, rampS[k] * 1.3)), tuft * (1 - dirt));
-      Wt[k * 4] = grass; Wt[k * 4 + 1] = rock; Wt[k * 4 + 2] = dirt; Wt[k * 4 + 3] = fbm(x / 70, z / 70, 71);
+      const patch = sstep(1 - GREEN, 1.2 - GREEN, fbm(x / 75, z / 75, 81) * 0.85 + fbm(x / 22, z / 22, 83) * 0.15 + 0.1) * sstep(-3, -0.8, wide[k]) * (1 - dirt) * 0.9;   // 平地上一片一片的草地，多少看地图
+      const wd = sstep(0.25, 0.6, woodS[k] + (fbm(x / 9, z / 9, 47) - 0.5) * 0.3);   // 树林的地面：深色草甸
+      const grass = sstep(-3, -0.8, wide[k]) * Math.max(sstep(0.4, 0.8, Math.min(h, LV * VS) / (LV * VS) + (fbm(x / 16, z / 16, 41) - 0.5) * 0.22) * (1 - Math.min(1, dirtS[k] * 1.3)), tuft * (1 - dirt), wd, patch);
+      { const dk = (1 - 0.3 * wd) * (1 + 0.2 * Math.max(0, Math.min(1.3, hn)));   // 林子里暗一些；越高越亮，缓丘才看得出来
+        C[k * 3] *= dk; C[k * 3 + 1] *= dk * 1.03; C[k * 3 + 2] *= dk; }
+      Wt[k * 4] = grass; Wt[k * 4 + 1] = rock; Wt[k * 4 + 2] = dirt; Wt[k * 4 + 3] = fbm(x / 70, z / 70, 71) * (1 - 0.8 * wd);
     }
     const idx = new Uint32Array((FW - 1) * (FH - 1) * 6); let q = 0;
     for (let j = 0; j < FH - 1; j++) for (let i = 0; i < FW - 1; i++) { const a = j * FW + i, b = a + 1, c = a + FW, d = c + 1; idx[q++] = a; idx[q++] = c; idx[q++] = b; idx[q++] = b; idx[q++] = c; idx[q++] = d; }
@@ -1759,9 +1806,15 @@ void main(){
 }` }));
     g3.scene.add(g3.terrain);
   }
-  if (HGT.some(v => v < 0)) {   // 有河：铺一层水面
-    g3.water = new THREE.Mesh(new THREE.PlaneGeometry(W + 2 * MG * CS, H + 2 * MG * CS), new THREE.MeshBasicMaterial({ map: g3.wtex || (g3.wtex = (() => { const t = g3.T3.water.clone(); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set((W + 2 * MG * CS) / 110, (H + 2 * MG * CS) / 110); t.needsUpdate = true; g3.T3.water.userData.also.push(t); return t; })()), color: 0xd8e4e0, transparent: true, opacity: 0.86, depthWrite: false }));
-    g3.water.rotation.x = -Math.PI / 2; g3.water.position.set(W / 2, -LV * DK * 0.42, H / 2); g3.scene.add(g3.water);
+  if (HGT.some(v => v < 0)) {   // 有水：铺一层水面，按水深定透明度——浅水看得见底，岸边慢慢淡出去
+    const ST = 2, nw = ((FW - 1) / ST | 0) + 1, nh = ((FH - 1) / ST | 0) + 1, P = new Float32Array(nw * nh * 3), U = new Float32Array(nw * nh * 2), C = new Float32Array(nw * nh * 4), dp = new Float32Array(nw * nh), I = [];
+    for (let j = 0; j < nh; j++) for (let i = 0; i < nw; i++) { const k = j * nw + i, x = TX0 + i * ST * FS, z = TZ0 + j * ST * FS, d = WL - VH[j * ST * FW + i * ST]; dp[k] = d;
+      P[k * 3] = x; P[k * 3 + 1] = WL; P[k * 3 + 2] = z; U[k * 2] = x / 110; U[k * 2 + 1] = z / 110;
+      const sh = sstep(0.5, 2.6, d), a = sstep(0, 0.3, d) * (0.34 + 0.56 * sh), b = 1.12 - 0.3 * sh; C[k * 4] = b * 0.85; C[k * 4 + 1] = b * 0.92; C[k * 4 + 2] = b * 0.9; C[k * 4 + 3] = a; }
+    for (let j = 0; j < nh - 1; j++) for (let i = 0; i < nw - 1; i++) { const a = j * nw + i, b = a + 1, c = a + nw, d = c + 1; if (dp[a] > 0 || dp[b] > 0 || dp[c] > 0 || dp[d] > 0) I.push(a, c, b, b, c, d); }
+    const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.BufferAttribute(P, 3)); wg.setAttribute('uv', new THREE.BufferAttribute(U, 2)); wg.setAttribute('color', new THREE.BufferAttribute(C, 4)); wg.setIndex(I);
+    g3.wtex = g3.wtex || (() => { const t = g3.T3.water.clone(); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true; g3.T3.water.userData.also.push(t); return t; })();
+    g3.water = new THREE.Mesh(wg, new THREE.MeshBasicMaterial({ map: g3.wtex, vertexColors: true, transparent: true, depthWrite: false })); g3.water.renderOrder = 1; g3.scene.add(g3.water);
   }
   }; g3.build();
   const T3 = g3.T3;
@@ -1801,7 +1854,7 @@ const bridgeImg = new Image(); if (UIART.bridge) { bridgeImg.onload = () => { if
 const propImg = new Image(); let propOK = false; if (UIART.props) { propImg.onload = () => { propOK = true; }; propImg.src = UIART.props; }
 // 摆在哪：只放在不能布阵的外沿上，不挡场地。两侧高地外沿是树，北边（敌方）枯树乱石，南边（我方）营地杂物
 const mkProps = () => {
-  const L = [], put = (n, x, z) => { let i = PROPS.findIndex(p => p[0] === n); if (i >= 0) L.push(['prop' + i, PROPS[i], x, z]); else if ((i = MARKS.findIndex(p => p[0] === n)) >= 0) L.push(['mark' + i, MARKS[i], x, z]); }; let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, pick = a => a[Math.floor(rnd() * a.length)];
+  const L = [], put = (n, x, z, k = 1) => { let i = PROPS.findIndex(p => p[0] === n), A = PROPS, key = 'prop'; if (i < 0) { i = MARKS.findIndex(p => p[0] === n); A = MARKS; key = 'mark'; } if (i >= 0) L.push([key + i, k === 1 ? A[i] : [A[i][0], A[i][1], A[i][2], A[i][3] * k], x, z]); }; let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, pick = a => a[Math.floor(rnd() * a.length)];
   for (const x of [-16, W + 16]) for (let z = 14; z < H - 6; z += 26 + rnd() * 14) {
     const high = gAt(x, z) > 8, n = high ? pick(['pineA', 'pineB', 'leaf', 'pineA', 'bush']) : z < H * 0.5 ? pick(['dead', 'rockA', 'rockB', 'grass', 'grass']) : pick(['bush', 'grass', 'crate', 'spike', 'flag', 'rockB']);
     put(n, x + (rnd() - 0.5) * 8, z);
@@ -1810,8 +1863,13 @@ const mkProps = () => {
   for (let x = 24; x < W - 10; x += 50 + rnd() * 36) put(pick(['flag', 'crate', 'tent', 'flag', 'fire', 'tent', 'drum', 'spike']), x, H + 15);
   // 上不去的山峰上长树，河边长草：都在走不到的格子里，不挡兵
   for (let z = 8; z < H; z += 15) for (let x = 8; x < W; x += 15) { const px = x + (rnd() - 0.5) * 12, pz = z + (rnd() - 0.5) * 12, h = HGT[cellI(px, pz)], ok = [[-9, 0], [9, 0], [0, -9], [0, 9]].every(([a, b]) => HGT[cellI(px + a, pz + b)] === h);
-    if (h >= 2 && ok && rnd() < 0.8) put(pick(['pineA', 'pineB', 'pineA', 'leaf', 'rockA']), px, pz); else if (h < 0 && !ok && rnd() < 0.6) put(pick(['reed', 'reed', 'grass']), px, pz); }
-  if (MAPS[mapI].deco) MAPS[mapI].deco((n, c, r) => put(n, c * CS, r * CS), rnd);   // 这张地图自己的地标（位置按格子写）
+    if (h > 2.2 && ok && rnd() < 0.8) put(pick(['pineA', 'pineB', 'pineA', 'leaf', 'rockA']), px, pz); else if (h < 0 && !ok && rnd() < 0.6) put(pick(['reed', 'reed', 'grass']), px, pz); }
+  // 树林：格子里稀稀地长着矮一些的树和灌木（兵站在里面还看得见）；浅水里零星几丛芦苇
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const i = r * COLS + c, x = (c + 0.15 + rnd() * 0.7) * CS, z = (r + 0.15 + rnd() * 0.7) * CS;
+    if (TAG[i] & 1) { const q = rnd(); if (q < 0.3) put(pick(['pineA', 'pineB', 'leaf', 'leaf', 'pineB']), x, z, 0.5 + rnd() * 0.25); else if (q < 0.42) put(pick(['bush', 'bush', 'grass']), x, z, 0.8); }
+    else if (HGT[i] < -0.05 && HGT[i] > -0.9) { if (rnd() < 0.07) put(pick(['reed', 'reed', 'grass']), x, z, 0.7); }
+    else if (HGT[i] < 2.2 && r > SPAWN_ROWS && rnd() < 0.016) put(pick(['grass', 'grass', 'rockB', 'bush', 'grass']), x, z, 0.5 + rnd() * 0.2); }
+  if (MAPS[mapI].deco) MAPS[mapI].deco((n, c, r, k) => put(n, c * CS, r * CS, k), rnd);   // 这张地图自己的地标（位置按格子写）
   return L;
 };
 let propAt = mkProps();
@@ -1990,7 +2048,8 @@ function makeSand() {
   for (let y = SPAWN_ROWS; y <= ROWS; y++) { g.beginPath(); g.moveTo(0, y * CS); g.lineTo(W, y * CS); g.stroke(); }
   for (let i = 0; i < (G3 ? 0 : HGT.length); i++) if (HGT[i] > 0) { g.fillStyle = `rgba(110,132,70,${(0.3 * Math.min(1, HGT[i])).toFixed(3)})`; g.fillRect((i % COLS) * CS, Math.floor(i / COLS) * CS, CS, CS); }   // 高处：越高越绿
   // 出怪区：一片暗色
-  if (bridgeImg.complete && bridgeImg.naturalWidth) for (const [c0, r0, c1, r1] of MAPS[mapI].bridges || []) g.drawImage(bridgeImg, c0 * CS - 3, r0 * CS - 9, (c1 - c0 + 1) * CS + 6, (r1 - r0 + 1) * CS + 18);   // 桥：木板铺在河上那一段
+  g.fillStyle = 'rgba(30,58,24,.16)'; for (let i = 0; i < TAG.length; i++) if (TAG[i] & 1) { g.beginPath(); g.arc((i % COLS + 0.5) * CS, (Math.floor(i / COLS) + 0.5) * CS, 6.4, 0, 6.283); g.fill(); }   // 树林的范围：一格一个圆点叠成一片
+  if (bridgeImg.complete && bridgeImg.naturalWidth) for (const [c0, r0, c1, r1] of BRIDGES) g.drawImage(bridgeImg, c0 * CS - 3, r0 * CS - 9, (c1 - c0 + 1) * CS + 6, (r1 - r0 + 1) * CS + 18);   // 桥：木板铺在河上那一段
   const gr = g.createLinearGradient(0, 0, 0, SPAWN_ROWS * CS); gr.addColorStop(0, 'rgba(70,20,14,.55)'); gr.addColorStop(1, 'rgba(70,20,14,.08)');
   g.fillStyle = gr; g.fillRect(0, 0, W, SPAWN_ROWS * CS);
   return c;
@@ -2041,7 +2100,7 @@ function frame(now) {
   if (state === 'fight' && !paused) {
     for (let it = 0; it < speed; it++) {   // 变速：×2、×3 就是一帧里多算几遍
       spawn(gdt);
-      buildBuckets(); updateTeams(gdt);
+      buildBuckets(); hideTick(); updateTeams(gdt);
       for (const s of soldiers) if (!s.dead) updateUnit(s, gdt);
       for (const e of enemies) if (!e.dead) updateUnit(e, gdt);
       buildBuckets(); separate(); updateShots(gdt);

@@ -444,9 +444,9 @@ function buildHeights() {
   const ramp = (c0, r0, c1, r1, dir, base = 0) => { for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const n = dir === 'S' || dir === 'N' ? r1 - r0 + 1 : c1 - c0 + 1, k = dir === 'S' ? r - r0 : dir === 'N' ? r1 - r : dir === 'E' ? c - c0 : c1 - c; HGT[r * COLS + c] = base + 0.8 - 0.6 * k / Math.max(1, n - 1); TAG[r * COLS + c] |= 2; } };
   const peak = (cx, cy, rx, ry) => hill(cx, cy, rx, ry, 2.4);
   const river = (pts, hw) => each((c, r, i) => { if (seg(c, r, pts) <= hw) HGT[i] = -1; });
-  const ford = (pts, hw) => each((c, r, i) => { if (seg(c, r, pts) <= hw && HGT[i] < 0) HGT[i] = -0.3; });
+  const ford = (pts, hw) => each((c, r, i) => { if (seg(c, r, pts) <= hw && HGT[i] < 0) HGT[i] = -0.25; });
   const road = (pts, hw) => each((c, r, i) => { if (seg(c, r, pts) <= hw) { HGT[i] = 0; TAG[i] |= 2; } });
-  const pond = (cx, cy, rx, ry) => each((c, r, i) => { if (ell(c, r, cx, cy, rx, ry) <= 1) HGT[i] = -0.3; });
+  const pond = (cx, cy, rx, ry) => each((c, r, i) => { if (ell(c, r, cx, cy, rx, ry) <= 1) HGT[i] = -0.25; });
   const lake = (cx, cy, rx, ry) => hill(cx, cy, rx, ry, -1);
   const bridge = (c0, r0, c1, r1) => { box(c0, r0, c1, r1, 0); BRIDGES.push([c0, r0, c1, r1]); };
   const wood = (cx, cy, rx, ry) => each((c, r, i) => { if (ell(c, r, cx, cy, rx, ry) <= 1) TAG[i] |= 1; });
@@ -568,8 +568,8 @@ function reset() {
 }
 
 // ---------- 摆兵 / 撤兵 ----------
-// 只有最上面敌人出生的几行、和每波敌阵的红区不能放兵；左右、下边都能画到底
-const drawable = (c, r) => c >= 0 && c < COLS && r >= SPAWN_ROWS && r < ROWS && REACH[r * COLS + c] === 1 && !(foeZone && foeZone[r * COLS + c]);
+// 只有最上面敌人出生的几行、每波敌阵的红区、水里（浅水也算）和上不去的地方不能放兵；左右、下边都能画到底
+const drawable = (c, r) => c >= 0 && c < COLS && r >= SPAWN_ROWS && r < ROWS && REACH[r * COLS + c] === 1 && HGT[r * COLS + c] > -0.05 && !(foeZone && foeZone[r * COLS + c]);
 let foeZone = null; // 敌阵占的格子（外加两格），准备阶段不能往里画
 function place(c, r, type, free) {
   if (!drawable(c, r)) return false;
@@ -1412,7 +1412,7 @@ function showStart() {
 const RULES_HTML = `<ul>
       <li>敌军和你一样是<b>刀盾、枪、弓、骑</b>，基础数值也一样；你赢在<b>怎么摆、怎么搭配，加上过关强化</b>。两边对砍，<b>谁剩下谁赢</b></li>
       <li><b>刀盾兵</b>主要负责挡，也能砍几下（下面简称「盾」）</li>
-      <li>手里<b>有多少兵就能摆多少</b>（按钮上的 场上/手里）。每波打完<b>活着的回到原位、全军回满血；战死的不补回</b>，要靠过关招兵补；过关时可以招兵、强化</li><li>过关得金币；<b>评级看战损比</b>（歼敌兵力 ÷ 自己折损的兵力，刀盾、枪算 1，弓 2，骑 3）：比值越高，金币多给 10%～100%；过关时可以花金币买一张更强的卡</li><li><b>士气</b>（上面的士气槽）：<b>80 以上士气高昂，伤害 +15%</b>，会冒火；身边有人倒下、被围、被从侧面背后打，兵会慌；慌到底就<b>溃逃</b>，逃出场外就没了。评级越高，下一波<b>军心</b>越高</li><li>战死、逃散的兵不补回：备战时可以<b>花金币招兵</b></li><li>兵活下来就留到下一波。一波比一波难，<b>兵死光就输</b></li><li>布阵时「撤」能擦掉兵；直接在别的兵上画会把它换成新兵种</li><li>「移」：先拉框圈住一块兵，再按住框里拖，整块挪走</li><li>下面「阵型」能存 3 套阵：点「存」再点一格存下，以后点那格一键摆上</li><li>敌人三波一轮：换一种打法后，接下来两波是同一路数、人更多，微调就行</li><li><b>树林</b>：走得慢（骑兵更慢，冲不起来）；射进林子的箭只有一半伤害；站在林子里不动手的兵，<b>敌人走到三格内才看得见</b>。从藏身处出手的头一下<b>伏击多五成</b>。用「守」把兵按在林子里，等敌人走过去再点「出击」</li><li><b>浅水</b>：走得慢，骑兵冲不起来，<b>在水里挨打多三成</b>；深水和山峰过不去</li><li><b>高处</b>：弓射得远三成；近战站得高多两成半，从坡上冲下去多五成；上坡慢、下坡快</li>
+      <li>手里<b>有多少兵就能摆多少</b>（按钮上的 场上/手里）。每波打完<b>活着的回到原位、全军回满血；战死的不补回</b>，要靠过关招兵补；过关时可以招兵、强化</li><li>过关得金币；<b>评级看战损比</b>（歼敌兵力 ÷ 自己折损的兵力，刀盾、枪算 1，弓 2，骑 3）：比值越高，金币多给 10%～100%；过关时可以花金币买一张更强的卡</li><li><b>士气</b>（上面的士气槽）：<b>80 以上士气高昂，伤害 +15%</b>，会冒火；身边有人倒下、被围、被从侧面背后打，兵会慌；慌到底就<b>溃逃</b>，逃出场外就没了。评级越高，下一波<b>军心</b>越高</li><li>战死、逃散的兵不补回：备战时可以<b>花金币招兵</b></li><li>兵活下来就留到下一波。一波比一波难，<b>兵死光就输</b></li><li>布阵时「撤」能擦掉兵；直接在别的兵上画会把它换成新兵种</li><li>「移」：先拉框圈住一块兵，再按住框里拖，整块挪走</li><li>下面「阵型」能存 3 套阵：点「存」再点一格存下，以后点那格一键摆上</li><li>敌人三波一轮：换一种打法后，接下来两波是同一路数、人更多，微调就行</li><li><b>树林</b>：走得慢（骑兵更慢，冲不起来）；射进林子的箭只有一半伤害；站在林子里不动手的兵，<b>敌人走到三格内才看得见</b>。从藏身处出手的头一下<b>伏击多五成</b>。用「守」把兵按在林子里，等敌人走过去再点「出击」</li><li><b>浅水</b>：走得慢，骑兵冲不起来，<b>在水里挨打多三成</b>；深水和山峰过不去；<b>水里不能摆兵</b></li><li><b>高处</b>：弓射得远三成；近战站得高多两成半，从坡上冲下去多五成；上坡慢、下坡快</li>
     </ul>`;
 const MY_TIPS = { shield: '主要负责挡，也能砍几下。敌人贴上来就被缠住，箭飞过会被挡下', spear: '隔一格就能戳，戳中一小片。站在刀盾后面最好', bow: '射得远、血薄，站住放箭，不会跑到近战兵前面去', horse: '对面有弓兵就直接冲过去打弓兵，没有就等步兵先撞上再冲。跑满 3 格撞第一下三倍伤害，还踩到旁边一片' };
 let paused = false;
@@ -2110,7 +2110,10 @@ function frame(now) {
     // 两边都只剩不会打人的盾兵：打不下去了，算输
     const canHit = soldiers.some(s => !s.dead && T[s.type].dmg), foeHit = enemies.some(e => !e.dead && e.dmg) || sp.groups.some(g => g.queue.some(k => FOES[k].dmg) || (g.pend || g.slots).some(o => FOES[o.k].dmg));
     if (!soldiers.some(s => !s.dead) || (!canHit && !foeHit)) showOver();
-    else if (!foesLeft() && !enemies.length) showPick();
+    else if (!foesLeft() && enemies.every(e => e.state === 'rout')) {   // 敌军没有后续、场上只剩逃兵：不用追，直接算赢，逃兵按逃散记
+      for (const e of enemies) flee(e); enemies = [];
+      showPick();
+    }
   }
   for (const p of parts) { p.life -= gdt; if (!p.ring) { p.x += p.vx * gdt; p.y += p.vy * gdt; if (!p.ember) { p.vx *= 0.92; p.vy *= 0.92; } } }
   parts = parts.filter(p => p.life > 0);

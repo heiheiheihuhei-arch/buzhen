@@ -161,6 +161,9 @@ footer { display: flex; flex-direction: column; gap: 6px; }
 .mapb b { display: block; font: 400 19px var(--brush); color: var(--ink); line-height: 1.1; }
 .mapb i { display: block; font-style: normal; font-size: 10px; color: var(--dim); margin: 1px 0 3px; }
 .mapb span { display: block; font-size: 10.5px; line-height: 1.4; color: var(--dim); }
+#mapTip { position: fixed; top: 62px; left: 50%; transform: translateX(-50%); width: max-content; max-width: min(320px, 86vw); z-index: 6; padding: 7px 12px 8px; border-radius: 8px; background: rgba(34,24,14,.86); border: 1px solid rgba(214,170,84,.5); color: #f3e3bf; font-size: 12px; line-height: 1.5; pointer-events: none; opacity: 0; transition: opacity .4s; }
+#mapTip b { display: block; font: 400 18px var(--brush); color: #e9c46a; margin-bottom: 1px; }
+.mapb.wide { grid-column: 1 / -1; }
 .mapb.on { border-color: var(--gold); background: rgba(214,170,84,.12); }
 .mapb.on b { color: var(--gold); }
 .mapb:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
@@ -389,7 +392,7 @@ const linked = (a, b) => Math.abs(a - b) <= 0.3;           // 两格高度差不
 //   河 river：过不去；桥 bridge、浅水 ford/pond 能过（浅水里走得慢、挨打更疼）；road 是把水填平的干路
 //   树林 wood：走得慢，挡箭，藏兵
 // 画面会把缺口抹圆，所以谷口、桥、坡道、干路至少留 4 格宽
-const TAG = new Uint8Array(COLS * ROWS);                    // 每格的记号：1 树林，2 土路（坡道、干路）
+const TAG = new Uint8Array(COLS * ROWS);                    // 每格的记号：1 树林，2 土路（坡道、干路），4 城墙营垒
 let BRIDGES = [];
 const MAPS = [
   { id: 'drill', green: 0.45, name: '演武场', era: '练兵', tip: '一丘、一林、一塘、一座崖台，各种地形都能试试',
@@ -398,41 +401,88 @@ const MAPS = [
       mound(31, 51, 14, 9); wood(49, 64, 10, 9); mound(12, 71, 10, 7);
       pond(48, 33, 10, 6); lake(49, 33, 4, 2.5); },
     deco: put => { put('stele', 31, 49); put('drum', 27, 88); put('tent', 9, 28, 0.8); } },
-  { id: 'hulao', green: 0.3, name: '虎牢关', era: '初平元年 · 190', tip: '群山横断，正面一道关口；西边林间小道也能绕，只是走得慢。关后两肩是高台，正好往关口里射',
+  { id: 'hulao', year: 190, green: 0.3, name: '虎牢关', era: '初平元年 · 190', tip: '群山横断，正面一道关口；西边林间小道也能绕，只是走得慢。关后两肩是高台，正好往关口里射',
     build: ({ hill, ramp, peak, mound, wood }) => {
       peak(15, 43, 10, 9); peak(47, 43, 14, 9); wood(2, 43, 3, 12);            // 关口 c26～32；西边 c0～4 是林间小道
       hill(18, 55, 7, 5); ramp(16, 58, 20, 62, 'S'); hill(40, 55, 7, 5); ramp(38, 58, 42, 62, 'S');
       mound(45, 24, 10, 6); wood(12, 25, 9, 6); mound(30, 77, 16, 7); wood(54, 71, 7, 8); wood(5, 73, 6, 7); },
     deco: put => { put('tower', 24.5, 46.5); put('tower', 34.5, 46.5); put('fence', 23, 50.5); put('fence', 36, 50.5); put('tentBig', 30, 91); put('drum', 25, 91); } },
-  { id: 'bowang', green: 0.55, name: '博望坡', era: '建安七年 · 202', tip: '一条弯弯的长谷，两边坡上全是林子。谷里放几个兵当饵，林子里藏主力：藏着的兵，敌人走到跟前才看得见',
+  { id: 'bowang', year: 202, green: 0.55, name: '博望坡', era: '建安七年 · 202', tip: '一条弯弯的长谷，两边坡上全是林子。谷里放几个兵当饵，林子里藏主力：藏着的兵，敌人走到跟前才看得见',
     build: ({ mound, wood, peak }) => {
       mound(6, 48, 14, 26); mound(16, 62, 12, 9); wood(5, 48, 10, 24); wood(17, 62, 9, 7);      // 西梁，南段往谷里探出一块
       mound(54, 46, 14, 26); mound(44, 36, 10, 9); wood(55, 46, 10, 24); wood(44, 36, 8, 7);    // 东梁，北段往谷里探出一块：谷是弯的
       peak(0, 16, 3, 4); peak(59, 80, 3, 5); },
     deco: (put, rnd) => { for (let r = 30; r < 70; r += 2.6) { const mid = r < 48 ? 26 : 36; put(rnd() < 0.25 ? 'hay' : rnd() < 0.5 ? 'reed' : 'grass', mid + (rnd() - 0.5) * 12, r + rnd() * 2, 0.8); } put('stele', 30, 78); } },
-  { id: 'changban', green: 0.6, name: '长坂桥', era: '建安十三年 · 208', tip: '河过不去，只有西边一座桥和东边一片浅滩。蹚水的兵走得慢、挨打多三成：等他们下了水再打',
+  { id: 'changban', year: 208.1, green: 0.6, name: '长坂桥', era: '建安十三年 · 208', tip: '河过不去，只有西边一座桥和东边一片浅滩。蹚水的兵走得慢、挨打多三成：等他们下了水再打',
     build: ({ hill, ramp, mound, wood, river, ford, bridge }) => {
       river([[-3, 40], [12, 44], [24, 41], [36, 46], [48, 42], [63, 46]], 2.6);
       bridge(16, 39, 21, 47); ford([[40, 45.5], [51, 42.5]], 3.4);
       hill(47, 54, 10, 5); ramp(45, 56, 49, 60, 'S');                          // 南岸的土崖：正对着浅滩
       wood(11, 54, 10, 6); mound(28, 26, 11, 6); wood(50, 28, 9, 7); mound(22, 72, 12, 7); wood(51, 75, 7, 6); },
     deco: put => { put('stele', 23.5, 49.5); put('fence', 24, 48.5); put('tent', 30, 90); put('tent', 36, 91); } },
-  { id: 'dingjun', green: 0.5, name: '定军山', era: '建安二十四年 · 219', tip: '我方脚下是一座两层的山：山腰是缓坡，谁都能上；山顶四面是崖，只有南面一条路。从坡上冲下去，伤害多五成',
+  { id: 'dingjun', year: 219, green: 0.5, name: '定军山', era: '建安二十四年 · 219', tip: '我方脚下是一座两层的山：山腰是缓坡，谁都能上；山顶四面是崖，只有南面一条路。从坡上冲下去，伤害多五成',
     build: ({ hill, ramp, peak, mound, wood }) => {
       mound(30, 64, 24, 14); hill(30, 62, 9, 5, 2); ramp(28, 64, 32, 68, 'S', 1);
       wood(11, 66, 5, 8); wood(49, 66, 5, 8);                                 // 山腰两侧的林子
       mound(44, 25, 11, 7); wood(13, 28, 10, 7);                              // 对面的天荡山和林子
       peak(0, 42, 3, 8); peak(59, 42, 3, 8); },
     deco: put => { put('tentBig', 30, 60.5); put('drum', 26, 61); put('tent', 44, 24, 0.8); put('tent', 41, 25, 0.8); put('fence', 22, 51); put('fence', 38, 51); } },
-  { id: 'huarong', green: 0.25, name: '华容道', era: '建安十三年 · 208', tip: '一大片泥沼，只有中间和西边两条干路。蹚水的走得慢、挨打多三成，骑兵也冲不起来；沼里的深潭过不去',
+  { id: 'huarong', year: 208.2, green: 0.25, name: '华容道', era: '建安十三年 · 208', tip: '一大片泥沼，只有中间和西边两条干路。蹚水的走得慢、挨打多三成，骑兵也冲不起来；沼里的深潭过不去',
     build: ({ pond, lake, road, wood, mound }) => {
       pond(30, 46, 36, 12); lake(16, 45, 5, 4); lake(45, 49, 6, 3);
       road([[30, 32], [26, 40], [33, 49], [29, 60]], 2.6); road([[5, 32], [8, 46], [5, 60]], 2.2);
       road([[47, 40], [50, 40]], 3.2); wood(48, 40, 5, 3);                     // 沼中小洲，长着树
       mound(30, 75, 17, 7); wood(9, 72, 8, 7); wood(52, 73, 8, 7); wood(30, 24, 9, 4); },
     deco: put => { put('stele', 30, 30); put('fence', 30, 63); } },
+  // ---- 下面是照史书上写的战场摆的（大致还原，不按比例）；marks 是图上的地名 ----
+  { id: 'guandu', year: 200, green: 0.3, name: '官渡', era: '建安五年 · 200', tip: '袁绍沿沙堆连营，又堆起两座土山往曹营里射。我方营前有壕沟、两翼有营垒，中间是营门。土山只有北面能上，抢下来就是我方的箭台',
+    marks: [['袁军连营 · 沙堆', 30, 17], ['土山', 17, 36], ['土山', 43, 36], ['壕沟', 12, 60], ['营垒', 14, 68], ['营垒', 46, 68], ['曹营', 30, 74], ['官渡水', 55, 80]],
+    build: ({ hill, ramp, mound, wood, wall, creek, river, road }) => {
+      mound(10, 23, 11, 5); mound(30, 21, 12, 5); mound(50, 23, 11, 5);         // 依沙塠为屯，东西数十里
+      hill(17, 42, 6, 4); ramp(15, 37, 19, 41, 'N'); hill(43, 42, 6, 4); ramp(41, 37, 45, 41, 'N');   // 起土山、为高橹，射营中
+      creek([[5, 62], [25, 62]], 1.3); creek([[35, 62], [52, 62]], 1.3);          // 于内为长堑
+      wall([[6, 66], [22, 66]], 0.9); wall([[38, 66], [51, 66]], 0.9);
+      river([[57, 50], [55, 66], [58, 82], [56, 99]], 1.8); road([[30, 28], [30, 76]], 1.6); wood(4, 48, 4, 6); },
+    deco: put => { for (const c of [6, 12, 26, 33, 47, 54]) put('tent', c, 22 + (c % 3), 0.8); put('tower', 17.5, 43); put('tower', 43.5, 43); put('tentBig', 30, 72); put('drum', 26, 73); put('fence', 26, 63); put('fence', 34, 63); } },
+  { id: 'xiaoyao', year: 215, green: 0.5, name: '逍遥津', era: '建安二十年 · 215', tip: '合肥城下，背后一条河：桥断了一截，只剩一小段浅水能蹚，东边还有一处渡口。在北岸迎战是背水，退到南岸就能守着断桥和渡口打',
+    marks: [['合肥城', 30, 21], ['断桥', 30, 51], ['逍遥津', 49, 51], ['肥水', 12, 51], ['吴军大营', 30, 74]],
+    build: ({ box, mound, wood, wall, river, ford, bridge, road }) => {
+      wall([[22, 17], [38, 17]], 1); wall([[22, 26], [38, 26]], 1); wall([[22, 17], [22, 26]], 1); wall([[38, 17], [38, 26]], 1); box(23, 18, 37, 25, 2.4);
+      river([[-3, 55], [15, 58], [30, 56], [45, 59], [63, 56]], 2.6);
+      bridge(28, 52, 32, 55); bridge(28, 59, 32, 61); ford([[30, 55.5], [30, 58.5]], 2.4); ford([[45, 58], [54, 57]], 3.2);
+      road([[30, 28], [30, 51]], 1.6); mound(44, 42, 9, 6); wood(10, 44, 7, 6); wood(11, 67, 8, 5); wood(50, 70, 7, 6); },
+    deco: put => { put('tower', 23, 27.5); put('tower', 38, 27.5); put('stele', 34.5, 62.5); put('tentBig', 30, 90); put('tent', 24, 91); put('tent', 36, 91); } },
+  { id: 'yiling', year: 222, green: 0.6, name: '夷陵', era: '章武二年 · 222', tip: '西边是长江。蜀军顺着山梁在林子里连营几十座，林子里的兵走到跟前才看得见。中间一道溪涧，蹚水的挨打多三成',
+    marks: [['长江', 4, 44], ['马鞍山', 31, 12], ['蜀军连营', 49, 38], ['溪涧', 24, 60], ['猇亭 · 吴军', 32, 76]],
+    build: ({ mound, wood, river, creek }) => {
+      river([[0, -3], [3, 24], [-1, 50], [4, 74], [1, 99]], 4.6);
+      mound(24, 13, 8, 5); mound(38, 13, 8, 5);                                 // 马鞍山：两个包
+      mound(50, 40, 12, 30); wood(51, 40, 9, 27); wood(27, 28, 11, 6); wood(21, 44, 7, 6);
+      creek([[10, 59], [24, 57], [38, 60]], 1.4); wood(16, 72, 6, 5); },
+    deco: (put, rnd) => { for (let r = 18; r < 64; r += 5) { put('tent', 47 + rnd() * 8, r, 0.75); put('fence', 42 + rnd() * 2, r + 2); } for (const c of [22, 27, 32]) put('tent', c, 27 + (c % 2), 0.75); put('tentBig', 31, 11); put('tentBig', 32, 90); } },
+  { id: 'jieting', year: 228, green: 0.4, name: '街亭', era: '建兴六年 · 228', tip: '两山夹一条川道，敌军顺着大路来。路上有座小城，三面有墙；南边一座孤山，四面是崖。马谡当年舍水上山，被断了水道——据城当道，还是上山，由你定',
+    marks: [['街亭城', 26, 62], ['南山', 45, 68], ['溪水', 11, 46], ['大路', 31, 36], ['陇山', 2, 30], ['陇山', 57, 30]],
+    build: ({ hill, ramp, peak, mound, wood, wall, creek, road }) => {
+      peak(-3, 42, 11, 36); peak(62, 40, 11, 36);
+      road([[28, 8], [26, 34], [26, 56]], 1.6); creek([[14, 18], [11, 38], [15, 56], [11, 78]], 1.5);
+      wall([[20, 57], [32, 57]], 0.9); wall([[20, 57], [20, 66]], 0.9); wall([[32, 57], [32, 66]], 0.9);   // 街亭城：三面墙，南面开口
+      hill(45, 67, 9, 7); ramp(43, 59, 47, 63, 'N'); ramp(43, 71, 47, 75, 'S');   // 南山
+      mound(40, 30, 9, 6); wood(44, 46, 5, 6); },
+    deco: put => { put('tower', 20.5, 56); put('tower', 32.5, 56); put('tent', 26, 61, 0.8); put('tentBig', 45, 66); put('stele', 29, 52); } },
+  { id: 'wuzhang', year: 234, green: 0.5, name: '五丈原', era: '建兴十二年 · 234', tip: '我方在一座高原上，四面是崖，南北各一条坡道。北边渭水有两处浅滩，东边武功水上有座桥。敌军蹚水过来的时候挨打多三成',
+    marks: [['北原', 13, 13], ['渭水', 31, 27], ['五丈原', 27, 65], ['武功水', 55, 62], ['竹桥', 51, 56], ['魏军渡渭', 16, 37]],
+    build: ({ hill, ramp, mound, wood, river, ford, bridge }) => {
+      mound(13, 14, 11, 6);
+      river([[-3, 31], [18, 29], [40, 33], [63, 30]], 2.7); ford([[10, 30], [20, 29]], 3.5); ford([[36, 32.5], [45, 32.5]], 3.5);
+      river([[51, 33], [53, 50], [50, 70], [53, 99]], 1.9); bridge(48, 58, 55, 62);
+      hill(26, 66, 19, 10); ramp(24, 55, 28, 59, 'N'); ramp(24, 73, 28, 77, 'S');
+      wood(7, 50, 5, 7); wood(42, 45, 5, 5); wood(57, 44, 2, 6); },
+    deco: put => { put('tentBig', 26, 64); put('tent', 20, 66, 0.8); put('tent', 32, 66, 0.8); put('drum', 26, 68); put('fence', 22, 54); put('fence', 30, 54); put('tent', 14, 38, 0.8); put('tent', 40, 38, 0.8); put('tent', 57, 60, 0.7); } },
 ];
-let mapI = 0; try { mapI = Math.max(0, MAPS.findIndex(m => m.id === (new URLSearchParams(location.search).get('map') || localStorage.getItem('huazhen.map')))); } catch (e) {}
+let mapI = 0, roam = true, CUR = MAPS[0];   // roam：征途，每一仗换一处战场（随机拼出来的，隔几仗一场名战）；否则固定打 MAPS[mapI]
+try { const q = new URLSearchParams(location.search).get('map'), st = localStorage.getItem('huazhen.mode');
+  roam = q ? q === 'roam' : st !== 'fixed';
+  mapI = Math.max(0, MAPS.findIndex(m => m.id === (q || localStorage.getItem('huazhen.map')))); CUR = MAPS[mapI]; } catch (e) {}
 function buildHeights() {
   HGT.fill(0); TAG.fill(0); BRIDGES = [];
   const each = fn => { for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) fn(c, r, r * COLS + c); };
@@ -449,9 +499,11 @@ function buildHeights() {
   const pond = (cx, cy, rx, ry) => each((c, r, i) => { if (ell(c, r, cx, cy, rx, ry) <= 1) HGT[i] = -0.25; });
   const lake = (cx, cy, rx, ry) => hill(cx, cy, rx, ry, -1);
   const bridge = (c0, r0, c1, r1) => { box(c0, r0, c1, r1, 0); BRIDGES.push([c0, r0, c1, r1]); };
+  const wall = (pts, hw = 1) => each((c, r, i) => { if (seg(c, r, pts) <= hw) { HGT[i] = 2.4; TAG[i] = 4; } });   // 城墙、营垒：过不去，也射不穿
+  const creek = (pts, hw = 1.2) => each((c, r, i) => { if (seg(c, r, pts) <= hw && HGT[i] === 0) HGT[i] = -0.25; });   // 溪、壕沟：浅水
   const wood = (cx, cy, rx, ry) => each((c, r, i) => { if (ell(c, r, cx, cy, rx, ry) <= 1) TAG[i] |= 1; });
-  MAPS[mapI].build({ box, hill, mound, ramp, peak, river, ford, road, pond, lake, bridge, wood });
-  for (let i = 0; i < HGT.length; i++) if (HGT[i] < 0 || HGT[i] > 2.2) TAG[i] &= ~1;   // 水里、山峰上不算树林
+  CUR.build({ box, hill, mound, ramp, peak, river, ford, road, pond, lake, bridge, wood, wall, creek });
+  for (let i = 0; i < HGT.length; i++) if (HGT[i] < 0 || HGT[i] > 2.2) TAG[i] &= ~1;   // 水里、山峰、城墙上不算树林
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
     const h = HGT[r * COLS + c];
     for (let q = 0; q < 4; q++) {
@@ -559,7 +611,8 @@ function reset() {
   grid = new Array(COLS * ROWS).fill(null); units = Array.from({ length: COLS * ROWS }, () => []);
   soldiers = []; enemies = []; shots = []; parts = []; floats = [];
   recentArmies = []; seenFoes = new Set(); sp = null; showIntel();
-  wave = 0; lastPlan = null; kills = 0; gold = 0; junxin = 80; fightN = 1; fallen = [];
+  wave = 0;
+  lastPlan = null; kills = 0; gold = 0; junxin = 80; fightN = 1; fallen = [];
   state = 'start'; sp = null; shake = 0;
   // 开局送一个示范阵：一排盾，后面一排枪，再后面一排弓
   { const m = COLS / 2, r = ROWS - 16; for (let c = m - 9; c < m + 9; c++) { place(c, r, 'shield', true); place(c, r + 1, 'spear', true); } for (let c = m - 7; c < m + 7; c++) place(c, r + 3, 'bow', true); }
@@ -834,8 +887,9 @@ function clearZone() {
 function blockedNear(x, y) { const [c, r] = cellOf(x, y); for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const cc = c + dx, rr = r + dy; if (cc >= 0 && cc < COLS && rr >= 0 && rr < ROWS && grid[rr * COLS + cc]) return true; } return false; }
 function startPrep() {
   wave++;
+  if (roam) { travel(); mapTip(`<b>${CUR.name}</b>${CUR.tip}`); }
   sp = planWave(wave);
-  state = 'prep'; bannerTxt = `第 ${wave} 波 · ${sp.army}${wave > 3 && !sp.big ? '（同上波）' : ''}`; bannerT = 1.6;
+  state = 'prep'; bannerTxt = roam ? `第 ${wave} 仗 · ${CUR.name}` : `第 ${wave} 波 · ${sp.army}${wave > 3 && !sp.big ? '（同上波）' : ''}`; bannerT = 1.6;
   clearZone();
   showIntel(); phaseUI(); buildGhosts(); buildTools();
 }
@@ -844,7 +898,7 @@ function startFight() {
   fightN = Math.max(1, soldiers.filter(s => !s.dead).length); foeLost = 0;
   drawing = false; lastPt = null; pointer = null; sel = null; selDrag = null; saving = false;
   for (const g of sp.groups) for (const k in g.counts) seenFoes.add(k);
-  ghosts = []; foeZone = null;
+  ghosts = []; foeZone = null; mapTip(null);
   teams = []; hitStat = [0, 0, 0]; mstat = { rout: [0, 0], flee: [0, 0], die: [0, 0] };
   for (const s of soldiers) Object.assign(s, { side: 0, rad: R_OF[s.type], spd: MOVE[s.type], vx: 0, vy: -1, run: 0, aim: null, team: null, cdT: Math.random() * 0.5, mor: junxin, mor0: junxin, fx0: 0, fy0: 1, mT: Math.random() * 0.25 });
   formUp();
@@ -883,7 +937,7 @@ const CN = n => n <= 10 ? '零一二三四五六七八九十'[n] : n;
 // 顶上的卷轴（第几波、军势、天时）和敌军各兵种的数量
 function showIntel() {
   if (!sp) return;
-  document.getElementById('waveTxt').textContent = `第${CN(wave)}波`;
+  document.getElementById('waveTxt').textContent = roam ? `第${CN(wave)}仗 · ${CUR.name}` : `第${CN(wave)}波`;
   document.getElementById('armyTxt').textContent = [sp.army, ...sp.mods.map(m => m.name)].join(' · ');
   const n = {}; for (const g of sp.groups) for (const k in g.counts) n[k] = (n[k] || 0) + g.counts[k];
   document.getElementById('foeChip').innerHTML = '<em>敌军</em>' + (sp.mod.fog ? '<span>？</span>' : Object.keys(FOES).filter(k => n[k]).map(k => `<span>${uicon(k, 16, FOES[k].color)}<b style="font-size:15px">${n[k]}</b></span>`).join(''));
@@ -1401,12 +1455,12 @@ function showStart() {
   overlay(`<div class="panel"><h1>画阵</h1>
     <p>选一个兵种，用手指在沙盘上画，一笔就是一片。画好了点「开战」，两军对冲。</p>
     <p>兵种、士气怎么算，都在「兵书」里。</p>
-    <div class="maps">${MAPS.map((m, i) => `<button class="mapb${i === mapI ? ' on' : ''}" data-i="${i}"><b>${m.name}</b><i>${m.era}</i><span>${m.tip}</span></button>`).join('')}</div>
+    <div class="maps"><button class="mapb wide${roam ? ' on' : ''}" data-i="-1"><b>征途</b><i>每一仗换一处战场</i><span>从虎牢关到五丈原，按年代一场一场打过去。兵一路带着走</span></button>${MAPS.map((m, i) => `<button class="mapb${!roam && i === mapI ? ' on' : ''}" data-i="${i}"><b>${m.name}</b><i>${m.era}</i><span>${m.tip}</span></button>`).join('')}</div>
     <button class="go ghost" id="bookBtn0">看兵书</button>
     <button class="go" id="goBtn">开始</button></div>`);
   document.getElementById('goBtn').onclick = () => { overlay(null); startPrep(); };
   document.getElementById('bookBtn0').onclick = () => showBook(showStart);
-  for (const b of document.querySelectorAll('.mapb')) b.onclick = () => { if (+b.dataset.i !== mapI) setMap(+b.dataset.i); showStart(); };
+  for (const b of document.querySelectorAll('.mapb')) b.onclick = () => { const i = +b.dataset.i; if (i < 0 ? !roam : roam || i !== mapI) setMap(i); showStart(); };
 }
 // ---------- 兵书：兵种、阵法、规则（随时能翻；打仗时翻开会暂停） ----------
 const RULES_HTML = `<ul>
@@ -1711,7 +1765,7 @@ if (G3) {
   g3.build = () => {   // 换地图时重新做一遍
   if (g3.terrain) { g3.scene.remove(g3.terrain); g3.terrain.geometry.dispose(); g3.terrain.material.dispose(); }
   if (g3.water) { g3.scene.remove(g3.water); g3.water.geometry.dispose(); g3.water = null; }
-  const GREEN = MAPS[mapI].green == null ? 0.4 : MAPS[mapI].green;
+  const GREEN = CUR.green == null ? 0.4 : CUR.green;
   const raw = new Float32Array(FN), rampM = new Float32Array(FN), dirtM = new Float32Array(FN), woodM = new Float32Array(FN);
   for (let j = 0; j < FH; j++) for (let i = 0; i < FW; i++) {   // 规则高度，取样位置先用噪声挪一挪：崖的边线就不再是直的
     const x = TX0 + i * FS, z = TZ0 + j * FS, wx = x + (fbm(x / 30, z / 30, 11) - 0.5) * 34, wz = z + (fbm(x / 30, z / 30, 17) - 0.5) * 34, k = j * FW + i;
@@ -1863,19 +1917,55 @@ const mkProps = () => {
   for (let x = 24; x < W - 10; x += 50 + rnd() * 36) put(pick(['flag', 'crate', 'tent', 'flag', 'fire', 'tent', 'drum', 'spike']), x, H + 15);
   // 上不去的山峰上长树，河边长草：都在走不到的格子里，不挡兵
   for (let z = 8; z < H; z += 15) for (let x = 8; x < W; x += 15) { const px = x + (rnd() - 0.5) * 12, pz = z + (rnd() - 0.5) * 12, h = HGT[cellI(px, pz)], ok = [[-9, 0], [9, 0], [0, -9], [0, 9]].every(([a, b]) => HGT[cellI(px + a, pz + b)] === h);
-    if (h > 2.2 && ok && rnd() < 0.8) put(pick(['pineA', 'pineB', 'pineA', 'leaf', 'rockA']), px, pz); else if (h < 0 && !ok && rnd() < 0.6) put(pick(['reed', 'reed', 'grass']), px, pz); }
+    if (h > 2.2 && ok && !(TAG[cellI(px, pz)] & 4) && rnd() < 0.8) put(pick(['pineA', 'pineB', 'pineA', 'leaf', 'rockA']), px, pz); else if (h < 0 && !ok && rnd() < 0.6) put(pick(['reed', 'reed', 'grass']), px, pz); }
   // 树林：格子里稀稀地长着矮一些的树和灌木（兵站在里面还看得见）；浅水里零星几丛芦苇
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const i = r * COLS + c, x = (c + 0.15 + rnd() * 0.7) * CS, z = (r + 0.15 + rnd() * 0.7) * CS;
     if (TAG[i] & 1) { const q = rnd(); if (q < 0.3) put(pick(['pineA', 'pineB', 'leaf', 'leaf', 'pineB']), x, z, 0.5 + rnd() * 0.25); else if (q < 0.42) put(pick(['bush', 'bush', 'grass']), x, z, 0.8); }
     else if (HGT[i] < -0.05 && HGT[i] > -0.9) { if (rnd() < 0.07) put(pick(['reed', 'reed', 'grass']), x, z, 0.7); }
     else if (HGT[i] < 2.2 && r > SPAWN_ROWS && rnd() < 0.016) put(pick(['grass', 'grass', 'rockB', 'bush', 'grass']), x, z, 0.5 + rnd() * 0.2); }
-  if (MAPS[mapI].deco) MAPS[mapI].deco((n, c, r, k) => put(n, c * CS, r * CS, k), rnd);   // 这张地图自己的地标（位置按格子写）
+  if (CUR.deco) CUR.deco((n, c, r, k) => put(n, c * CS, r * CS, k), rnd);   // 这张地图自己的地标（位置按格子写）
   return L;
 };
 let propAt = mkProps();
-function setMap(i) {   // 换地图：重堆地形、重算走得到的格子、重做画面，然后整局重来
-  mapI = i; try { localStorage.setItem('huazhen.map', MAPS[i].id); } catch (e) {}
-  buildHeights(); mapReady(); if (G3) g3.build(); propAt = mkProps(); sandImg = makeSand(); reset(); if (G3) { g3.lastState = null; }
+// 到了新战场，顶上出一条说明：这儿的地形怎么用。几秒后自己收起，开打也收起
+let mapTipT = 0;
+function mapTip(html) {
+  let el = document.getElementById('mapTip'); if (!el) { el = document.createElement('div'); el.id = 'mapTip'; document.body.appendChild(el); }
+  clearTimeout(mapTipT); if (!html) { el.style.opacity = 0; return; }
+  el.innerHTML = html; el.style.opacity = 1; mapTipT = setTimeout(() => { el.style.opacity = 0; }, 7000);
+}
+function applyMap(m) {   // 换地图：重堆地形、重算走得到的格子、重做画面
+  CUR = m; buildHeights(); mapReady(); if (G3) g3.build(); propAt = mkProps(); sandImg = makeSand(); if (G3) { g3.lastState = null; }
+}
+function setMap(i) {   // 在开始页选了一张固定的图（i < 0 是征途）：整局重来
+  roam = i < 0; if (!roam) mapI = i;
+  try { localStorage.setItem('huazhen.mode', roam ? 'roam' : 'fixed'); if (!roam) localStorage.setItem('huazhen.map', MAPS[i].id); } catch (e) {}
+  applyMap(roam ? CUR : MAPS[i]); reset();
+}
+// 这张图能不能打：敌军出生的地方和我方摆阵的地方都走得通、够宽，没有大片白占地方的死角
+function mapOK() {
+  let top = 0, low = 0, dead = 0;
+  for (let i = 0; i < HGT.length; i++) { const r = (i / COLS) | 0, dry = HGT[i] > -0.05, ok = REACH[i] && dry;
+    if (r < 12 && ok) top++; if (r >= 70 && ok) low++; if (!REACH[i] && dry && HGT[i] < 2.2) dead++; }
+  for (let r = ROWS - 17; r <= ROWS - 12; r++) for (let c = COLS / 2 - 10; c < COLS / 2 + 10; c++) if (!REACH[r * COLS + c] || HGT[r * COLS + c] < -0.05) return false;
+  return top > 12 * COLS * 0.8 && low > 26 * COLS * 0.8 && dead < COLS * ROWS * 0.02;
+}
+// 征途里第 w 仗打哪儿：按年代一场一场打过去（演武场不算），打完一轮从头再来
+const ROAM_SEQ = () => MAPS.filter(m => m.year).sort((a, b) => a.year - b.year);
+function roamMap(w) { const q = ROAM_SEQ(); return q[(w - 1) % q.length]; }
+// 行军到下一处战场：阵形原样搬过去，落在水里、崖上的挪到最近能站的地方
+function travel() {
+  const homes = soldiers.filter(s => !s.dead).map(s => [s.type, s.hc, s.hr, s.hold]);
+  for (const s of soldiers) s.dead = true;
+  soldiers = []; grid.fill(null); for (const a of units) a.length = 0; foeZone = null;
+  applyMap(roamMap(wave));
+  for (const [k, c0, r0, h] of homes) {
+    let done = false;
+    for (let R = 0; R <= 14 && !done; R++) for (let dr = -R; dr <= R && !done; dr++) for (let dc = -R; dc <= R && !done; dc++) {
+      if (Math.max(Math.abs(dr), Math.abs(dc)) !== R) continue; const c = c0 + dc, r = r0 + dr;
+      if (drawable(c, r) && !grid[r * COLS + c] && place(c, r, k, true) === true) { done = true; if (h) soldiers[soldiers.length - 1].hold = true; } }
+  }
+  recalcBuffs(); needBuffs = true;
 }
 // 图集：上面 480 高是摆件；下面每个有美术图的兵种占两行（背面、正面），每行六个样子
 function g3atlas() {

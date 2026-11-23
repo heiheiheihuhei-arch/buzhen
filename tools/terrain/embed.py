@@ -10,9 +10,17 @@ CFG = {   # rivers：名字: (半宽格数, 深不深)。小河按浅水算，�
   'dingjun': dict(step=120, rivers={'汉江': (2.6, 1), '漾水河': (1.2, 0)}),
   'yiling':  dict(step=60,  rivers={'长江': (4.0, 1)}),
   'hulao':   dict(step=45,  rivers={'黄河': (5.0, 1), '汜河': (1.2, 0)}),
+  'yangping': dict(step=120, rivers={'汉江': (1.6, 0)}),
+  'zouma':   dict(step=90,  rivers={'漾水河': (1.2, 0)}),
+  'hanshui': dict(step=90,  rivers={'汉江': (2.6, 1), '': (1.2, 0)}),
+  'baogu':   dict(step=100, rivers={'褒河': (2.2, 0)}),
 }
 def conv(name, step, rivers, margin=10):
     d = json.load(open(os.path.join(HERE, 'out', name + '.json'))); E = d['elev']; R, C = len(E), len(E[0])
+    for r in E:   # 水库这类地方高程数据是坏的（负几百米）：按这一行最低的正常值算
+        ok = [v for v in r if v > 50]; lo = min(ok) if ok else 500
+        for i, v in enumerate(r):
+            if v <= 50: r[i] = lo
     base = [sorted(r)[int(C * 0.08)] for r in E]
     base = [sum(base[max(0, i - 8):i + 9]) / len(base[max(0, i - 8):i + 9]) for i in range(R)]
     h = [[max(0, (E[r][c] - base[r] - margin) / step) for c in range(C)] for r in range(R)]
